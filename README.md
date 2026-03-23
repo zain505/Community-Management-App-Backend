@@ -60,6 +60,25 @@ npm run dev
 This starts `api-gateway`, `auth-service`, `store-service`, `newsfeed-service`, and `app-service`.
 If one of those services is already running on its configured port, `npm run dev` reuses the healthy instance instead of failing with `EADDRINUSE`.
 If a service `.env` file is missing, `npm run dev` now creates it from that service's `.env.example` before startup.
+`npm run dev` also builds the shared `@community/contracts` package before launching services so a fresh checkout has the runtime contract files available.
+
+## Fresh Environment Troubleshooting
+
+If you copied or moved the repository to a new folder and see `Cannot find module '@community/contracts/dist/index.js'`, remove existing installs and reinstall from the current project path so local `file:` dependencies are relinked correctly.
+
+```bash
+rm -rf node_modules services/*/node_modules packages/*/node_modules
+npm install
+```
+
+On Windows PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force node_modules, services\*\node_modules, packages\*\node_modules
+npm install
+```
+
+If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. The included Docker setup expects `root:root` on `127.0.0.1:3306`.
 
 ## API Endpoints
 
