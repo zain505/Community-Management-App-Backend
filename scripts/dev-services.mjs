@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import process from 'node:process';
@@ -9,6 +9,9 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(scriptDir, '..');
 const stateFilePath = path.join(rootDir, '.dev-services-state.json');
+const contractsWorkspacePath = path.join(rootDir, 'packages', 'contracts');
+const contractsNodeModulesPath = path.join(rootDir, 'node_modules', '@community', 'contracts');
+const contractsEntryPath = path.join(contractsWorkspacePath, 'dist', 'index.js');
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -263,16 +266,6 @@ if (duplicatePorts.length > 0) {
   process.exit(1);
 }
 
-console.log('[dev] Starting all services...');
-for (const service of services) {
-  console.log(
-    `[dev] ${service.name}: workspace=${service.workspace} port=${service.port} env=${path.relative(
-      rootDir,
-      service.envPath,
-    )}`,
-  );
-}
-
 let shuttingDown = false;
 let activeChildren = 0;
 let exitCode = 0;
@@ -283,6 +276,91 @@ function getErrorMessage(error) {
     return error.message;
   }
   return String(error);
+}
+
+function normalizePathForComparison(filePath) {
+  const normalizedPath = path.resolve(filePath);
+  return process.platform === 'win32' ? normalizedPath.toLowerCase() : normalizedPath;
+}
+
+function getReinstallCommand() {
+  if (process.platform === 'win32') {
+    return 'Remove-Item -Recurse -Force node_modules, services\\*\\node_modules, packages\\*\\node_modules';
+  }
+
+  return 'rm -rf node_modules services/*/node_modules packages/*/node_modules';
+}
+
+function reportContractsInstallProblem(summary, details = []) {
+  console.error(`[dev] ${summary}`);
+
+  for (const detail of details) {
+    console.error(`[dev] ${detail}`);
+  }
+
+  console.error('[dev] Reinstall dependencies from the current project folder so workspace links point here:');
+  console.error(`[dev]   ${getReinstallCommand()}`);
+  console.error('[dev]   npm install');
+  console.error('[dev]   npm run dev');
+}
+
+function validateContractsWorkspaceInstall() {
+  if (!existsSync(contractsNodeModulesPath)) {
+    reportContractsInstallProblem(
+      'Missing node_modules/@community/contracts.',
+      [
+        'This workspace package is required at runtime by newsfeed-service.',
+        'A fresh checkout or copied repo still needs "npm install" from the current root folder.',
+      ],
+    );
+    return false;
+  }
+
+  let resolvedContractsPath;
+  try {
+    resolvedContractsPath = realpathSync(contractsNodeModulesPath);
+  } catch (error) {
+    reportContractsInstallProblem('Unable to resolve node_modules/@community/contracts.', [
+      getErrorMessage(error),
+    ]);
+    return false;
+  }
+
+  const normalizedResolvedPath = normalizePathForComparison(resolvedContractsPath);
+  const normalizedExpectedPath = normalizePathForComparison(contractsWorkspacePath);
+
+  if (normalizedResolvedPath !== normalizedExpectedPath) {
+    reportContractsInstallProblem(
+      '@community/contracts points to a different folder than this repository.',
+      [
+        `Expected: ${contractsWorkspacePath}`,
+        `Resolved: ${resolvedContractsPath}`,
+        'This usually happens after moving or copying the repository without reinstalling dependencies.',
+      ],
+    );
+    return false;
+  }
+
+  if (!existsSync(contractsEntryPath)) {
+    console.error(
+      `[dev] Missing ${path.relative(rootDir, contractsEntryPath)}. Run "npm run contracts:build" or "npm run dev" from the repository root.`,
+    );
+    return false;
+  }
+
+  return true;
+}
+
+function logServiceStartupPlan() {
+  console.log('[dev] Starting all services...');
+  for (const service of services) {
+    console.log(
+      `[dev] ${service.name}: workspace=${service.workspace} port=${service.port} env=${path.relative(
+        rootDir,
+        service.envPath,
+      )}`,
+    );
+  }
 }
 
 function announceReady(service, runtimePort) {
@@ -571,6 +649,12 @@ function handleChildExit(service, code, signal) {
 }
 
 async function main() {
+  if (!validateContractsWorkspaceInstall()) {
+    process.exit(1);
+  }
+
+  logServiceStartupPlan();
+
   const servicesToStart = await prepareServices();
   activeChildren = servicesToStart.length;
 
