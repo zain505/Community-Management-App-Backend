@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum NewsFeedEventType {
+  STORE_CREATED
+  STORE_NAME_UPDATED
+  STORE_LOCATION_UPDATED
+  STORE_RATING_UPDATED
+  STORE_IMAGE_UPDATED
+  STORE_DELIVERY_UPDATED
+  STORE_MIN_ORDER_UPDATED
+  STORE_CONTACT_UPDATED
+  STORE_PROFILE_UPDATED
+  PRODUCT_ADDED
+  PRODUCT_UPDATED
+  PRODUCT_DELETED
+  ANNOUNCEMENT_CREATED
+  ANNOUNCEMENT_UPDATED
+  ANNOUNCEMENT_DELETED
+  POPULAR_STORE_CHANGED
+  MOST_ACTIVE_STORE_CHANGED
+  MOST_SEARCHED_STORE_CHANGED
+}
+
+enum NewsFeedMetric {
+  POPULAR_STORE
+  MOST_ACTIVE_STORE
+  MOST_SEARCHED_STORE
+}
+
+model NewsFeedItem {
+  id          String            @id @default(cuid())
+  type        NewsFeedEventType
+  title       String
+  description String            @db.Text
+  storeId     Int?
+  storeName   String?
+  metadata    Json?
+  createdAt   DateTime          @default(now())
+  likes       NewsFeedLike[]
+  saves       NewsFeedSave[]
+
+  @@index([storeId])
+  @@index([createdAt])
+  @@index([type])
+}
+
+model NewsFeedLike {
+  id             String       @id @default(cuid())
+  newsFeedItemId String
+  userId         String
+  createdAt      DateTime     @default(now())
+  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)
+
+  @@unique([newsFeedItemId, userId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model NewsFeedMetricState {
+  metric    NewsFeedMetric @id
+  storeId   Int?
+  updatedAt DateTime       @updatedAt
+
+  @@index([storeId])
+}
+
+model NewsFeedSave {
+  id             String       @id @default(cuid())
+  newsFeedItemId String
+  userId         String
+  savedAt        DateTime     @default(now())
+  expiresAt      DateTime
+  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)
+
+  @@unique([newsFeedItemId, userId])
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+  @@index([savedAt])
+}

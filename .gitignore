@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# outputs
+dist/
+coverage/
+services/*/uploads/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+
+# prisma
+services/*/prisma/dev.db
+services/*/prisma/dev.db-journal
+
+# logs
+*.log
+npm-debug.log*

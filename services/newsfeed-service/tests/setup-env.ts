@@ -1,0 +1,17 @@
+process.env.NODE_ENV = 'test';
+process.env.PORT = '4300';
+process.env.LOG_LEVEL = 'info';
+process.env.CORS_ORIGINS = 'http://localhost:3000';
+process.env.DATABASE_URL = 'mysql://root:root@127.0.0.1:3306/newsfeed_db';
+process.env.JWT_ACCESS_SECRET = '12345678901234567890123456789012';
+process.env.JWT_REFRESH_SECRET = '12345678901234567890123456789012';
+process.env.JWT_ACCESS_TTL = '15m';
+process.env.JWT_REFRESH_TTL = '7d';
+process.env.BCRYPT_SALT_ROUNDS = '8';
+process.env.RATE_LIMIT_WINDOW_MS = '60000';
+process.env.RATE_LIMIT_MAX = '100';
+process.env.LOGIN_RATE_LIMIT_MAX = '10';
+process.env.AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:59998';
+process.env.AUTH_SERVICE_TIMEOUT_MS = '200';
+process.env.STORE_SERVICE_BASE_URL = 'http://127.0.0.1:59999';
+process.env.STORE_SERVICE_TIMEOUT_MS = '200';

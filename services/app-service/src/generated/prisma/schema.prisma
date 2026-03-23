@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  mobileNumber  String         @unique
+  name          String
+  passwordHash  String
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Announcement {
+  id              String   @id @default(cuid())
+  title           String
+  content         String   @db.Text
+  authorName      String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdByUserId String
+
+  @@index([createdByUserId])
+  @@index([createdAt])
+  @@index([title])
+}
+
+model EventManagement {
+  id              String    @id @default(cuid())
+  title           String
+  description     String    @db.Text
+  location        String
+  startAt         DateTime
+  endAt           DateTime?
+  authorName      String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdByUserId String
+
+  @@index([createdByUserId])
+  @@index([createdAt])
+  @@index([startAt])
+  @@index([title])
+}

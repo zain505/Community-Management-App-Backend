@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id          Int            @id @default(autoincrement())
+  ownerUserId String         @unique
+  name        String
+  location    String
+  rating      String
+  image       String         @db.LongText
+  badges      Json?
+  delivery    String
+  minOrderRs  String
+  openingTime String         @default("00:00")
+  closingTime String         @default("23:59")
+  phoneNumber String
+  searchCount Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  products    StoreProduct[]
+  ratings     StoreRating[]
+
+  @@index([name])
+  @@index([location])
+}
+
+model StoreProduct {
+  id        String   @id @default(cuid())
+  name      String
+  price     String
+  image     String
+  tag       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  storeId   Int
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([name])
+}
+
+model StoreRating {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  rating    Decimal  @db.Decimal(4, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  storeId   Int
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, userId])
+  @@index([storeId])
+  @@index([userId])
+}
+
+enum NewsFeedEventType {
+  STORE_CREATED
+  STORE_NAME_UPDATED
+  STORE_LOCATION_UPDATED
+  STORE_RATING_UPDATED
+  STORE_IMAGE_UPDATED
+  STORE_DELIVERY_UPDATED
+  STORE_MIN_ORDER_UPDATED
+  STORE_CONTACT_UPDATED
+  STORE_PROFILE_UPDATED
+  PRODUCT_ADDED
+  PRODUCT_UPDATED
+  PRODUCT_DELETED
+  POPULAR_STORE_CHANGED
+  MOST_ACTIVE_STORE_CHANGED
+  MOST_SEARCHED_STORE_CHANGED
+}
+
+enum NewsFeedMetric {
+  POPULAR_STORE
+  MOST_ACTIVE_STORE
+  MOST_SEARCHED_STORE
+}
