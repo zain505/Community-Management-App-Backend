@@ -24,27 +24,34 @@ Microservices-ready Node.js starter using:
 
 ## Quick Start
 
-1. Copy `.env.example` to `.env` and set secure JWT secrets.
-2. Make sure Docker Desktop is running, then start MySQL:
-
-```bash
-npm run docker:up
-```
-
-3. Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-4. Generate Prisma client and run migrations:
+2. Create per-service env files from `services/*/.env.example`:
+
+```bash
+npm run env:setup
+```
+
+3. Review the generated `services/*/.env` files and replace the placeholder JWT secrets.
+
+4. Make sure Docker Desktop is running, then start MySQL:
+
+```bash
+npm run docker:up
+```
+
+5. Generate Prisma client and run migrations:
 
 ```bash
 npm run prisma:generate
 npm run prisma:deploy
 ```
 
-5. Start all services in one command:
+6. Start all services in one command:
 
 ```bash
 npm run dev
@@ -52,6 +59,7 @@ npm run dev
 
 This starts `api-gateway`, `auth-service`, `store-service`, `newsfeed-service`, and `app-service`.
 If one of those services is already running on its configured port, `npm run dev` reuses the healthy instance instead of failing with `EADDRINUSE`.
+If a service `.env` file is missing, `npm run dev` now creates it from that service's `.env.example` before startup.
 
 ## API Endpoints
 
@@ -89,7 +97,7 @@ npm run create:service -- user-service
 
 After cloning, adjust:
 - service-specific routes/modules
-- `.env` defaults and port
+- `.env.example` defaults and port
 - Prisma schema and migrations
 
 See [Service Checklist](services/auth-service/README.md) for standards to keep across services.
