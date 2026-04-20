@@ -32,28 +32,30 @@ model Store {
 }
 
 model StoreProduct {
-  id        String   @id @default(cuid())
-  name      String
-  price     String
-  image     String
-  tag       String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  storeId   Int
-  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  name        String
+  price       String
+  image       String   @db.LongText
+  tag         String?
+  description String?  @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  storeId     Int
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([name])
 }
 
 model StoreRating {
-  id        Int      @id @default(autoincrement())
-  userId    String
-  rating    Decimal  @db.Decimal(4, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  storeId   Int
-  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  userId      String
+  rating      Decimal  @db.Decimal(4, 2)
+  description String?  @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  storeId     Int
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@unique([storeId, userId])
   @@index([storeId])

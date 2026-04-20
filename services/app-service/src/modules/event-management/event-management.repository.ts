@@ -7,6 +7,7 @@ const eventManagementSelect = {
   id: true,
   title: true,
   description: true,
+  image: true,
   location: true,
   startAt: true,
   endAt: true,
@@ -23,6 +24,7 @@ export type EventManagementRecord = Prisma.EventManagementGetPayload<{
 interface CreateEventManagementRecordInput {
   title: string;
   description: string;
+  image: string;
   location: string;
   startAt: string;
   endAt?: string | null;
@@ -31,6 +33,7 @@ interface CreateEventManagementRecordInput {
 interface UpdateEventManagementRecordInput {
   title?: string;
   description?: string;
+  image?: string;
   location?: string;
   startAt?: string;
   endAt?: string | null;
@@ -90,6 +93,7 @@ export const eventManagementRepository = {
       data: {
         title: payload.title,
         description: payload.description,
+        image: payload.image,
         location: payload.location,
         startAt: new Date(payload.startAt),
         endAt: payload.endAt ? new Date(payload.endAt) : null,
@@ -105,6 +109,7 @@ export const eventManagementRepository = {
 
     if (payload.title !== undefined) data.title = payload.title;
     if (payload.description !== undefined) data.description = payload.description;
+    if (payload.image !== undefined) data.image = payload.image;
     if (payload.location !== undefined) data.location = payload.location;
     if (payload.startAt !== undefined) data.startAt = new Date(payload.startAt);
     if ('endAt' in payload) data.endAt = payload.endAt ? new Date(payload.endAt) : null;

@@ -145,6 +145,7 @@ exports.Prisma.StoreProductScalarFieldEnum = {
   price: 'price',
   image: 'image',
   tag: 'tag',
+  description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   storeId: 'storeId'
@@ -154,6 +155,7 @@ exports.Prisma.StoreRatingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   rating: 'rating',
+  description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   storeId: 'storeId'
@@ -203,11 +205,13 @@ exports.Prisma.StoreProductOrderByRelevanceFieldEnum = {
   name: 'name',
   price: 'price',
   image: 'image',
-  tag: 'tag'
+  tag: 'tag',
+  description: 'description'
 };
 
 exports.Prisma.StoreRatingOrderByRelevanceFieldEnum = {
-  userId: 'userId'
+  userId: 'userId',
+  description: 'description'
 };
 
 

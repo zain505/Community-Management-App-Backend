@@ -12,6 +12,7 @@ model User {
   id            String         @id @default(cuid())
   mobileNumber  String         @unique
   name          String
+  usertype      Int            @default(2)
   passwordHash  String
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
@@ -50,6 +51,7 @@ model EventManagement {
   id              String    @id @default(cuid())
   title           String
   description     String    @db.Text
+  image           String    @db.LongText
   location        String
   startAt         DateTime
   endAt           DateTime?
@@ -62,4 +64,16 @@ model EventManagement {
   @@index([createdAt])
   @@index([startAt])
   @@index([title])
+}
+
+model ChatMessage {
+  id              String   @id @default(cuid())
+  content         String   @db.Text
+  authorName      String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdByUserId String
+
+  @@index([createdAt])
+  @@index([createdByUserId])
 }

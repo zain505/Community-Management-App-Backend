@@ -9,6 +9,7 @@ export interface UpdateProductRequest {
   price?: string;
   image?: string;
   tag?: string;
+  description?: string;
 }
 
 export interface ProductListQuery {

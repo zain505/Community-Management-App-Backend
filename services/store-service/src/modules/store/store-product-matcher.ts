@@ -4,6 +4,7 @@ export interface ExistingStoreProductLike {
   price: string;
   image: string;
   tag: string | null;
+  description: string | null;
 }
 
 export interface IncomingStoreProductLike {
@@ -12,6 +13,7 @@ export interface IncomingStoreProductLike {
   price: string;
   image: string;
   tag?: string;
+  description?: string;
 }
 
 export interface MatchedStoreProductPair<
@@ -43,7 +45,8 @@ export function hasStoreProductContentChanged<
     existingProduct.name !== nextProduct.name ||
     existingProduct.price !== nextProduct.price ||
     existingProduct.image !== nextProduct.image ||
-    normalizeText(existingProduct.tag) !== normalizeText(nextProduct.tag)
+    normalizeText(existingProduct.tag) !== normalizeText(nextProduct.tag) ||
+    normalizeText(existingProduct.description) !== normalizeText(nextProduct.description)
   );
 }
 

@@ -48,6 +48,7 @@ export async function createMyStore(req: Request, res: Response): Promise<void> 
     getAuthenticatedUserId(req),
     req.body as CreateStoreRequest,
   );
+  console.log(">>>>>>>>>>>>>>>>>>",req.body);
   sendSuccess(res, StatusCodes.CREATED, store);
 }
 

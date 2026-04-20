@@ -26,6 +26,16 @@ export const storeClient = {
     return getInternalStoreData<StoreRankingSnapshot[]>('/internal/stores/ranking');
   },
 
+  findStoreSummariesByIds(storeIds: number[]): Promise<StoreSummaryWithOwner[]> {
+    if (storeIds.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    return getInternalStoreData<StoreSummaryWithOwner[]>(
+      `/internal/stores/summaries?ids=${encodeURIComponent(storeIds.join(','))}`,
+    );
+  },
+
   findStoreBasicById(storeId: number): Promise<StoreBasicSnapshot | null> {
     return getInternalStoreData<StoreBasicSnapshot | null>(`/internal/stores/${storeId}/basic`);
   },

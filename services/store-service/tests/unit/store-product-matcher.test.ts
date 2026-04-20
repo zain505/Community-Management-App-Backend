@@ -12,6 +12,7 @@ describe('store product matcher', () => {
         price: 'Rs.1200',
         image: 'https://example.com/karahi.jpg',
         tag: 'Popular',
+        description: 'Classic karahi with tender chicken pieces.',
       },
       {
         id: 'prod-2',
@@ -19,6 +20,7 @@ describe('store product matcher', () => {
         price: 'Rs.600',
         image: 'https://example.com/kebab.jpg',
         tag: null,
+        description: null,
       },
     ];
 
@@ -28,18 +30,21 @@ describe('store product matcher', () => {
         price: 'Rs.1300',
         image: 'https://example.com/karahi-new.jpg',
         tag: 'Popular',
+        description: 'Classic karahi with tender chicken pieces.',
       },
       {
         id: 'prod-2',
         name: 'Seekh Kebab',
         price: 'Rs.600',
         image: 'https://example.com/kebab.jpg',
+        description: '',
       },
       {
         name: 'Mutton Handi',
         price: 'Rs.1500',
         image: 'https://example.com/handi.jpg',
         tag: 'New',
+        description: 'Slow-cooked handi with rich spices.',
       },
     ];
 
@@ -60,6 +65,7 @@ describe('store product matcher', () => {
         price: 'Rs.1200',
         image: 'https://example.com/karahi.jpg',
         tag: 'Popular',
+        description: 'Classic karahi with tender chicken pieces.',
       },
       {
         id: 'prod-2',
@@ -67,6 +73,7 @@ describe('store product matcher', () => {
         price: 'Rs.600',
         image: 'https://example.com/kebab.jpg',
         tag: null,
+        description: null,
       },
     ];
 
@@ -77,6 +84,7 @@ describe('store product matcher', () => {
         price: 'Rs.1200',
         image: 'https://example.com/karahi.jpg',
         tag: 'Popular',
+        description: 'Classic karahi with tender chicken pieces.',
       },
     ]);
 
@@ -90,6 +98,7 @@ describe('store product matcher', () => {
       price: 'Rs.1200',
       image: 'https://example.com/karahi.jpg',
       tag: null,
+      description: null,
     };
 
     expect(
@@ -98,6 +107,7 @@ describe('store product matcher', () => {
         name: 'Chicken Karahi',
         price: 'Rs.1200',
         image: 'https://example.com/karahi.jpg',
+        description: '',
       }),
     ).toBe(false);
   });

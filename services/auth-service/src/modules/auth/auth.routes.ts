@@ -3,7 +3,7 @@ import { requireAuth } from '../../middleware/require-auth';
 import { asyncHandler } from '../../shared/async-handler';
 import { loginRateLimiter } from '../../middleware/rate-limit';
 import { validate } from '../../middleware/validate';
-import { getUserStatus, login, logout, refresh, register, updateUserImage } from './auth.controller';
+import { getUserStatus, listUsersPublic, login, logout, refresh, register, updateUserImage } from './auth.controller';
 import {
   loginBodySchema,
   logoutBodySchema,
@@ -11,6 +11,7 @@ import {
   registerBodySchema,
   updateUserImageBodySchema,
   userIdParamSchema,
+  userIdsQuerySchema,
 } from './auth.schemas';
 import { parseUserImageUpload } from './user-image-upload.middleware';
 
@@ -30,5 +31,6 @@ authRouter.patch(
 );
 
 internalAuthRouter.get('/users/:id/status', validate({ params: userIdParamSchema }), asyncHandler(getUserStatus));
+internalAuthRouter.get('/users/public', validate({ query: userIdsQuerySchema }), asyncHandler(listUsersPublic));
 
 export { authRouter, internalAuthRouter };

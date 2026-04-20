@@ -67,6 +67,14 @@ describe('routes', () => {
     expect(response.body.code).toBe('APP_SERVICE_UNAVAILABLE');
   });
 
+  it('reports app-service unavailability for event management', async () => {
+    const response = await request(app).post('/v1/event-management').send({});
+
+    expect(response.status).toBe(503);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('APP_SERVICE_UNAVAILABLE');
+  });
+
   it('reports newsfeed-service unavailability on the dedicated route', async () => {
     const response = await request(app).get('/v1/newsfeed');
 

@@ -117,6 +117,7 @@ exports.Prisma.StoreProductScalarFieldEnum = {
   price: 'price',
   image: 'image',
   tag: 'tag',
+  description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   storeId: 'storeId'
@@ -126,6 +127,7 @@ exports.Prisma.StoreRatingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   rating: 'rating',
+  description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   storeId: 'storeId'
@@ -175,11 +177,13 @@ exports.Prisma.StoreProductOrderByRelevanceFieldEnum = {
   name: 'name',
   price: 'price',
   image: 'image',
-  tag: 'tag'
+  tag: 'tag',
+  description: 'description'
 };
 
 exports.Prisma.StoreRatingOrderByRelevanceFieldEnum = {
-  userId: 'userId'
+  userId: 'userId',
+  description: 'description'
 };
 exports.NewsFeedEventType = exports.$Enums.NewsFeedEventType = {
   STORE_CREATED: 'STORE_CREATED',
@@ -221,7 +225,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "E:\\Node Js\\community-app-backend\\services\\store-service\\src\\generated\\prisma",
+      "value": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\store-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -235,7 +239,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "E:\\Node Js\\community-app-backend\\services\\store-service\\prisma\\schema.prisma",
+    "sourceFilePath": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\store-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -258,13 +262,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Store {\n  id          Int            @id @default(autoincrement())\n  ownerUserId String         @unique\n  name        String\n  location    String\n  rating      String\n  image       String         @db.LongText\n  badges      Json?\n  delivery    String\n  minOrderRs  String\n  openingTime String         @default(\"00:00\")\n  closingTime String         @default(\"23:59\")\n  phoneNumber String\n  searchCount Int            @default(0)\n  createdAt   DateTime       @default(now())\n  updatedAt   DateTime       @updatedAt\n  products    StoreProduct[]\n  ratings     StoreRating[]\n\n  @@index([name])\n  @@index([location])\n}\n\nmodel StoreProduct {\n  id        String   @id @default(cuid())\n  name      String\n  price     String\n  image     String\n  tag       String?\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  storeId   Int\n  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)\n\n  @@index([storeId])\n  @@index([name])\n}\n\nmodel StoreRating {\n  id        Int      @id @default(autoincrement())\n  userId    String\n  rating    Decimal  @db.Decimal(4, 2)\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  storeId   Int\n  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)\n\n  @@unique([storeId, userId])\n  @@index([storeId])\n  @@index([userId])\n}\n\nenum NewsFeedEventType {\n  STORE_CREATED\n  STORE_NAME_UPDATED\n  STORE_LOCATION_UPDATED\n  STORE_RATING_UPDATED\n  STORE_IMAGE_UPDATED\n  STORE_DELIVERY_UPDATED\n  STORE_MIN_ORDER_UPDATED\n  STORE_CONTACT_UPDATED\n  STORE_PROFILE_UPDATED\n  PRODUCT_ADDED\n  PRODUCT_UPDATED\n  PRODUCT_DELETED\n  POPULAR_STORE_CHANGED\n  MOST_ACTIVE_STORE_CHANGED\n  MOST_SEARCHED_STORE_CHANGED\n}\n\nenum NewsFeedMetric {\n  POPULAR_STORE\n  MOST_ACTIVE_STORE\n  MOST_SEARCHED_STORE\n}\n",
-  "inlineSchemaHash": "a7b10b4ff1f433c28998dfa589e676d7c7c0ebfe35f819efe299dc6408803b4f",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Store {\n  id          Int            @id @default(autoincrement())\n  ownerUserId String         @unique\n  name        String\n  location    String\n  rating      String\n  image       String         @db.LongText\n  badges      Json?\n  delivery    String\n  minOrderRs  String\n  openingTime String         @default(\"00:00\")\n  closingTime String         @default(\"23:59\")\n  phoneNumber String\n  searchCount Int            @default(0)\n  createdAt   DateTime       @default(now())\n  updatedAt   DateTime       @updatedAt\n  products    StoreProduct[]\n  ratings     StoreRating[]\n\n  @@index([name])\n  @@index([location])\n}\n\nmodel StoreProduct {\n  id          String   @id @default(cuid())\n  name        String\n  price       String\n  image       String   @db.LongText\n  tag         String?\n  description String?  @db.VarChar(100)\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n  storeId     Int\n  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)\n\n  @@index([storeId])\n  @@index([name])\n}\n\nmodel StoreRating {\n  id          Int      @id @default(autoincrement())\n  userId      String\n  rating      Decimal  @db.Decimal(4, 2)\n  description String?  @db.VarChar(100)\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n  storeId     Int\n  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)\n\n  @@unique([storeId, userId])\n  @@index([storeId])\n  @@index([userId])\n}\n\nenum NewsFeedEventType {\n  STORE_CREATED\n  STORE_NAME_UPDATED\n  STORE_LOCATION_UPDATED\n  STORE_RATING_UPDATED\n  STORE_IMAGE_UPDATED\n  STORE_DELIVERY_UPDATED\n  STORE_MIN_ORDER_UPDATED\n  STORE_CONTACT_UPDATED\n  STORE_PROFILE_UPDATED\n  PRODUCT_ADDED\n  PRODUCT_UPDATED\n  PRODUCT_DELETED\n  POPULAR_STORE_CHANGED\n  MOST_ACTIVE_STORE_CHANGED\n  MOST_SEARCHED_STORE_CHANGED\n}\n\nenum NewsFeedMetric {\n  POPULAR_STORE\n  MOST_ACTIVE_STORE\n  MOST_SEARCHED_STORE\n}\n",
+  "inlineSchemaHash": "069c54e92c3139348e0415183fa336220417fd4837dfc354e32d5c5a39727b14",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Store\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"ownerUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"rating\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"badges\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"delivery\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"minOrderRs\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"openingTime\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"closingTime\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phoneNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"searchCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"products\",\"kind\":\"object\",\"type\":\"StoreProduct\",\"relationName\":\"StoreToStoreProduct\"},{\"name\":\"ratings\",\"kind\":\"object\",\"type\":\"StoreRating\",\"relationName\":\"StoreToStoreRating\"}],\"dbName\":null},\"StoreProduct\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tag\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"store\",\"kind\":\"object\",\"type\":\"Store\",\"relationName\":\"StoreToStoreProduct\"}],\"dbName\":null},\"StoreRating\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"rating\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"store\",\"kind\":\"object\",\"type\":\"Store\",\"relationName\":\"StoreToStoreRating\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Store\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"ownerUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"rating\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"badges\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"delivery\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"minOrderRs\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"openingTime\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"closingTime\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phoneNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"searchCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"products\",\"kind\":\"object\",\"type\":\"StoreProduct\",\"relationName\":\"StoreToStoreProduct\"},{\"name\":\"ratings\",\"kind\":\"object\",\"type\":\"StoreRating\",\"relationName\":\"StoreToStoreRating\"}],\"dbName\":null},\"StoreProduct\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tag\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"store\",\"kind\":\"object\",\"type\":\"Store\",\"relationName\":\"StoreToStoreProduct\"}],\"dbName\":null},\"StoreRating\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"rating\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"store\",\"kind\":\"object\",\"type\":\"Store\",\"relationName\":\"StoreToStoreRating\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

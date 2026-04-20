@@ -2254,6 +2254,7 @@ export namespace Prisma {
     price: string | null
     image: string | null
     tag: string | null
+    description: string | null
     createdAt: Date | null
     updatedAt: Date | null
     storeId: number | null
@@ -2265,6 +2266,7 @@ export namespace Prisma {
     price: string | null
     image: string | null
     tag: string | null
+    description: string | null
     createdAt: Date | null
     updatedAt: Date | null
     storeId: number | null
@@ -2276,6 +2278,7 @@ export namespace Prisma {
     price: number
     image: number
     tag: number
+    description: number
     createdAt: number
     updatedAt: number
     storeId: number
@@ -2297,6 +2300,7 @@ export namespace Prisma {
     price?: true
     image?: true
     tag?: true
+    description?: true
     createdAt?: true
     updatedAt?: true
     storeId?: true
@@ -2308,6 +2312,7 @@ export namespace Prisma {
     price?: true
     image?: true
     tag?: true
+    description?: true
     createdAt?: true
     updatedAt?: true
     storeId?: true
@@ -2319,6 +2324,7 @@ export namespace Prisma {
     price?: true
     image?: true
     tag?: true
+    description?: true
     createdAt?: true
     updatedAt?: true
     storeId?: true
@@ -2417,6 +2423,7 @@ export namespace Prisma {
     price: string
     image: string
     tag: string | null
+    description: string | null
     createdAt: Date
     updatedAt: Date
     storeId: number
@@ -2447,6 +2454,7 @@ export namespace Prisma {
     price?: boolean
     image?: boolean
     tag?: boolean
+    description?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     storeId?: boolean
@@ -2461,12 +2469,13 @@ export namespace Prisma {
     price?: boolean
     image?: boolean
     tag?: boolean
+    description?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     storeId?: boolean
   }
 
-  export type StoreProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "price" | "image" | "tag" | "createdAt" | "updatedAt" | "storeId", ExtArgs["result"]["storeProduct"]>
+  export type StoreProductOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "price" | "image" | "tag" | "description" | "createdAt" | "updatedAt" | "storeId", ExtArgs["result"]["storeProduct"]>
   export type StoreProductInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     store?: boolean | StoreDefaultArgs<ExtArgs>
   }
@@ -2482,6 +2491,7 @@ export namespace Prisma {
       price: string
       image: string
       tag: string | null
+      description: string | null
       createdAt: Date
       updatedAt: Date
       storeId: number
@@ -2860,6 +2870,7 @@ export namespace Prisma {
     readonly price: FieldRef<"StoreProduct", 'String'>
     readonly image: FieldRef<"StoreProduct", 'String'>
     readonly tag: FieldRef<"StoreProduct", 'String'>
+    readonly description: FieldRef<"StoreProduct", 'String'>
     readonly createdAt: FieldRef<"StoreProduct", 'DateTime'>
     readonly updatedAt: FieldRef<"StoreProduct", 'DateTime'>
     readonly storeId: FieldRef<"StoreProduct", 'Int'>
@@ -3252,6 +3263,7 @@ export namespace Prisma {
     id: number | null
     userId: string | null
     rating: Decimal | null
+    description: string | null
     createdAt: Date | null
     updatedAt: Date | null
     storeId: number | null
@@ -3261,6 +3273,7 @@ export namespace Prisma {
     id: number | null
     userId: string | null
     rating: Decimal | null
+    description: string | null
     createdAt: Date | null
     updatedAt: Date | null
     storeId: number | null
@@ -3270,6 +3283,7 @@ export namespace Prisma {
     id: number
     userId: number
     rating: number
+    description: number
     createdAt: number
     updatedAt: number
     storeId: number
@@ -3293,6 +3307,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     rating?: true
+    description?: true
     createdAt?: true
     updatedAt?: true
     storeId?: true
@@ -3302,6 +3317,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     rating?: true
+    description?: true
     createdAt?: true
     updatedAt?: true
     storeId?: true
@@ -3311,6 +3327,7 @@ export namespace Prisma {
     id?: true
     userId?: true
     rating?: true
+    description?: true
     createdAt?: true
     updatedAt?: true
     storeId?: true
@@ -3407,6 +3424,7 @@ export namespace Prisma {
     id: number
     userId: string
     rating: Decimal
+    description: string | null
     createdAt: Date
     updatedAt: Date
     storeId: number
@@ -3435,6 +3453,7 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     rating?: boolean
+    description?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     storeId?: boolean
@@ -3447,12 +3466,13 @@ export namespace Prisma {
     id?: boolean
     userId?: boolean
     rating?: boolean
+    description?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     storeId?: boolean
   }
 
-  export type StoreRatingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "rating" | "createdAt" | "updatedAt" | "storeId", ExtArgs["result"]["storeRating"]>
+  export type StoreRatingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "rating" | "description" | "createdAt" | "updatedAt" | "storeId", ExtArgs["result"]["storeRating"]>
   export type StoreRatingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     store?: boolean | StoreDefaultArgs<ExtArgs>
   }
@@ -3466,6 +3486,7 @@ export namespace Prisma {
       id: number
       userId: string
       rating: Prisma.Decimal
+      description: string | null
       createdAt: Date
       updatedAt: Date
       storeId: number
@@ -3842,6 +3863,7 @@ export namespace Prisma {
     readonly id: FieldRef<"StoreRating", 'Int'>
     readonly userId: FieldRef<"StoreRating", 'String'>
     readonly rating: FieldRef<"StoreRating", 'Decimal'>
+    readonly description: FieldRef<"StoreRating", 'String'>
     readonly createdAt: FieldRef<"StoreRating", 'DateTime'>
     readonly updatedAt: FieldRef<"StoreRating", 'DateTime'>
     readonly storeId: FieldRef<"StoreRating", 'Int'>
@@ -4247,6 +4269,7 @@ export namespace Prisma {
     price: 'price',
     image: 'image',
     tag: 'tag',
+    description: 'description',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     storeId: 'storeId'
@@ -4259,6 +4282,7 @@ export namespace Prisma {
     id: 'id',
     userId: 'userId',
     rating: 'rating',
+    description: 'description',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     storeId: 'storeId'
@@ -4329,14 +4353,16 @@ export namespace Prisma {
     name: 'name',
     price: 'price',
     image: 'image',
-    tag: 'tag'
+    tag: 'tag',
+    description: 'description'
   };
 
   export type StoreProductOrderByRelevanceFieldEnum = (typeof StoreProductOrderByRelevanceFieldEnum)[keyof typeof StoreProductOrderByRelevanceFieldEnum]
 
 
   export const StoreRatingOrderByRelevanceFieldEnum: {
-    userId: 'userId'
+    userId: 'userId',
+    description: 'description'
   };
 
   export type StoreRatingOrderByRelevanceFieldEnum = (typeof StoreRatingOrderByRelevanceFieldEnum)[keyof typeof StoreRatingOrderByRelevanceFieldEnum]
@@ -4519,6 +4545,7 @@ export namespace Prisma {
     price?: StringFilter<"StoreProduct"> | string
     image?: StringFilter<"StoreProduct"> | string
     tag?: StringNullableFilter<"StoreProduct"> | string | null
+    description?: StringNullableFilter<"StoreProduct"> | string | null
     createdAt?: DateTimeFilter<"StoreProduct"> | Date | string
     updatedAt?: DateTimeFilter<"StoreProduct"> | Date | string
     storeId?: IntFilter<"StoreProduct"> | number
@@ -4531,6 +4558,7 @@ export namespace Prisma {
     price?: SortOrder
     image?: SortOrder
     tag?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -4547,6 +4575,7 @@ export namespace Prisma {
     price?: StringFilter<"StoreProduct"> | string
     image?: StringFilter<"StoreProduct"> | string
     tag?: StringNullableFilter<"StoreProduct"> | string | null
+    description?: StringNullableFilter<"StoreProduct"> | string | null
     createdAt?: DateTimeFilter<"StoreProduct"> | Date | string
     updatedAt?: DateTimeFilter<"StoreProduct"> | Date | string
     storeId?: IntFilter<"StoreProduct"> | number
@@ -4559,6 +4588,7 @@ export namespace Prisma {
     price?: SortOrder
     image?: SortOrder
     tag?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -4578,6 +4608,7 @@ export namespace Prisma {
     price?: StringWithAggregatesFilter<"StoreProduct"> | string
     image?: StringWithAggregatesFilter<"StoreProduct"> | string
     tag?: StringNullableWithAggregatesFilter<"StoreProduct"> | string | null
+    description?: StringNullableWithAggregatesFilter<"StoreProduct"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"StoreProduct"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"StoreProduct"> | Date | string
     storeId?: IntWithAggregatesFilter<"StoreProduct"> | number
@@ -4590,6 +4621,7 @@ export namespace Prisma {
     id?: IntFilter<"StoreRating"> | number
     userId?: StringFilter<"StoreRating"> | string
     rating?: DecimalFilter<"StoreRating"> | Decimal | DecimalJsLike | number | string
+    description?: StringNullableFilter<"StoreRating"> | string | null
     createdAt?: DateTimeFilter<"StoreRating"> | Date | string
     updatedAt?: DateTimeFilter<"StoreRating"> | Date | string
     storeId?: IntFilter<"StoreRating"> | number
@@ -4600,6 +4632,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     rating?: SortOrder
+    description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -4615,6 +4648,7 @@ export namespace Prisma {
     NOT?: StoreRatingWhereInput | StoreRatingWhereInput[]
     userId?: StringFilter<"StoreRating"> | string
     rating?: DecimalFilter<"StoreRating"> | Decimal | DecimalJsLike | number | string
+    description?: StringNullableFilter<"StoreRating"> | string | null
     createdAt?: DateTimeFilter<"StoreRating"> | Date | string
     updatedAt?: DateTimeFilter<"StoreRating"> | Date | string
     storeId?: IntFilter<"StoreRating"> | number
@@ -4625,6 +4659,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     rating?: SortOrder
+    description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -4642,6 +4677,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"StoreRating"> | number
     userId?: StringWithAggregatesFilter<"StoreRating"> | string
     rating?: DecimalWithAggregatesFilter<"StoreRating"> | Decimal | DecimalJsLike | number | string
+    description?: StringNullableWithAggregatesFilter<"StoreRating"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"StoreRating"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"StoreRating"> | Date | string
     storeId?: IntWithAggregatesFilter<"StoreRating"> | number
@@ -4784,6 +4820,7 @@ export namespace Prisma {
     price: string
     image: string
     tag?: string | null
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     store: StoreCreateNestedOneWithoutProductsInput
@@ -4795,6 +4832,7 @@ export namespace Prisma {
     price: string
     image: string
     tag?: string | null
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     storeId: number
@@ -4806,6 +4844,7 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     store?: StoreUpdateOneRequiredWithoutProductsNestedInput
@@ -4817,6 +4856,7 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     storeId?: IntFieldUpdateOperationsInput | number
@@ -4828,6 +4868,7 @@ export namespace Prisma {
     price: string
     image: string
     tag?: string | null
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     storeId: number
@@ -4839,6 +4880,7 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4849,6 +4891,7 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     storeId?: IntFieldUpdateOperationsInput | number
@@ -4857,6 +4900,7 @@ export namespace Prisma {
   export type StoreRatingCreateInput = {
     userId: string
     rating: Decimal | DecimalJsLike | number | string
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     store: StoreCreateNestedOneWithoutRatingsInput
@@ -4866,6 +4910,7 @@ export namespace Prisma {
     id?: number
     userId: string
     rating: Decimal | DecimalJsLike | number | string
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     storeId: number
@@ -4874,6 +4919,7 @@ export namespace Prisma {
   export type StoreRatingUpdateInput = {
     userId?: StringFieldUpdateOperationsInput | string
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     store?: StoreUpdateOneRequiredWithoutRatingsNestedInput
@@ -4883,6 +4929,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     storeId?: IntFieldUpdateOperationsInput | number
@@ -4892,6 +4939,7 @@ export namespace Prisma {
     id?: number
     userId: string
     rating: Decimal | DecimalJsLike | number | string
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     storeId: number
@@ -4900,6 +4948,7 @@ export namespace Prisma {
   export type StoreRatingUpdateManyMutationInput = {
     userId?: StringFieldUpdateOperationsInput | string
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4908,6 +4957,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     storeId?: IntFieldUpdateOperationsInput | number
@@ -5172,6 +5222,7 @@ export namespace Prisma {
     price?: SortOrder
     image?: SortOrder
     tag?: SortOrder
+    description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -5187,6 +5238,7 @@ export namespace Prisma {
     price?: SortOrder
     image?: SortOrder
     tag?: SortOrder
+    description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -5198,6 +5250,7 @@ export namespace Prisma {
     price?: SortOrder
     image?: SortOrder
     tag?: SortOrder
+    description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -5251,6 +5304,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     rating?: SortOrder
+    description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -5266,6 +5320,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     rating?: SortOrder
+    description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -5275,6 +5330,7 @@ export namespace Prisma {
     id?: SortOrder
     userId?: SortOrder
     rating?: SortOrder
+    description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     storeId?: SortOrder
@@ -5638,6 +5694,7 @@ export namespace Prisma {
     price: string
     image: string
     tag?: string | null
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5648,6 +5705,7 @@ export namespace Prisma {
     price: string
     image: string
     tag?: string | null
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5665,6 +5723,7 @@ export namespace Prisma {
   export type StoreRatingCreateWithoutStoreInput = {
     userId: string
     rating: Decimal | DecimalJsLike | number | string
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5673,6 +5732,7 @@ export namespace Prisma {
     id?: number
     userId: string
     rating: Decimal | DecimalJsLike | number | string
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5712,6 +5772,7 @@ export namespace Prisma {
     price?: StringFilter<"StoreProduct"> | string
     image?: StringFilter<"StoreProduct"> | string
     tag?: StringNullableFilter<"StoreProduct"> | string | null
+    description?: StringNullableFilter<"StoreProduct"> | string | null
     createdAt?: DateTimeFilter<"StoreProduct"> | Date | string
     updatedAt?: DateTimeFilter<"StoreProduct"> | Date | string
     storeId?: IntFilter<"StoreProduct"> | number
@@ -5740,6 +5801,7 @@ export namespace Prisma {
     id?: IntFilter<"StoreRating"> | number
     userId?: StringFilter<"StoreRating"> | string
     rating?: DecimalFilter<"StoreRating"> | Decimal | DecimalJsLike | number | string
+    description?: StringNullableFilter<"StoreRating"> | string | null
     createdAt?: DateTimeFilter<"StoreRating"> | Date | string
     updatedAt?: DateTimeFilter<"StoreRating"> | Date | string
     storeId?: IntFilter<"StoreRating"> | number
@@ -5931,6 +5993,7 @@ export namespace Prisma {
     price: string
     image: string
     tag?: string | null
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5939,6 +6002,7 @@ export namespace Prisma {
     id?: number
     userId: string
     rating: Decimal | DecimalJsLike | number | string
+    description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5949,6 +6013,7 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5959,6 +6024,7 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5969,6 +6035,7 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5976,6 +6043,7 @@ export namespace Prisma {
   export type StoreRatingUpdateWithoutStoreInput = {
     userId?: StringFieldUpdateOperationsInput | string
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5984,6 +6052,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5992,6 +6061,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: StringFieldUpdateOperationsInput | string
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

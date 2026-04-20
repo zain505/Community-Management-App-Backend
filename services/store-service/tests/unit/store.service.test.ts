@@ -45,6 +45,17 @@ function buildStoreRecord(overrides: Record<string, unknown> = {}) {
     createdAt: new Date('2026-03-14T08:00:00.000Z'),
     updatedAt: new Date('2026-03-14T08:00:00.000Z'),
     products: [],
+    ratings: [],
+    ...overrides,
+  } as never;
+}
+
+function buildStoreReview(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 7,
+    rating: 4.5,
+    description: 'Fresh produce and helpful staff.',
+    createdAt: new Date('2026-03-14T10:00:00.000Z'),
     ...overrides,
   } as never;
 }
@@ -133,8 +144,16 @@ describe('store service', () => {
     jest.resetAllMocks();
   });
 
-  it('includes phoneNumber in store list responses', async () => {
-    mockedStoreRepository.listStores.mockResolvedValue([buildStoreRecord()]);
+  it('includes phoneNumber and reviews in store list responses', async () => {
+    mockedStoreRepository.listStores.mockResolvedValue([
+      buildStoreRecord({
+        ratings: [
+          buildStoreReview({
+            description: null,
+          }),
+        ],
+      }),
+    ]);
 
     const stores = await storeService.listStores(undefined, 1);
 
@@ -145,6 +164,14 @@ describe('store service', () => {
         openingTime: '09:00',
         closingTime: '22:00',
         phoneNumber: '03001234567',
+        reviews: [
+          {
+            id: 7,
+            rating: 4.5,
+            description: null,
+            createdAt: '2026-03-14T10:00:00.000Z',
+          },
+        ],
       }),
     ]);
     expect(mockedStoreRepository.incrementSearchCountByIds).not.toHaveBeenCalled();
@@ -172,7 +199,6 @@ describe('store service', () => {
       name: 'Fresh Mart2',
       location: 'Main Road',
       image: storeImageBase64,
-      badges: [],
       delivery: '30 mins',
       minOrderRs: '500',
       openingTime: '09:00',
@@ -208,9 +234,12 @@ describe('store service', () => {
   });
 
   it('refreshes derived metrics after deleting a store', async () => {
-    mockedStoreRepository.findStoreByUserId.mockResolvedValue({
-      id: 7,
-    } as never);
+    mockedStoreRepository.findStoreByUserId.mockResolvedValue(
+      buildStoreRecord({
+        id: 7,
+        name: 'Fresh Mart2',
+      }),
+    );
     mockedStoreRepository.deleteById.mockResolvedValue({} as never);
     mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
 
@@ -218,7 +247,17 @@ describe('store service', () => {
 
     expect(mockedStoreRepository.deleteById).toHaveBeenCalledWith(7);
     expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
-      events: undefined,
+      events: [
+        {
+          type: 'STORE_DELETED',
+          storeName: 'Fresh Mart2',
+          title: 'Fresh Mart2 removed their store.',
+          description: 'Fresh Mart2 is no longer available.',
+          metadata: {
+            deletedStoreId: 7,
+          },
+        },
+      ],
       refreshMetrics: ['POPULAR_STORE', 'MOST_ACTIVE_STORE', 'MOST_SEARCHED_STORE'],
     });
   });
@@ -368,10 +407,21 @@ describe('store service', () => {
     });
   });
 
-  it('publishes a rating event when an authenticated user rates a store', async () => {
-    const existingStore = buildStoreRecord();
+  it('publishes rating and badge profile events when an authenticated user rates a store with a new badge', async () => {
+    const existingStore = buildStoreRecord({
+      badges: ['Featured'],
+    });
     const updatedStore = buildStoreRecord({
       rating: '4.6',
+      badges: ['Featured', 'Fast Delivery'],
+      ratings: [
+        buildStoreReview({
+          id: 12,
+          rating: 5,
+          description: 'Fresh groceries with a really smooth checkout.',
+          createdAt: new Date('2026-03-14T11:30:00.000Z'),
+        }),
+      ],
     });
 
     mockedStoreRepository.findStoreById.mockResolvedValue(existingStore);
@@ -380,10 +430,27 @@ describe('store service', () => {
 
     const store = await storeService.rateStore('user-999', 18, {
       rating: 5,
+      badges: ['Fast Delivery'],
+      description: 'Fresh groceries with a really smooth checkout.',
     });
 
-    expect(mockedStoreRepository.addRatingForUser).toHaveBeenCalledWith(18, 'user-999', 5);
+    expect(mockedStoreRepository.addRatingForUser).toHaveBeenCalledWith(
+      18,
+      'user-999',
+      5,
+      ['Featured', 'Fast Delivery'],
+      'Fresh groceries with a really smooth checkout.',
+    );
     expect(store.rating).toBe('4.6');
+    expect(store.badges).toEqual(['Featured', 'Fast Delivery']);
+    expect(store.reviews).toEqual([
+      {
+        id: 12,
+        rating: 5,
+        description: 'Fresh groceries with a really smooth checkout.',
+        createdAt: '2026-03-14T11:30:00.000Z',
+      },
+    ]);
     expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
       events: [
         {
@@ -397,29 +464,6 @@ describe('store service', () => {
             nextRating: '4.6',
           },
         },
-      ],
-      refreshMetrics: ['MOST_ACTIVE_STORE', 'POPULAR_STORE'],
-    });
-  });
-
-  it('still publishes a profile event when only badges change', async () => {
-    const existingStore = buildStoreRecord({
-      badges: ['Featured'],
-    });
-    const updatedStore = buildStoreRecord({
-      badges: ['Featured', 'Fast Delivery'],
-    });
-
-    mockedStoreRepository.findStoreByUserId.mockResolvedValue(existingStore);
-    mockedStoreRepository.updateById.mockResolvedValue(updatedStore);
-    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
-
-    await storeService.updateMyStore('user-123', {
-      badges: ['Featured', 'Fast Delivery'],
-    });
-
-    expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
-      events: [
         {
           type: 'STORE_PROFILE_UPDATED',
           storeId: 18,
@@ -437,7 +481,52 @@ describe('store service', () => {
           },
         },
       ],
-      refreshMetrics: ['MOST_ACTIVE_STORE'],
+      refreshMetrics: ['MOST_ACTIVE_STORE', 'POPULAR_STORE'],
+    });
+  });
+
+  it('does not publish a badge profile event when a rating only repeats existing badges', async () => {
+    const existingStore = buildStoreRecord({
+      badges: ['Featured'],
+    });
+
+    mockedStoreRepository.findStoreById.mockResolvedValue(existingStore);
+    mockedStoreRepository.addRatingForUser.mockResolvedValue(
+      buildStoreRecord({
+        rating: '4.6',
+        badges: ['Featured'],
+      }),
+    );
+    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+
+    await storeService.rateStore('user-123', 18, {
+      rating: 5,
+      badges: ['Featured'],
+      description: 'Reliable every time.',
+    });
+
+    expect(mockedStoreRepository.addRatingForUser).toHaveBeenCalledWith(
+      18,
+      'user-123',
+      5,
+      ['Featured'],
+      'Reliable every time.',
+    );
+    expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
+      events: [
+        {
+          type: 'STORE_RATING_UPDATED',
+          storeId: 18,
+          storeName: 'Fresh Mart2',
+          title: 'Fresh Mart2 got a new rating update.',
+          description: 'See how the community is rating them now.',
+          metadata: {
+            previousRating: '4.2',
+            nextRating: '4.6',
+          },
+        },
+      ],
+      refreshMetrics: ['MOST_ACTIVE_STORE', 'POPULAR_STORE'],
     });
   });
 
@@ -475,58 +564,6 @@ describe('store service', () => {
               closingTime: {
                 previous: '22:00',
                 current: '23:00',
-              },
-            },
-          },
-        },
-      ],
-      refreshMetrics: ['MOST_ACTIVE_STORE'],
-    });
-  });
-
-  it('keeps a generic profile event when badges change alongside another meaningful update', async () => {
-    const existingStore = buildStoreRecord({
-      badges: ['Featured'],
-    });
-    const updatedStore = buildStoreRecord({
-      location: 'Mall Road',
-      badges: ['Featured', 'Fast Delivery'],
-    });
-
-    mockedStoreRepository.findStoreByUserId.mockResolvedValue(existingStore);
-    mockedStoreRepository.updateById.mockResolvedValue(updatedStore);
-    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
-
-    await storeService.updateMyStore('user-123', {
-      location: 'Mall Road',
-      badges: ['Featured', 'Fast Delivery'],
-    });
-
-    expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
-      events: [
-        {
-          type: 'STORE_LOCATION_UPDATED',
-          storeId: 18,
-          storeName: 'Fresh Mart2',
-          title: 'Fresh Mart2 changed location.',
-          description: 'See where they are now.',
-          metadata: {
-            previousLocation: 'Main Road',
-            nextLocation: 'Mall Road',
-          },
-        },
-        {
-          type: 'STORE_PROFILE_UPDATED',
-          storeId: 18,
-          storeName: 'Fresh Mart2',
-          title: 'Fresh Mart2 updated their store profile.',
-          description: "Take a look at what's new.",
-          metadata: {
-            changedFields: ['badges'],
-            changes: {
-              badges: {
-                previous: ['Featured'],
-                current: ['Featured', 'Fast Delivery'],
               },
             },
           },

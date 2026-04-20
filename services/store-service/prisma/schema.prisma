@@ -35,8 +35,9 @@ model StoreProduct {
   id        String   @id @default(cuid())
   name      String
   price     String
-  image     String
+  image     String   @db.LongText
   tag       String?
+  description String? @db.VarChar(100)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   storeId   Int
@@ -50,6 +51,7 @@ model StoreRating {
   id        Int      @id @default(autoincrement())
   userId    String
   rating    Decimal  @db.Decimal(4, 2)
+  description String? @db.VarChar(100)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   storeId   Int

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/prisma';
 import { hashPassword } from '../src/lib/password';
 
 const prisma = new PrismaClient();
@@ -15,6 +15,7 @@ async function main(): Promise<void> {
     data: {
       mobileNumber,
       name: 'Community Admin',
+      usertype: 1,
       profile: {
         image: null,
       },

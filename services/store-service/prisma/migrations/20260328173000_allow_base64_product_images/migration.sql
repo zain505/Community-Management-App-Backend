@@ -1,0 +1,1 @@
+ALTER TABLE `StoreProduct` MODIFY `image` LONGTEXT NOT NULL;

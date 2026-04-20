@@ -24,6 +24,7 @@ function toProduct(product: ProductRecord): Product {
     price: product.price,
     image: product.image,
     tag: product.tag ?? undefined,
+    description: product.description ?? undefined,
   };
 }
 

@@ -32,6 +32,7 @@ describe('event management routes', () => {
         id: 'event-1',
         title: 'Community meetup',
         description: 'Residents are meeting in the main hall.',
+        image: 'https://cdn.example.com/events/community-meetup.png',
         location: 'Main Hall',
         startAt: '2026-03-20T18:00:00.000Z',
         endAt: '2026-03-20T20:00:00.000Z',
@@ -55,6 +56,7 @@ describe('event management routes', () => {
       id: 'event-1',
       title: 'Community meetup',
       description: 'Residents are meeting in the main hall.',
+      image: 'https://cdn.example.com/events/community-meetup.png',
       location: 'Main Hall',
       startAt: '2026-03-20T18:00:00.000Z',
       endAt: '2026-03-20T20:00:00.000Z',
@@ -77,6 +79,7 @@ describe('event management routes', () => {
       id: 'event-1',
       title: 'Community meetup',
       description: 'Residents are meeting in the main hall.',
+      image: 'https://cdn.example.com/events/community-meetup.png',
       location: 'Main Hall',
       startAt: '2026-03-20T18:00:00.000Z',
       endAt: '2026-03-20T20:00:00.000Z',
@@ -92,6 +95,7 @@ describe('event management routes', () => {
       .send({
         title: 'Community meetup',
         description: 'Residents are meeting in the main hall.',
+        image: 'https://cdn.example.com/events/community-meetup.png',
         location: 'Main Hall',
         startAt: '2026-03-20T18:00:00.000Z',
         endAt: '2026-03-20T20:00:00.000Z',
@@ -103,6 +107,7 @@ describe('event management routes', () => {
     expect(mockedEventManagementService.create).toHaveBeenCalledWith('user-123', {
       title: 'Community meetup',
       description: 'Residents are meeting in the main hall.',
+      image: 'https://cdn.example.com/events/community-meetup.png',
       location: 'Main Hall',
       startAt: '2026-03-20T18:00:00.000Z',
       endAt: '2026-03-20T20:00:00.000Z',
@@ -114,6 +119,7 @@ describe('event management routes', () => {
       id: 'event-1',
       title: 'Updated community meetup',
       description: 'Residents are meeting in the main hall.',
+      image: 'https://cdn.example.com/events/community-meetup-updated.png',
       location: 'Main Hall',
       startAt: '2026-03-20T19:00:00.000Z',
       endAt: '2026-03-20T21:00:00.000Z',
@@ -128,6 +134,7 @@ describe('event management routes', () => {
       .set('Authorization', `Bearer ${getAccessToken()}`)
       .send({
         title: 'Updated community meetup',
+        image: 'https://cdn.example.com/events/community-meetup-updated.png',
       });
 
     expect(response.status).toBe(200);
@@ -135,6 +142,7 @@ describe('event management routes', () => {
     expect(response.body.data.title).toBe('Updated community meetup');
     expect(mockedEventManagementService.update).toHaveBeenCalledWith('user-123', 'event-1', {
       title: 'Updated community meetup',
+      image: 'https://cdn.example.com/events/community-meetup-updated.png',
     });
   });
 
@@ -159,6 +167,7 @@ describe('event management routes', () => {
     const response = await request(app)[method.toLowerCase() as 'post' | 'patch' | 'delete'](path).send({
       title: 'Community meetup',
       description: 'Residents are meeting in the main hall.',
+      image: 'https://cdn.example.com/events/community-meetup.png',
       location: 'Main Hall',
       startAt: '2026-03-20T18:00:00.000Z',
       endAt: '2026-03-20T20:00:00.000Z',

@@ -12,6 +12,8 @@ import { requestLogger } from './middleware/request-logger';
 import { healthRouter } from './modules/health/health.routes';
 import { internalNewsFeedRouter, newsFeedRouter } from './modules/newsfeed/newsfeed.routes';
 
+const requestBodyLimit = '5mb';
+
 const corsOptions: CorsOptions = {
   origin(origin, callback) {
     if (!origin || env.CORS_ORIGINS.includes(origin)) {
@@ -31,8 +33,9 @@ app.use(requestLogger);
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(compression());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Product sync events can include inline product images in metadata.
+app.use(express.json({ limit: requestBodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(cookieParser());
 app.use(globalRateLimiter);
 

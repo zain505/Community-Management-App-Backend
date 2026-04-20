@@ -15,6 +15,7 @@ async function main(): Promise<void> {
     data: {
       mobileNumber,
       name: 'Community Admin',
+      usertype: 1,
       passwordHash: await hashPassword('AdminPass123!'),
     },
   });

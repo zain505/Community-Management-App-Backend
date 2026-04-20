@@ -34,6 +34,7 @@ describe('product routes', () => {
       price: '500',
       image: 'https://example.com/orange-juice.png',
       tag: 'Fresh',
+      description: 'Freshly squeezed orange juice.',
     });
 
     const response = await request(app)
@@ -44,6 +45,7 @@ describe('product routes', () => {
         price: '500',
         image: 'https://example.com/orange-juice.png',
         tag: 'Fresh',
+        description: 'Freshly squeezed orange juice.',
       });
 
     expect(response.status).toBe(201);
@@ -54,6 +56,39 @@ describe('product routes', () => {
       price: '500',
       image: 'https://example.com/orange-juice.png',
       tag: 'Fresh',
+      description: 'Freshly squeezed orange juice.',
+    });
+  });
+
+  it('accepts product image data URIs', async () => {
+    mockedProductService.createMyProduct.mockResolvedValue({
+      id: 'prod-1',
+      name: 'Orange Juice',
+      price: '500',
+      image: 'data:image/png;base64,aGVsbG8=',
+      tag: 'Fresh',
+      description: 'Freshly squeezed orange juice.',
+    });
+
+    const response = await request(app)
+      .post('/v1/products')
+      .set('Authorization', `Bearer ${getAccessToken()}`)
+      .send({
+        name: 'Orange Juice',
+        price: '500',
+        image: 'data:image/png;base64,aGVsbG8=',
+        tag: 'Fresh',
+        description: 'Freshly squeezed orange juice.',
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(mockedProductService.createMyProduct).toHaveBeenCalledWith('user_123', {
+      name: 'Orange Juice',
+      price: '500',
+      image: 'data:image/png;base64,aGVsbG8=',
+      tag: 'Fresh',
+      description: 'Freshly squeezed orange juice.',
     });
   });
 
@@ -65,6 +100,7 @@ describe('product routes', () => {
         price: '500',
         image: 'https://example.com/orange-juice.png',
         tag: 'Fresh',
+        description: 'Freshly squeezed orange juice.',
       },
     ]);
 
@@ -86,6 +122,7 @@ describe('product routes', () => {
         price: '500',
         image: 'https://example.com/orange-juice.png',
         tag: 'Fresh',
+        description: 'Freshly squeezed orange juice.',
       },
     ]);
 
@@ -104,6 +141,7 @@ describe('product routes', () => {
       price: '500',
       image: 'https://example.com/orange-juice.png',
       tag: 'Fresh',
+      description: 'Freshly squeezed orange juice.',
     });
 
     const response = await request(app)
@@ -123,6 +161,7 @@ describe('product routes', () => {
       price: '550',
       image: 'https://example.com/orange-juice.png',
       tag: 'Fresh',
+      description: 'Freshly squeezed orange juice.',
     });
 
     const response = await request(app)

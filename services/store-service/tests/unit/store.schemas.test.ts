@@ -13,7 +13,6 @@ describe('store schemas', () => {
       name: 'Desi Eatery',
       location: 'AWT Main Market',
       image: storeImageBase64,
-      badges: ['Best Seller', 'Daily Deals'],
       delivery: 'Free Delivery',
       minOrderRs: '500',
       openingTime: '09:00',
@@ -43,7 +42,6 @@ describe('store schemas', () => {
       name: 'Desi Eatery',
       location: 'AWT Main Market',
       image: storeImageBase64,
-      badges: ['Best Seller', 'Daily Deals'],
       delivery: 'Free Delivery',
       minOrderRs: '500',
       openingTime: '08:00',
@@ -86,6 +84,30 @@ describe('store schemas', () => {
     expect(result.success).toBe(false);
   });
 
+  it('rejects badges in store creation payloads', () => {
+    const result = createStoreBodySchema.safeParse({
+      name: 'Desi Eatery',
+      location: 'AWT Main Market',
+      image: storeImageBase64,
+      badges: ['Best Seller'],
+      delivery: 'Free Delivery',
+      minOrderRs: '500',
+      openingTime: '09:00',
+      closingTime: '22:00',
+      phoneNumber: '0300402505',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects badges in store update payloads', () => {
+    const result = updateStoreBodySchema.safeParse({
+      badges: ['Best Seller'],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('rejects invalid store times', () => {
     const result = createStoreBodySchema.safeParse({
       name: 'Desi Eatery',
@@ -119,14 +141,27 @@ describe('store schemas', () => {
   it('accepts a store rating payload for authenticated rating posts', () => {
     const payload = createStoreRatingBodySchema.parse({
       rating: 4.5,
+      badges: ['Best Seller', 'Daily Deals'],
+      description: 'Fresh naan and quick delivery.',
     });
 
     expect(payload.rating).toBe(4.5);
+    expect(payload.badges).toEqual(['Best Seller', 'Daily Deals']);
+    expect(payload.description).toBe('Fresh naan and quick delivery.');
   });
 
   it('rejects store ratings outside the 1 to 5 range', () => {
     const result = createStoreRatingBodySchema.safeParse({
       rating: 6,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects rating descriptions longer than 100 characters', () => {
+    const result = createStoreRatingBodySchema.safeParse({
+      rating: 4.5,
+      description: 'a'.repeat(101),
     });
 
     expect(result.success).toBe(false);

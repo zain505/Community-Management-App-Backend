@@ -84,6 +84,7 @@ describe('auth service', () => {
       id: 'user-123',
       mobileNumber: '+923001234567',
       name: 'Community Admin',
+      usertype: 1,
       profile: {
         image: buildUserImagePublicPath(imageFileName),
       },
@@ -102,12 +103,42 @@ describe('auth service', () => {
     const result = await authService.login({
       mobileNumber: '+923001234567',
       password: 'StrongPass123',
+      usertype: 1,
     });
 
     expect(result.tokens).toEqual({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
     });
+    expect(result.user.usertype).toBe(1);
     expect(result.user.profile.image).toBe(`data:image/png;base64,${imageBuffer.toString('base64')}`);
+  });
+
+  it('rejects login when the supplied user type does not match the stored user type', async () => {
+    mockedAuthRepository.findUserByMobileNumber.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community Admin',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    mockedVerifyPassword.mockResolvedValue(true);
+
+    await expect(
+      authService.login({
+        mobileNumber: '+923001234567',
+        password: 'StrongPass123',
+        usertype: 2,
+      }),
+    ).rejects.toMatchObject({
+      code: 'INVALID_CREDENTIALS',
+      statusCode: 401,
+    });
   });
 });

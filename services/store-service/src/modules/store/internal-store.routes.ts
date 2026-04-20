@@ -5,14 +5,16 @@ import {
   getMostSearchedStoreSnapshot,
   getStoreBasicSnapshot,
   getStoreSummary,
+  listStoreSummaries,
   listStoreRankingSnapshots,
 } from './internal-store.controller';
-import { storeIdParamSchema } from './internal-store.schemas';
+import { storeIdParamSchema, storeIdsQuerySchema } from './internal-store.schemas';
 
 const internalStoreRouter = Router();
 
 internalStoreRouter.get('/ranking', asyncHandler(listStoreRankingSnapshots));
 internalStoreRouter.get('/most-searched', asyncHandler(getMostSearchedStoreSnapshot));
+internalStoreRouter.get('/summaries', validate({ query: storeIdsQuerySchema }), asyncHandler(listStoreSummaries));
 internalStoreRouter.get(
   '/:storeId/basic',
   validate({ params: storeIdParamSchema }),

@@ -4,10 +4,32 @@ import { hasStoreProductContentChanged, matchStoreProducts } from './store-produ
 
 const STORES_PER_PAGE = 10;
 
+const storeReviewSelect = {
+  id: true,
+  rating: true,
+  description: true,
+  createdAt: true,
+} satisfies Prisma.StoreRatingSelect;
+
+const storeListInclude = {
+  ratings: {
+    select: storeReviewSelect,
+    orderBy: {
+      createdAt: 'desc',
+    },
+  },
+} satisfies Prisma.StoreInclude;
+
 const storeWithProductsInclude = {
   products: {
     orderBy: {
       createdAt: 'asc',
+    },
+  },
+  ratings: {
+    select: storeReviewSelect,
+    orderBy: {
+      createdAt: 'desc',
     },
   },
 } satisfies Prisma.StoreInclude;
@@ -50,6 +72,14 @@ export type StoreWithProductsRecord = Prisma.StoreGetPayload<{
   include: typeof storeWithProductsInclude;
 }>;
 
+export type StoreListRecord = Prisma.StoreGetPayload<{
+  include: typeof storeListInclude;
+}>;
+
+export type StoreReviewRecord = Prisma.StoreRatingGetPayload<{
+  select: typeof storeReviewSelect;
+}>;
+
 export type StoreRankingRecord = Prisma.StoreGetPayload<{
   select: typeof storeRankingSelect;
 }>;
@@ -72,6 +102,7 @@ interface StoreProductWriteInput {
   price: string;
   image: string;
   tag?: string;
+  description?: string;
 }
 
 interface CreateStoreRecordInput {
@@ -91,7 +122,6 @@ interface UpdateStoreRecordInput {
   name?: string;
   location?: string;
   image?: string;
-  badges?: string[];
   delivery?: string;
   minOrderRs?: string;
   openingTime?: string;
@@ -106,6 +136,7 @@ function toProductCreateInput(product: StoreProductWriteInput): Prisma.StoreProd
     price: product.price,
     image: product.image,
     tag: product.tag,
+    description: product.description,
   };
 
   if (product.id) {
@@ -125,6 +156,7 @@ function toProductUpdateInput(product: StoreProductWriteInput): Prisma.StoreProd
     price: product.price,
     image: product.image,
     tag: product.tag,
+    description: product.description,
   };
 }
 
@@ -163,7 +195,7 @@ function buildProductRelationUpdate(
 }
 
 export const storeRepository = {
-  listStores(search?: string, page = 1): Promise<Store[]> {
+  listStores(search?: string, page = 1): Promise<StoreListRecord[]> {
     const where = search
       ? {
           OR: [
@@ -180,6 +212,7 @@ export const storeRepository = {
       orderBy: {
         createdAt: 'desc',
       },
+      include: storeListInclude,
     });
   },
 
@@ -286,13 +319,31 @@ export const storeRepository = {
     });
   },
 
-  addRatingForUser(storeId: number, userId: string, rating: number): Promise<StoreWithProductsRecord> {
+  findStoreSummariesByIds(storeIds: number[]): Promise<StoreSummaryWithOwnerRecord[]> {
+    return prisma.store.findMany({
+      where: {
+        id: {
+          in: storeIds,
+        },
+      },
+      select: storeSummaryWithOwnerSelect,
+    });
+  },
+
+  addRatingForUser(
+    storeId: number,
+    userId: string,
+    rating: number,
+    badges?: string[],
+    description?: string,
+  ): Promise<StoreWithProductsRecord> {
     return prisma.$transaction(async (transaction) => {
       await transaction.storeRating.create({
         data: {
           storeId,
           userId,
           rating: new Prisma.Decimal(rating),
+          description,
         },
       });
 
@@ -305,12 +356,17 @@ export const storeRepository = {
         },
       });
       const nextRating = formatStoreRating(Number(ratingAggregate._avg.rating ?? 0));
+      const data: Prisma.StoreUpdateInput = {
+        rating: nextRating,
+      };
+
+      if (badges !== undefined) {
+        data.badges = badges as Prisma.InputJsonValue;
+      }
 
       return transaction.store.update({
         where: { id: storeId },
-        data: {
-          rating: nextRating,
-        },
+        data,
         include: storeWithProductsInclude,
       });
     });
@@ -326,7 +382,6 @@ export const storeRepository = {
     if (payload.name !== undefined) data.name = payload.name;
     if (payload.location !== undefined) data.location = payload.location;
     if (payload.image !== undefined) data.image = payload.image;
-    if (payload.badges !== undefined) data.badges = payload.badges as Prisma.InputJsonValue;
     if (payload.delivery !== undefined) data.delivery = payload.delivery;
     if (payload.minOrderRs !== undefined) data.minOrderRs = payload.minOrderRs;
     if (payload.openingTime !== undefined) data.openingTime = payload.openingTime;

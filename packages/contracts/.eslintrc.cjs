@@ -11,7 +11,7 @@ module.exports = {
     node: true,
     es2022: true,
   },
-  ignorePatterns: ['dist/', 'node_modules/'],
+  ignorePatterns: ['dist/', 'node_modules/', 'src/**/*.d.ts'],
   rules: {
     '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
   },

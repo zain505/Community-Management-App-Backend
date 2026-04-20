@@ -1,8 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { Prisma } from '@prisma/client';
-import type { AuthResponse, AuthTokens, LoginRequest, RegisterRequest, UserProfile, UserPublic, UserStatus } from '@community/contracts';
+import type { Prisma } from '../../generated/prisma';
+import type {
+  AuthResponse,
+  AuthTokens,
+  LoginRequest,
+  RegisterRequest,
+  UserProfile,
+  UserPublic,
+  UserStatus,
+  UserType,
+} from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
 import { decodeTokenExpiration, hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../../lib/token';
 import { verifyPassword, hashPassword } from '../../lib/password';
@@ -14,6 +23,7 @@ import { detectUserImageMimeType, getUserImageExtension, toBase64DataUrl } from 
 const defaultUserProfile: UserProfile = {
   image: null,
 };
+const invalidCredentialsMessage = 'Invalid mobile number, password, or user type';
 
 function toUserProfile(profile: Prisma.JsonValue | null | undefined): UserProfile {
   if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
@@ -68,19 +78,23 @@ async function resolveUserImageForResponse(image: string | null): Promise<string
   }
 }
 
+type AuthUserPublic = UserPublic & { usertype: UserType };
+
 async function toUserPublic(user: {
   id: string;
   mobileNumber: string;
   name: string;
+  usertype: number;
   profile: Prisma.JsonValue | null;
   createdAt: Date;
-}): Promise<UserPublic> {
+}): Promise<AuthUserPublic> {
   const profile = toUserProfile(user.profile);
 
   return {
     id: user.id,
     mobileNumber: user.mobileNumber,
     name: user.name,
+    usertype: user.usertype as UserType,
     profile: {
       image: await resolveUserImageForResponse(profile.image),
     },
@@ -184,6 +198,22 @@ export const authService = {
     return toUserStatus(user);
   },
 
+  async listUsersPublicByIds(userIds: string[]): Promise<UserPublic[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    const users = await authRepository.findUsersByIds(userIds);
+    const usersById = new Map(users.map((user) => [user.id, user]));
+
+    return Promise.all(
+      userIds
+        .map((userId) => usersById.get(userId))
+        .filter((user): user is NonNullable<typeof user> => Boolean(user))
+        .map((user) => toUserPublic(user)),
+    );
+  },
+
   async register(payload: RegisterRequest): Promise<AuthResponse> {
     const existing = await authRepository.findUserByMobileNumber(payload.mobileNumber);
 
@@ -197,6 +227,7 @@ export const authService = {
     const user = await authRepository.createUser({
       mobileNumber: payload.mobileNumber,
       name: payload.name,
+      usertype: payload.usertype,
       profile: toStoredUserProfile(defaultUserProfile),
       passwordHash: await hashPassword(payload.password),
     });
@@ -213,7 +244,7 @@ export const authService = {
     const user = await authRepository.findUserByMobileNumber(payload.mobileNumber);
 
     if (!user || !user.isActive) {
-      throw new AppError('Invalid mobile number or password', {
+      throw new AppError(invalidCredentialsMessage, {
         statusCode: StatusCodes.UNAUTHORIZED,
         code: 'INVALID_CREDENTIALS',
       });
@@ -221,8 +252,8 @@ export const authService = {
 
     const passwordMatches = await verifyPassword(payload.password, user.passwordHash);
 
-    if (!passwordMatches) {
-      throw new AppError('Invalid mobile number or password', {
+    if (!passwordMatches || user.usertype !== payload.usertype) {
+      throw new AppError(invalidCredentialsMessage, {
         statusCode: StatusCodes.UNAUTHORIZED,
         code: 'INVALID_CREDENTIALS',
       });

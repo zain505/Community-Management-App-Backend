@@ -1,26 +1,26 @@
 {
   "services/api-gateway": {
-    "pid": 2368,
+    "pid": 15136,
     "port": 4000,
     "name": "api-gateway"
   },
   "services/auth-service": {
-    "pid": 1624,
+    "pid": 9884,
     "port": 4100,
     "name": "auth-service"
   },
   "services/store-service": {
-    "pid": 11484,
+    "pid": 5016,
     "port": 4200,
     "name": "store-service"
   },
   "services/newsfeed-service": {
-    "pid": 772,
+    "pid": 6440,
     "port": 4300,
     "name": "newsfeed-service"
   },
   "services/app-service": {
-    "pid": 8544,
+    "pid": 2780,
     "port": 4400,
     "name": "app-service"
   }

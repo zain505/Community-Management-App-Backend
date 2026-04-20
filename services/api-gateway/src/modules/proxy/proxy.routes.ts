@@ -1,3 +1,5 @@
+import type { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import axios, { type Method } from 'axios';
 import { Router, type Request, type Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -41,6 +43,12 @@ const proxyRoutes: ProxyRouteConfig[] = [
   },
   {
     prefix: '/v1/announcements',
+    targetBaseUrl: env.APP_SERVICE_BASE_URL,
+    unavailableCode: 'APP_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'App service is unavailable',
+  },
+  {
+    prefix: '/v1/event-management',
     targetBaseUrl: env.APP_SERVICE_BASE_URL,
     unavailableCode: 'APP_SERVICE_UNAVAILABLE',
     unavailableMessage: 'App service is unavailable',
@@ -108,19 +116,19 @@ async function proxyRequest(route: ProxyRouteConfig, req: Request, res: Response
   const method = req.method.toUpperCase() as Method;
   const targetUrl = buildTargetUrl(req, route);
   const data = method === 'GET' || method === 'HEAD' ? undefined : req.body;
+  let response: Awaited<ReturnType<typeof axios.request<Readable>>>;
 
   try {
-    const response = await axios.request({
+    response = await axios.request<Readable>({
       method,
       url: targetUrl,
       data,
       headers: getForwardHeaders(req),
       timeout: env.PROXY_TIMEOUT_MS,
+      responseType: 'stream',
+      decompress: false,
       validateStatus: () => true,
     });
-
-    copyResponseHeaders(res, response.headers as Record<string, unknown>);
-    return res.status(response.status).send(response.data);
   } catch (error) {
     const err = error as { code?: string; message?: string };
     logger.error(
@@ -136,6 +144,51 @@ async function proxyRequest(route: ProxyRouteConfig, req: Request, res: Response
       code: route.unavailableCode,
       message: route.unavailableMessage,
     });
+  }
+
+  copyResponseHeaders(res, response.headers as Record<string, unknown>);
+  res.status(response.status);
+
+  const upstreamStream = response.data;
+  const handleClose = () => {
+    if (!res.writableEnded) {
+      upstreamStream.destroy();
+    }
+  };
+
+  res.once('close', handleClose);
+
+  try {
+    await pipeline(upstreamStream, res);
+    return;
+  } catch (error) {
+    if (res.headersSent) {
+      logger.warn(
+        {
+          code: (error as NodeJS.ErrnoException).code,
+          message: (error as Error).message,
+          targetUrl,
+        },
+        'Gateway proxy response stream closed before completion',
+      );
+      return;
+    }
+
+    logger.error(
+      {
+        code: (error as NodeJS.ErrnoException).code,
+        message: (error as Error).message,
+        targetUrl,
+      },
+      'Gateway proxy response stream failed',
+    );
+
+    return sendError(res, StatusCodes.SERVICE_UNAVAILABLE, {
+      code: route.unavailableCode,
+      message: route.unavailableMessage,
+    });
+  } finally {
+    res.off('close', handleClose);
   }
 }
 

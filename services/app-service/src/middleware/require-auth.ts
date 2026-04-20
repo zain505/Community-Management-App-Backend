@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { verifyAccessToken } from '../lib/token';
+import { verifyAccessTokenOrThrowAppError } from '../lib/token';
 import { sendError } from '../lib/http';
+import { AppError } from '../shared/app-error';
 
 function extractBearerToken(authorization?: string): string | null {
   if (!authorization) {
@@ -24,7 +25,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 
   try {
-    const payload = verifyAccessToken(token);
+    const payload = verifyAccessTokenOrThrowAppError(token);
     const userId = payload.sub;
 
     if (typeof userId !== 'string') {
@@ -40,10 +41,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       mobileNumber: typeof payload.mobileNumber === 'string' ? payload.mobileNumber : undefined,
     };
     next();
-  } catch {
-    sendError(res, StatusCodes.UNAUTHORIZED, {
-      code: 'INVALID_ACCESS_TOKEN',
-      message: 'Access token is invalid or expired',
-    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      sendError(res, error.statusCode, {
+        code: error.code,
+        message: error.message,
+      });
+      return;
+    }
+
+    next(error);
   }
 }

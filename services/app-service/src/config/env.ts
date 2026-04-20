@@ -38,9 +38,34 @@ if (!parsed.success) {
 
 const rawEnv = parsed.data;
 
+const corsOrigins = rawEnv.CORS_ORIGINS.split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const developmentCorsOriginPatterns = [
+  /^http:\/\/localhost(?::\d+)?$/i,
+  /^http:\/\/127\.0\.0\.1(?::\d+)?$/i,
+  /^http:\/\/192\.168(?:\.\d{1,3}){2}(?::\d+)?$/i,
+  /^http:\/\/10(?:\.\d{1,3}){3}(?::\d+)?$/i,
+  /^exp:\/\/.+$/i,
+];
+
+export function isAllowedCorsOrigin(origin?: string | null): boolean {
+  if (!origin) {
+    return true;
+  }
+
+  if (
+    rawEnv.NODE_ENV === 'development' &&
+    developmentCorsOriginPatterns.some((pattern) => pattern.test(origin))
+  ) {
+    return true;
+  }
+
+  return corsOrigins.includes(origin);
+}
+
 export const env = {
   ...rawEnv,
-  CORS_ORIGINS: rawEnv.CORS_ORIGINS.split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  CORS_ORIGINS: corsOrigins,
 };

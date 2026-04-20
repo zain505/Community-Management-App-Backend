@@ -45,6 +45,7 @@ function buildProductRecord(overrides: Record<string, unknown> = {}) {
     price: '500',
     image: 'https://example.com/orange-juice.png',
     tag: 'Fresh',
+    description: 'Freshly squeezed orange juice.',
     storeId: 18,
     createdAt: new Date('2026-03-14T08:00:00.000Z'),
     updatedAt: new Date('2026-03-14T08:00:00.000Z'),
@@ -72,6 +73,7 @@ describe('product service', () => {
         price: '500',
         image: 'https://example.com/orange-juice.png',
         tag: 'Fresh',
+        description: 'Freshly squeezed orange juice.',
       },
     ]);
     expect(mockedStoreRepository.findStoreBasicById).toHaveBeenCalledWith(18);
@@ -87,6 +89,7 @@ describe('product service', () => {
         price: '900',
         image: 'https://example.com/chocolate-cake.png',
         tag: 'Dessert',
+        description: 'Rich chocolate sponge cake.',
       }),
     );
     mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
@@ -96,6 +99,7 @@ describe('product service', () => {
       price: '900',
       image: 'https://example.com/chocolate-cake.png',
       tag: 'Dessert',
+      description: 'Rich chocolate sponge cake.',
     });
 
     expect(mockedProductRepository.createForStore).toHaveBeenCalledWith(18, {
@@ -103,6 +107,7 @@ describe('product service', () => {
       price: '900',
       image: 'https://example.com/chocolate-cake.png',
       tag: 'Dessert',
+      description: 'Rich chocolate sponge cake.',
     });
     expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
       events: [
@@ -119,6 +124,7 @@ describe('product service', () => {
               price: '900',
               image: 'https://example.com/chocolate-cake.png',
               tag: 'Dessert',
+              description: 'Rich chocolate sponge cake.',
             },
           },
         },
@@ -156,6 +162,7 @@ describe('product service', () => {
               price: '500',
               image: 'https://example.com/orange-juice.png',
               tag: 'Fresh',
+              description: 'Freshly squeezed orange juice.',
             },
             current: {
               id: 'prod-1',
@@ -163,6 +170,7 @@ describe('product service', () => {
               price: '550',
               image: 'https://example.com/orange-juice.png',
               tag: 'Fresh',
+              description: 'Freshly squeezed orange juice.',
             },
           },
         },
@@ -195,6 +203,7 @@ describe('product service', () => {
               price: '500',
               image: 'https://example.com/orange-juice.png',
               tag: 'Fresh',
+              description: 'Freshly squeezed orange juice.',
             },
           },
         },

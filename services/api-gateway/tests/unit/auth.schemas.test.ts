@@ -9,6 +9,16 @@ describe('auth schemas', () => {
     });
 
     expect(value.mobileNumber).toBe('+923001234567');
+    expect(value.usertype).toBe(2);
+  });
+
+  it('defaults missing login usertype to normal user', () => {
+    const value = loginBodySchema.parse({
+      mobileNumber: '+923001234567',
+      password: 'StrongPass123',
+    });
+
+    expect(value.usertype).toBe(2);
   });
 
   it('rejects short passwords', () => {

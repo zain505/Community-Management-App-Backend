@@ -34,6 +34,12 @@ export async function getUserStatus(req: Request, res: Response): Promise<void> 
   sendSuccess(res, StatusCodes.OK, user);
 }
 
+export async function listUsersPublic(req: Request, res: Response): Promise<void> {
+  const query = req.query as unknown as { ids: string[] };
+  const users = await authService.listUsersPublicByIds(query.ids);
+  sendSuccess(res, StatusCodes.OK, users);
+}
+
 export async function updateUserImage(req: Request, res: Response): Promise<void> {
   if (!req.user) {
     throw new AppError('Access token is required', {

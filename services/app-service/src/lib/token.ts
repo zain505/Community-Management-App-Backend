@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
-import jwt, { type JwtPayload, type SignOptions } from 'jsonwebtoken';
+import { StatusCodes } from 'http-status-codes';
+import jwt, { JsonWebTokenError, type JwtPayload, type SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
+import { AppError } from '../shared/app-error';
 
 type TokenType = 'access' | 'refresh';
 
@@ -38,6 +40,21 @@ export function signRefreshToken(claims: BaseClaims): { token: string; jti: stri
 
 export function verifyAccessToken(token: string): JwtPayload {
   return jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+}
+
+export function verifyAccessTokenOrThrowAppError(token: string): JwtPayload {
+  try {
+    return verifyAccessToken(token);
+  } catch (error) {
+    if (error instanceof JsonWebTokenError) {
+      throw new AppError('Access token is invalid or expired', {
+        statusCode: StatusCodes.UNAUTHORIZED,
+        code: 'INVALID_ACCESS_TOKEN',
+      });
+    }
+
+    throw error;
+  }
 }
 
 export function verifyRefreshToken(token: string): JwtPayload {

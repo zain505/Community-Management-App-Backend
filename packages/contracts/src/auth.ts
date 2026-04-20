@@ -1,12 +1,16 @@
+export type UserType = 0 | 1 | 2;
+
 export interface RegisterRequest {
   name: string;
   mobileNumber: string;
   password: string;
+  usertype: UserType;
 }
 
 export interface LoginRequest {
   mobileNumber: string;
   password: string;
+  usertype: UserType;
 }
 
 export interface TokenRefreshRequest {
@@ -30,6 +34,7 @@ export interface UserPublic {
   id: string;
   mobileNumber: string;
   name: string;
+  usertype?: UserType;
   profile: UserProfile;
   createdAt: string;
 }

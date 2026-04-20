@@ -3,6 +3,12 @@ import { StatusCodes } from 'http-status-codes';
 import { sendSuccess } from '../../lib/http';
 import { storeService } from './store.service';
 
+export async function listStoreSummaries(req: Request, res: Response): Promise<void> {
+  const query = req.query as unknown as { ids: number[] };
+  const stores = await storeService.findStoreSummariesByIds(query.ids);
+  sendSuccess(res, StatusCodes.OK, stores);
+}
+
 export async function listStoreRankingSnapshots(_req: Request, res: Response): Promise<void> {
   const stores = await storeService.listStoresForPopularityRanking();
   sendSuccess(res, StatusCodes.OK, stores);

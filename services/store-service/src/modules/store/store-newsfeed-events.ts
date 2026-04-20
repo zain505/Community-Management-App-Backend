@@ -2,7 +2,6 @@ import type {
   NewsFeedMetric,
   NewsFeedSyncEvent,
   StoreProductInput,
-  UpdateStoreRequest,
 } from '@community/contracts';
 import type { Prisma } from '../../generated/prisma';
 import {
@@ -18,24 +17,6 @@ export function parseStoreBadges(value: Prisma.JsonValue | null): string[] {
   }
 
   return value.filter((badge): badge is string => typeof badge === 'string');
-}
-
-function areStringArraysDifferent(left: string[], right: string[]): boolean {
-  if (left.length !== right.length) {
-    return true;
-  }
-
-  return left.some((value, index) => value !== right[index]);
-}
-
-export function hasStoreBadgesChanged(
-  existingStore: StoreWithProductsRecord,
-  payload: UpdateStoreRequest,
-): boolean {
-  return (
-    payload.badges !== undefined &&
-    areStringArraysDifferent(payload.badges, parseStoreBadges(existingStore.badges))
-  );
 }
 
 interface AddedProductChange {
@@ -62,6 +43,7 @@ interface ProductEventSnapshot {
   price: string;
   image: string;
   tag?: string | null;
+  description?: string | null;
 }
 
 export function buildProductChanges(
@@ -325,6 +307,17 @@ export function buildStoreCreatedEvent(store: Pick<StoreWithProductsRecord, 'id'
   };
 }
 
+export function buildStoreDeletedEvent(store: Pick<StoreWithProductsRecord, 'id' | 'name'>): NewsFeedSyncEvent {
+  return {
+    type: 'STORE_DELETED',
+    storeName: store.name,
+    ...storeNewsFeedCopy.storeDeleted(store.name),
+    metadata: {
+      deletedStoreId: store.id,
+    },
+  };
+}
+
 function toProductMetadata(product: ProductEventSnapshot): Record<string, unknown> {
   return {
     id: product.id,
@@ -332,6 +325,7 @@ function toProductMetadata(product: ProductEventSnapshot): Record<string, unknow
     price: product.price,
     image: product.image,
     tag: product.tag ?? undefined,
+    description: product.description ?? undefined,
   };
 }
 
@@ -417,6 +411,7 @@ export function buildStoreUpdateActivitySync(
           price: productChange.next.price,
           image: productChange.next.image,
           tag: productChange.next.tag,
+          description: productChange.next.description,
         },
       }),
     );

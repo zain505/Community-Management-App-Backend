@@ -35,7 +35,6 @@ export interface CreateStoreRequest {
     name: string;
     location: string;
     image: string;
-    badges?: string[];
     delivery: string;
     minOrderRs: string;
     openingTime: string;
@@ -47,7 +46,6 @@ export interface UpdateStoreRequest {
     name?: string;
     location?: string;
     image?: string;
-    badges?: string[];
     delivery?: string;
     minOrderRs?: string;
     openingTime?: string;
@@ -57,6 +55,8 @@ export interface UpdateStoreRequest {
 }
 export interface CreateStoreRatingRequest {
     rating: number;
+    badges?: string[];
+    description?: string;
 }
 export interface StoreListQuery {
     search?: string;

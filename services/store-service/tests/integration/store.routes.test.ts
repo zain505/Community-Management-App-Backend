@@ -1,6 +1,7 @@
 jest.mock('../../src/modules/store/store.service', () => ({
   storeService: {
     createMyStore: jest.fn(),
+    listStores: jest.fn(),
     rateStore: jest.fn(),
   },
 }));
@@ -22,6 +23,46 @@ function getAccessToken(): string {
 describe('store routes', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+  });
+
+  it('returns store reviews in the public store list response', async () => {
+    mockedStoreService.listStores.mockResolvedValue([
+      {
+        id: 18,
+        name: 'Fresh Mart',
+        location: 'Main Road',
+        rating: '4.5',
+        image: 'data:image/png;base64,aGVsbG8=',
+        badges: ['Best Seller'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
+        reviews: [
+          {
+            id: 3,
+            rating: 5,
+            description: 'Fresh produce and helpful staff.',
+            createdAt: '2026-03-14T10:00:00.000Z',
+          },
+        ],
+      },
+    ]);
+
+    const response = await request(app).get('/v1/stores');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data[0].reviews).toEqual([
+      {
+        id: 3,
+        rating: 5,
+        description: 'Fresh produce and helpful staff.',
+        createdAt: '2026-03-14T10:00:00.000Z',
+      },
+    ]);
+    expect(mockedStoreService.listStores).toHaveBeenCalledWith(undefined, 1);
   });
 
   it('accepts large base64 store images for store creation', async () => {
@@ -86,7 +127,7 @@ describe('store routes', () => {
       location: 'Main Road',
       rating: '4.5',
       image: 'data:image/png;base64,aGVsbG8=',
-      badges: [],
+      badges: ['Best Seller'],
       delivery: '30 mins',
       minOrderRs: '500',
       openingTime: '09:00',
@@ -100,13 +141,18 @@ describe('store routes', () => {
       .set('Authorization', `Bearer ${getAccessToken()}`)
       .send({
         rating: 4.5,
+        badges: ['Best Seller'],
+        description: 'Fresh produce and helpful staff.',
       });
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.data.rating).toBe('4.5');
+    expect(response.body.data.badges).toEqual(['Best Seller']);
     expect(mockedStoreService.rateStore).toHaveBeenCalledWith('user_123', 18, {
       rating: 4.5,
+      badges: ['Best Seller'],
+      description: 'Fresh produce and helpful staff.',
     });
   });
 });

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imageSchema } from '../../shared/image-schema';
 
 const isoDateTimeSchema = z.string().trim().min(1).refine((value) => !Number.isNaN(Date.parse(value)), {
   message: 'Invalid datetime',
@@ -15,6 +16,7 @@ function hasValidTimeRange(startAt: string, endAt?: string | null): boolean {
 const eventManagementPayloadSchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().min(1).max(5_000),
+  image: imageSchema,
   location: z.string().trim().min(1).max(255),
   startAt: isoDateTimeSchema,
   endAt: isoDateTimeSchema.nullable().optional(),

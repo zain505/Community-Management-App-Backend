@@ -1,12 +1,19 @@
 import type {
   CreateEventManagementRequest,
   EventManagement,
+  NewsFeedSyncEvent,
   UpdateEventManagementRequest,
   UserStatus,
 } from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../shared/app-error';
 import { authClient } from '../auth/auth-client';
+import { newsFeedClient } from '../newsfeed/newsfeed.client';
+import {
+  buildEventManagementCreatedEvent,
+  buildEventManagementDeletedEvent,
+  buildEventManagementUpdateActivitySync,
+} from './event-management-newsfeed-events';
 import {
   eventManagementRepository,
   type EventManagementRecord,
@@ -17,6 +24,7 @@ function toEventManagement(eventManagement: EventManagementRecord): EventManagem
     id: eventManagement.id,
     title: eventManagement.title,
     description: eventManagement.description,
+    image: eventManagement.image,
     location: eventManagement.location,
     startAt: eventManagement.startAt.toISOString(),
     endAt: eventManagement.endAt ? eventManagement.endAt.toISOString() : null,
@@ -63,6 +71,13 @@ async function getActiveUser(userId: string): Promise<UserStatus> {
   return user;
 }
 
+async function syncNewsFeed(events?: NewsFeedSyncEvent[]): Promise<void> {
+  await newsFeedClient.syncBestEffort({
+    events: events && events.length > 0 ? events : undefined,
+    refreshMetrics: undefined,
+  });
+}
+
 export const eventManagementService = {
   async list(search?: string, page = 1): Promise<EventManagement[]> {
     const events = await eventManagementRepository.list(search, page);
@@ -87,6 +102,7 @@ export const eventManagementService = {
     );
 
     const eventManagement = await eventManagementRepository.create(userId, user.name, payload);
+    await syncNewsFeed([buildEventManagementCreatedEvent(eventManagement)]);
     return toEventManagement(eventManagement);
   },
 
@@ -118,6 +134,12 @@ export const eventManagementService = {
     assertValidTimeRange(nextStartAt, nextEndAt);
 
     const updatedEventManagement = await eventManagementRepository.updateById(eventManagementId, payload);
+    await syncNewsFeed(
+      buildEventManagementUpdateActivitySync({
+        existingEventManagement,
+        updatedEventManagement,
+      }),
+    );
     return toEventManagement(updatedEventManagement);
   },
 
@@ -133,6 +155,7 @@ export const eventManagementService = {
       throwEventManagementForbidden();
     }
 
-    await eventManagementRepository.deleteById(eventManagementId);
+    const deletedEventManagement = await eventManagementRepository.deleteById(eventManagementId);
+    await syncNewsFeed([buildEventManagementDeletedEvent(deletedEventManagement)]);
   },
 };

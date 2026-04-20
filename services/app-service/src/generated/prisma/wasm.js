@@ -97,6 +97,7 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   mobileNumber: 'mobileNumber',
   name: 'name',
+  usertype: 'usertype',
   passwordHash: 'passwordHash',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -126,9 +127,19 @@ exports.Prisma.EventManagementScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  image: 'image',
   location: 'location',
   startAt: 'startAt',
   endAt: 'endAt',
+  authorName: 'authorName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdByUserId: 'createdByUserId'
+};
+
+exports.Prisma.ChatMessageScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
   authorName: 'authorName',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -170,7 +181,15 @@ exports.Prisma.EventManagementOrderByRelevanceFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  image: 'image',
   location: 'location',
+  authorName: 'authorName',
+  createdByUserId: 'createdByUserId'
+};
+
+exports.Prisma.ChatMessageOrderByRelevanceFieldEnum = {
+  id: 'id',
+  content: 'content',
   authorName: 'authorName',
   createdByUserId: 'createdByUserId'
 };
@@ -180,7 +199,8 @@ exports.Prisma.ModelName = {
   User: 'User',
   RefreshToken: 'RefreshToken',
   Announcement: 'Announcement',
-  EventManagement: 'EventManagement'
+  EventManagement: 'EventManagement',
+  ChatMessage: 'ChatMessage'
 };
 /**
  * Create the Client
@@ -193,7 +213,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "E:\\Node Js\\community-app-backend\\services\\app-service\\src\\generated\\prisma",
+      "value": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\app-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -207,7 +227,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "E:\\Node Js\\community-app-backend\\services\\app-service\\prisma\\schema.prisma",
+    "sourceFilePath": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\app-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -230,13 +250,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id            String         @id @default(cuid())\n  mobileNumber  String         @unique\n  name          String\n  passwordHash  String\n  isActive      Boolean        @default(true)\n  createdAt     DateTime       @default(now())\n  updatedAt     DateTime       @updatedAt\n  refreshTokens RefreshToken[]\n}\n\nmodel RefreshToken {\n  id        String    @id @default(cuid())\n  tokenHash String    @unique\n  expiresAt DateTime\n  revokedAt DateTime?\n  createdAt DateTime  @default(now())\n  userId    String\n  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n  @@index([expiresAt])\n}\n\nmodel Announcement {\n  id              String   @id @default(cuid())\n  title           String\n  content         String   @db.Text\n  authorName      String\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([title])\n}\n\nmodel EventManagement {\n  id              String    @id @default(cuid())\n  title           String\n  description     String    @db.Text\n  location        String\n  startAt         DateTime\n  endAt           DateTime?\n  authorName      String\n  createdAt       DateTime  @default(now())\n  updatedAt       DateTime  @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([startAt])\n  @@index([title])\n}\n",
-  "inlineSchemaHash": "bd75dfa1092802ecb4f9291a75c9914e040918eed192b29e57d463c1d7f245d3",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id            String         @id @default(cuid())\n  mobileNumber  String         @unique\n  name          String\n  usertype      Int            @default(2)\n  passwordHash  String\n  isActive      Boolean        @default(true)\n  createdAt     DateTime       @default(now())\n  updatedAt     DateTime       @updatedAt\n  refreshTokens RefreshToken[]\n}\n\nmodel RefreshToken {\n  id        String    @id @default(cuid())\n  tokenHash String    @unique\n  expiresAt DateTime\n  revokedAt DateTime?\n  createdAt DateTime  @default(now())\n  userId    String\n  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n  @@index([expiresAt])\n}\n\nmodel Announcement {\n  id              String   @id @default(cuid())\n  title           String\n  content         String   @db.Text\n  authorName      String\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([title])\n}\n\nmodel EventManagement {\n  id              String    @id @default(cuid())\n  title           String\n  description     String    @db.Text\n  image           String    @db.LongText\n  location        String\n  startAt         DateTime\n  endAt           DateTime?\n  authorName      String\n  createdAt       DateTime  @default(now())\n  updatedAt       DateTime  @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([startAt])\n  @@index([title])\n}\n\nmodel ChatMessage {\n  id              String   @id @default(cuid())\n  content         String   @db.Text\n  authorName      String\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  createdByUserId String\n\n  @@index([createdAt])\n  @@index([createdByUserId])\n}\n",
+  "inlineSchemaHash": "0bb009eb3021953fd44316c57205fc08167275a8ce26a51b16f6c2a870d0117c",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mobileNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"refreshTokens\",\"kind\":\"object\",\"type\":\"RefreshToken\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"RefreshToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"revokedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"Announcement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"EventManagement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mobileNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"usertype\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"refreshTokens\",\"kind\":\"object\",\"type\":\"RefreshToken\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"RefreshToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"revokedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"Announcement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"EventManagement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ChatMessage\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

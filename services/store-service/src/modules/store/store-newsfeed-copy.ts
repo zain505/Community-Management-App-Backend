@@ -14,6 +14,10 @@ export const storeNewsFeedCopy = {
     return buildCopy(`A new store opened in your neighborhood.`, `Check out ${storeName}.`);
   },
 
+  storeDeleted(storeName: string): StoreNewsFeedCopy {
+    return buildCopy(`${storeName} removed their store.`, `${storeName} is no longer available.`);
+  },
+
   storeNameUpdated(previousName: string, nextName: string): StoreNewsFeedCopy {
     return buildCopy(`${previousName} is now ${nextName}.`, `${nextName} updated their store name.`);
   },

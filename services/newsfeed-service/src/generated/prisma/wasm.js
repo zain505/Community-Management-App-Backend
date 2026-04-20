@@ -179,12 +179,16 @@ exports.NewsFeedEventType = exports.$Enums.NewsFeedEventType = {
   STORE_MIN_ORDER_UPDATED: 'STORE_MIN_ORDER_UPDATED',
   STORE_CONTACT_UPDATED: 'STORE_CONTACT_UPDATED',
   STORE_PROFILE_UPDATED: 'STORE_PROFILE_UPDATED',
+  STORE_DELETED: 'STORE_DELETED',
   PRODUCT_ADDED: 'PRODUCT_ADDED',
   PRODUCT_UPDATED: 'PRODUCT_UPDATED',
   PRODUCT_DELETED: 'PRODUCT_DELETED',
   ANNOUNCEMENT_CREATED: 'ANNOUNCEMENT_CREATED',
   ANNOUNCEMENT_UPDATED: 'ANNOUNCEMENT_UPDATED',
   ANNOUNCEMENT_DELETED: 'ANNOUNCEMENT_DELETED',
+  EVENT_MANAGEMENT_CREATED: 'EVENT_MANAGEMENT_CREATED',
+  EVENT_MANAGEMENT_UPDATED: 'EVENT_MANAGEMENT_UPDATED',
+  EVENT_MANAGEMENT_DELETED: 'EVENT_MANAGEMENT_DELETED',
   POPULAR_STORE_CHANGED: 'POPULAR_STORE_CHANGED',
   MOST_ACTIVE_STORE_CHANGED: 'MOST_ACTIVE_STORE_CHANGED',
   MOST_SEARCHED_STORE_CHANGED: 'MOST_SEARCHED_STORE_CHANGED'
@@ -213,7 +217,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "E:\\Node Js\\community-app-backend\\services\\newsfeed-service\\src\\generated\\prisma",
+      "value": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\newsfeed-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -227,7 +231,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "E:\\Node Js\\community-app-backend\\services\\newsfeed-service\\prisma\\schema.prisma",
+    "sourceFilePath": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\newsfeed-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -241,6 +245,7 @@ const config = {
     "db"
   ],
   "activeProvider": "mysql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -249,8 +254,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum NewsFeedEventType {\n  STORE_CREATED\n  STORE_NAME_UPDATED\n  STORE_LOCATION_UPDATED\n  STORE_RATING_UPDATED\n  STORE_IMAGE_UPDATED\n  STORE_DELIVERY_UPDATED\n  STORE_MIN_ORDER_UPDATED\n  STORE_CONTACT_UPDATED\n  STORE_PROFILE_UPDATED\n  PRODUCT_ADDED\n  PRODUCT_UPDATED\n  PRODUCT_DELETED\n  ANNOUNCEMENT_CREATED\n  ANNOUNCEMENT_UPDATED\n  ANNOUNCEMENT_DELETED\n  POPULAR_STORE_CHANGED\n  MOST_ACTIVE_STORE_CHANGED\n  MOST_SEARCHED_STORE_CHANGED\n}\n\nenum NewsFeedMetric {\n  POPULAR_STORE\n  MOST_ACTIVE_STORE\n  MOST_SEARCHED_STORE\n}\n\nmodel NewsFeedItem {\n  id          String            @id @default(cuid())\n  type        NewsFeedEventType\n  title       String\n  description String            @db.Text\n  storeId     Int?\n  storeName   String?\n  metadata    Json?\n  createdAt   DateTime          @default(now())\n  likes       NewsFeedLike[]\n  saves       NewsFeedSave[]\n\n  @@index([storeId])\n  @@index([createdAt])\n  @@index([type])\n}\n\nmodel NewsFeedLike {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  createdAt      DateTime     @default(now())\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId])\n  @@index([createdAt])\n}\n\nmodel NewsFeedMetricState {\n  metric    NewsFeedMetric @id\n  storeId   Int?\n  updatedAt DateTime       @updatedAt\n\n  @@index([storeId])\n}\n\nmodel NewsFeedSave {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  savedAt        DateTime     @default(now())\n  expiresAt      DateTime\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId, expiresAt])\n  @@index([expiresAt])\n  @@index([savedAt])\n}\n",
-  "inlineSchemaHash": "b56fda2b840a1e87177352c940012f49a8c924e9372be3b619f1f3075fdd3f2d",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum NewsFeedEventType {\n  STORE_CREATED\n  STORE_NAME_UPDATED\n  STORE_LOCATION_UPDATED\n  STORE_RATING_UPDATED\n  STORE_IMAGE_UPDATED\n  STORE_DELIVERY_UPDATED\n  STORE_MIN_ORDER_UPDATED\n  STORE_CONTACT_UPDATED\n  STORE_PROFILE_UPDATED\n  STORE_DELETED\n  PRODUCT_ADDED\n  PRODUCT_UPDATED\n  PRODUCT_DELETED\n  ANNOUNCEMENT_CREATED\n  ANNOUNCEMENT_UPDATED\n  ANNOUNCEMENT_DELETED\n  EVENT_MANAGEMENT_CREATED\n  EVENT_MANAGEMENT_UPDATED\n  EVENT_MANAGEMENT_DELETED\n  POPULAR_STORE_CHANGED\n  MOST_ACTIVE_STORE_CHANGED\n  MOST_SEARCHED_STORE_CHANGED\n}\n\nenum NewsFeedMetric {\n  POPULAR_STORE\n  MOST_ACTIVE_STORE\n  MOST_SEARCHED_STORE\n}\n\nmodel NewsFeedItem {\n  id          String            @id @default(cuid())\n  type        NewsFeedEventType\n  title       String\n  description String            @db.Text\n  storeId     Int?\n  storeName   String?\n  metadata    Json?\n  createdAt   DateTime          @default(now())\n  likes       NewsFeedLike[]\n  saves       NewsFeedSave[]\n\n  @@index([storeId])\n  @@index([createdAt])\n  @@index([type])\n}\n\nmodel NewsFeedLike {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  createdAt      DateTime     @default(now())\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId])\n  @@index([createdAt])\n}\n\nmodel NewsFeedMetricState {\n  metric    NewsFeedMetric @id\n  storeId   Int?\n  updatedAt DateTime       @updatedAt\n\n  @@index([storeId])\n}\n\nmodel NewsFeedSave {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  savedAt        DateTime     @default(now())\n  expiresAt      DateTime\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId, expiresAt])\n  @@index([expiresAt])\n  @@index([savedAt])\n}\n",
+  "inlineSchemaHash": "fa3e653b6afc242c351026df2c5ef950915f731b352135277c6b7b5b4a33ca16",
   "copyEngine": true
 }
 config.dirname = '/'

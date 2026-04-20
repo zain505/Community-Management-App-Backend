@@ -4,6 +4,7 @@ export interface StoreProduct {
   price: string;
   image: string;
   tag?: string;
+  description?: string;
 }
 
 export interface StoreProductInput {
@@ -12,6 +13,14 @@ export interface StoreProductInput {
   price: string;
   image: string;
   tag?: string;
+  description?: string;
+}
+
+export interface StoreReview {
+  id: number;
+  rating: number;
+  description: string | null;
+  createdAt: string;
 }
 
 export interface StoreSummary {
@@ -26,6 +35,7 @@ export interface StoreSummary {
   openingTime: string;
   closingTime: string;
   phoneNumber: string;
+  reviews?: StoreReview[];
 }
 
 export interface StoreSummaryWithOwner extends StoreSummary {
@@ -40,7 +50,6 @@ export interface CreateStoreRequest {
   name: string;
   location: string;
   image: string;
-  badges?: string[];
   delivery: string;
   minOrderRs: string;
   openingTime: string;
@@ -53,7 +62,6 @@ export interface UpdateStoreRequest {
   name?: string;
   location?: string;
   image?: string;
-  badges?: string[];
   delivery?: string;
   minOrderRs?: string;
   openingTime?: string;
@@ -64,6 +72,8 @@ export interface UpdateStoreRequest {
 
 export interface CreateStoreRatingRequest {
   rating: number;
+  badges?: string[];
+  description?: string;
 }
 
 export interface StoreListQuery {

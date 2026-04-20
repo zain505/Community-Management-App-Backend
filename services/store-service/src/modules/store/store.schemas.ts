@@ -1,14 +1,5 @@
 import { z } from 'zod';
-
-const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-
-function isBase64Image(value: string): boolean {
-  const trimmedValue = value.trim();
-  const dataUriMatch = trimmedValue.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/);
-  const base64Value = dataUriMatch ? dataUriMatch[1] : trimmedValue;
-
-  return base64Value.length >= 8 && base64Pattern.test(base64Value);
-}
+import { base64ImageSchema, productImageSchema } from '../../shared/image-schema';
 
 const phoneNumberSchema = z
   .string()
@@ -25,26 +16,21 @@ const storeTimeSchema = z
     message: 'Time must be in HH:mm format',
   });
 
-const base64ImageSchema = z
-  .string()
-  .trim()
-  .refine(isBase64Image, {
-    message: 'Image must be a base64 string or data URI',
-  });
+const storeBadgeSchema = z.string().trim().min(1).max(40);
 
 const storeProductSchema = z.object({
   id: z.string().trim().min(1).max(64).optional(),
   name: z.string().trim().min(1).max(120),
   price: z.string().trim().min(1).max(40),
-  image: z.string().trim().url(),
+  image: productImageSchema,
   tag: z.string().trim().min(1).max(40).optional(),
+  description: z.string().trim().min(1).max(100).optional(),
 });
 
 const storePayloadFields = {
   name: z.string().trim().min(2).max(120),
   location: z.string().trim().min(2).max(120),
   image: base64ImageSchema,
-  badges: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
   delivery: z.string().trim().min(1).max(80),
   minOrderRs: z.string().trim().min(1).max(40),
   openingTime: storeTimeSchema,
@@ -67,7 +53,7 @@ function normalizeStorePayload<T extends { contact?: string; phoneNumber?: strin
   } as Omit<T, 'contact'> & { phoneNumber?: string };
 }
 
-const storePayloadSchema = z.object(storePayloadFields);
+const storePayloadSchema = z.object(storePayloadFields).strict();
 
 export const createStoreBodySchema = storePayloadSchema.refine(
   (payload) => typeof payload.phoneNumber === 'string' || typeof payload.contact === 'string',
@@ -86,6 +72,8 @@ export const updateStoreBodySchema = storePayloadSchema
 
 export const createStoreRatingBodySchema = z.object({
   rating: z.coerce.number().gt(0).lte(5),
+  badges: z.array(storeBadgeSchema).max(20).optional(),
+  description: z.string().trim().min(1).max(100).optional(),
 });
 
 export const storeIdParamSchema = z.object({

@@ -23,7 +23,6 @@ import { storeClient } from '../store/store.client';
 
 const DEFAULT_NEWSFEED_LIMIT = 20;
 const MAX_NEWSFEED_LIMIT = 50;
-
 function parseRatingValue(rating: string): number {
   const match = rating.match(/(\d+(?:\.\d+)?)/);
 
@@ -35,12 +34,34 @@ function parseRatingValue(rating: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function sanitizeImageValue(value: string): string {
+  return value;
+}
+
+function sanitizeMetadataValue(value: unknown, key?: string): unknown {
+  if (typeof value === 'string') {
+    return key?.toLowerCase().includes('image') ? sanitizeImageValue(value) : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeMetadataValue(entry));
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([nestedKey, nestedValue]) => [nestedKey, sanitizeMetadataValue(nestedValue, nestedKey)]),
+  );
+}
+
 function toMetadata(value: Prisma.JsonValue | null): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return undefined;
   }
 
-  return value as Record<string, unknown>;
+  return sanitizeMetadataValue(value) as Record<string, unknown>;
 }
 
 function toNewsFeedItem(item: NewsFeedItemRecord): NewsFeedItem {
@@ -105,7 +126,7 @@ function toStoreSummary(store: StoreSummaryWithOwner): StoreSummary {
     name: store.name,
     location: store.location,
     rating: store.rating,
-    image: store.image,
+    image: sanitizeImageValue(store.image),
     badges: store.badges,
     delivery: store.delivery,
     minOrderRs: store.minOrderRs,
@@ -124,7 +145,7 @@ function toProductSnapshot(value: unknown): NewsFeedProductSnapshot | undefined 
     return undefined;
   }
 
-  const { id, name, price, image, tag } = value;
+  const { id, name, price, image, tag, description } = value;
 
   if (typeof name !== 'string' || typeof price !== 'string' || typeof image !== 'string') {
     return undefined;
@@ -134,8 +155,21 @@ function toProductSnapshot(value: unknown): NewsFeedProductSnapshot | undefined 
     ...(typeof id === 'string' && id.trim().length > 0 ? { id } : {}),
     name,
     price,
-    image,
+    image: sanitizeImageValue(image),
     ...(typeof tag === 'string' && tag.trim().length > 0 ? { tag } : {}),
+    ...(typeof description === 'string' && description.trim().length > 0 ? { description } : {}),
+  };
+}
+
+function sanitizeUserPublic(user: UserPublic): UserPublic {
+  const profileImage = user.profile.image;
+
+  return {
+    ...user,
+    profile: {
+      ...user.profile,
+      image: typeof profileImage === 'string' ? sanitizeImageValue(profileImage) : profileImage,
+    },
   };
 }
 
@@ -157,69 +191,68 @@ function toAttachedProduct(item: NewsFeedItemRecord): NewsFeedProductSnapshot | 
   }
 }
 
-function createStoreSummaryLoader(): (storeId: number) => Promise<StoreSummaryWithOwner | null> {
-  const cache = new Map<number, Promise<StoreSummaryWithOwner | null>>();
+function buildStoreSummaryMap(stores: StoreSummaryWithOwner[]): Map<number, StoreSummaryWithOwner> {
+  return new Map(stores.map((store) => [store.id, store]));
+}
 
-  return (storeId: number) => {
-    let storePromise = cache.get(storeId);
+function buildStoreOwnerMap(owners: UserPublic[]): Map<string, UserPublic> {
+  return new Map(owners.map((owner) => [owner.id, owner]));
+}
 
-    if (!storePromise) {
-      storePromise = storeClient.findStoreSummaryById(storeId).catch(() => null);
-      cache.set(storeId, storePromise);
-    }
+interface NewsFeedEnrichmentData {
+  storeSummariesById: Map<number, StoreSummaryWithOwner>;
+  storeOwnersById: Map<string, UserPublic>;
+}
 
-    return storePromise;
+async function buildNewsFeedEnrichmentData(items: NewsFeedItemRecord[]): Promise<NewsFeedEnrichmentData> {
+  const storeIds = [...new Set(items.map((item) => item.storeId).filter((storeId): storeId is number => typeof storeId === 'number'))];
+  const stores =
+    storeIds.length > 0 ? await storeClient.findStoreSummariesByIds(storeIds).catch(() => []) : [];
+  const storeSummariesById = buildStoreSummaryMap(stores);
+  const ownerUserIds = [
+    ...new Set(stores.map((store) => store.ownerUserId).filter((ownerUserId) => ownerUserId.trim().length > 0)),
+  ];
+  const owners =
+    ownerUserIds.length > 0 ? await authClient.findUsersPublicByIds(ownerUserIds).catch(() => []) : [];
+
+  return {
+    storeSummariesById,
+    storeOwnersById: buildStoreOwnerMap(owners),
   };
 }
 
-function createStoreOwnerLoader(): (ownerUserId: string) => Promise<UserPublic | null> {
-  const cache = new Map<string, Promise<UserPublic | null>>();
-
-  return (ownerUserId: string) => {
-    let ownerPromise = cache.get(ownerUserId);
-
-    if (!ownerPromise) {
-      ownerPromise = authClient.findUserPublicById(ownerUserId).catch(() => null);
-      cache.set(ownerUserId, ownerPromise);
-    }
-
-    return ownerPromise;
-  };
-}
-
-async function enrichNewsFeedItem(
+function enrichNewsFeedItem(
   item: NewsFeedItemRecord,
-  loadStoreSummary: (storeId: number) => Promise<StoreSummaryWithOwner | null>,
-  loadStoreOwner: (ownerUserId: string) => Promise<UserPublic | null>,
-): Promise<NewsFeedItem> {
+  enrichmentData: NewsFeedEnrichmentData,
+): NewsFeedItem {
   const baseItem = toNewsFeedItem(item);
   const attachedStoreSnapshot =
-    typeof item.storeId === 'number' ? await loadStoreSummary(item.storeId) : null;
+    typeof item.storeId === 'number' ? enrichmentData.storeSummariesById.get(item.storeId) ?? null : null;
   const attachedStore = attachedStoreSnapshot ? toStoreSummary(attachedStoreSnapshot) : undefined;
   const attachedStoreOwner =
-    attachedStoreSnapshot?.ownerUserId ? await loadStoreOwner(attachedStoreSnapshot.ownerUserId) : undefined;
+    attachedStoreSnapshot?.ownerUserId
+      ? enrichmentData.storeOwnersById.get(attachedStoreSnapshot.ownerUserId)
+      : undefined;
 
   return {
     ...baseItem,
     store: attachedStore,
-    storeOwner: attachedStoreOwner ?? undefined,
+    storeOwner: attachedStoreOwner ? sanitizeUserPublic(attachedStoreOwner) : undefined,
     product: toAttachedProduct(item),
   };
 }
 
 async function enrichNewsFeedItems(items: NewsFeedItemRecord[]): Promise<NewsFeedItem[]> {
-  const loadStoreSummary = createStoreSummaryLoader();
-  const loadStoreOwner = createStoreOwnerLoader();
+  const enrichmentData = await buildNewsFeedEnrichmentData(items);
 
-  return Promise.all(items.map((item) => enrichNewsFeedItem(item, loadStoreSummary, loadStoreOwner)));
+  return items.map((item) => enrichNewsFeedItem(item, enrichmentData));
 }
 
 async function toSavedNewsFeedItem(
   item: SavedNewsFeedRecord,
-  loadStoreSummary: (storeId: number) => Promise<StoreSummaryWithOwner | null>,
-  loadStoreOwner: (ownerUserId: string) => Promise<UserPublic | null>,
+  enrichmentData: NewsFeedEnrichmentData,
 ): Promise<SavedNewsFeedItem> {
-  const newsFeedItem = await enrichNewsFeedItem(item.newsFeedItem, loadStoreSummary, loadStoreOwner);
+  const newsFeedItem = enrichNewsFeedItem(item.newsFeedItem, enrichmentData);
 
   return {
     ...newsFeedItem,
@@ -337,10 +370,9 @@ export const newsFeedService = {
       throwNewsFeedNotFound();
     }
 
-    const loadStoreSummary = createStoreSummaryLoader();
-    const loadStoreOwner = createStoreOwnerLoader();
+    const enrichmentData = await buildNewsFeedEnrichmentData([savedEntry.newsFeedItem]);
 
-    return toSavedNewsFeedItem(savedEntry, loadStoreSummary, loadStoreOwner);
+    return toSavedNewsFeedItem(savedEntry, enrichmentData);
   },
 
   async listSavedNewsFeed(
@@ -354,13 +386,10 @@ export const newsFeedService = {
     await newsFeedRepository.deleteExpiredSavedEntries(now);
 
     const items = await newsFeedRepository.listSavedEntries(userId, now, pagination.page, pagination.limit);
-    const loadStoreSummary = createStoreSummaryLoader();
-    const loadStoreOwner = createStoreOwnerLoader();
+    const enrichmentData = await buildNewsFeedEnrichmentData(items.map((item) => item.newsFeedItem));
 
     return {
-      items: await Promise.all(
-        items.map((item) => toSavedNewsFeedItem(item, loadStoreSummary, loadStoreOwner)),
-      ),
+      items: await Promise.all(items.map((item) => toSavedNewsFeedItem(item, enrichmentData))),
       page: pagination.page,
       limit: pagination.limit,
     };

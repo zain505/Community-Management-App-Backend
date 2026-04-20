@@ -1,4 +1,4 @@
-import type { Prisma, RefreshToken, User } from '@prisma/client';
+import type { Prisma, RefreshToken, User } from '../../generated/prisma';
 import { prisma } from '../../lib/prisma';
 
 export const authRepository = {
@@ -8,6 +8,16 @@ export const authRepository = {
 
   findUserById(id: string): Promise<User | null> {
     return prisma.user.findUnique({ where: { id } });
+  },
+
+  findUsersByIds(ids: string[]): Promise<User[]> {
+    return prisma.user.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
   },
 
   createUser(data: Prisma.UserCreateInput): Promise<User> {

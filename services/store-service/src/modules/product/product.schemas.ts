@@ -1,11 +1,13 @@
 import { z } from 'zod';
+import { productImageSchema } from '../../shared/image-schema';
 
 const productPayloadSchema = z.object({
   id: z.string().trim().min(1).max(64).optional(),
   name: z.string().trim().min(1).max(120),
   price: z.string().trim().min(1).max(40),
-  image: z.string().trim().url(),
+  image: productImageSchema,
   tag: z.string().trim().min(1).max(40).optional(),
+  description: z.string().trim().min(1).max(100).optional(),
 });
 
 export const createProductBodySchema = productPayloadSchema;

@@ -3,6 +3,7 @@ import type {
   CreateStoreRatingRequest,
   MostSearchedStoreSnapshot,
   NewsFeedMetric,
+  StoreReview,
   NewsFeedSyncEvent,
   StoreBasicSnapshot,
   StoreDetails,
@@ -16,12 +17,16 @@ import { Prisma } from '../../generated/prisma';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../shared/app-error';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
-import { storeRepository, type StoreWithProductsRecord } from './store.repository';
+import {
+  storeRepository,
+  type StoreReviewRecord,
+  type StoreWithProductsRecord,
+} from './store.repository';
 import {
   buildProductChanges,
   buildStoreCreatedEvent,
+  buildStoreDeletedEvent,
   buildStoreUpdateActivitySync,
-  hasStoreBadgesChanged,
   parseStoreBadges,
 } from './store-newsfeed-events';
 import { matchStoreProducts } from './store-product-matcher';
@@ -33,6 +38,16 @@ function toStoreProduct(product: StoreWithProductsRecord['products'][number]): S
     price: product.price,
     image: product.image,
     tag: product.tag ?? undefined,
+    description: product.description ?? undefined,
+  };
+}
+
+function toStoreReview(review: StoreReviewRecord): StoreReview {
+  return {
+    id: review.id,
+    rating: Number(review.rating),
+    description: review.description,
+    createdAt: review.createdAt.toISOString(),
   };
 }
 
@@ -48,6 +63,7 @@ function toStoreSummary(store: {
   openingTime: string;
   closingTime: string;
   phoneNumber: string;
+  ratings?: StoreReviewRecord[];
 }): StoreSummary {
   return {
     id: store.id,
@@ -61,6 +77,7 @@ function toStoreSummary(store: {
     openingTime: store.openingTime,
     closingTime: store.closingTime,
     phoneNumber: store.phoneNumber,
+    reviews: store.ratings?.map(toStoreReview),
   };
 }
 
@@ -105,7 +122,7 @@ function toMostSearchedStoreSnapshot(store: {
 function buildCreatePayload(payload: CreateStoreRequest) {
   return {
     ...payload,
-    badges: payload.badges ?? [],
+    badges: [],
     products: payload.products ?? [],
   };
 }
@@ -113,8 +130,34 @@ function buildCreatePayload(payload: CreateStoreRequest) {
 function buildUpdatePayload(payload: UpdateStoreRequest) {
   return {
     ...payload,
-    badges: payload.badges ?? undefined,
     products: payload.products ?? undefined,
+  };
+}
+
+function mergeStoreBadges(
+  existingBadgesValue: Prisma.JsonValue | null,
+  nextBadges?: string[],
+): { badgesChanged: boolean; mergedBadges?: string[] } {
+  if (nextBadges === undefined) {
+    return {
+      badgesChanged: false,
+    };
+  }
+
+  const currentBadges = parseStoreBadges(existingBadgesValue);
+  const mergedBadges = [...currentBadges];
+
+  for (const badge of nextBadges) {
+    if (!mergedBadges.includes(badge)) {
+      mergedBadges.push(badge);
+    }
+  }
+
+  return {
+    badgesChanged:
+      mergedBadges.length !== currentBadges.length ||
+      mergedBadges.some((badge, index) => badge !== currentBadges[index]),
+    mergedBadges,
   };
 }
 
@@ -248,7 +291,6 @@ export const storeService = {
       throwMyStoreNotFound();
     }
 
-    const badgesChanged = hasStoreBadgesChanged(existingStore, payload);
     const productMatches =
       payload.products !== undefined ? matchStoreProducts(existingStore.products, payload.products) : undefined;
     const productChanges = productMatches ? buildProductChanges(productMatches) : [];
@@ -260,7 +302,7 @@ export const storeService = {
     const { events: newsFeedEvents, refreshMetrics } = buildStoreUpdateActivitySync({
       existingStore,
       updatedStore,
-      badgesChanged,
+      badgesChanged: false,
       productChanges,
     });
 
@@ -280,12 +322,20 @@ export const storeService = {
       throwStoreNotFound();
     }
 
+    const { badgesChanged, mergedBadges } = mergeStoreBadges(existingStore.badges, payload.badges);
+
     try {
-      const updatedStore = await storeRepository.addRatingForUser(storeId, userId, payload.rating);
+      const updatedStore = await storeRepository.addRatingForUser(
+        storeId,
+        userId,
+        payload.rating,
+        mergedBadges,
+        payload.description,
+      );
       const { events, refreshMetrics } = buildStoreUpdateActivitySync({
         existingStore,
         updatedStore,
-        badgesChanged: false,
+        badgesChanged,
         productChanges: [],
       });
 
@@ -305,7 +355,10 @@ export const storeService = {
     }
 
     await storeRepository.deleteById(existingStore.id);
-    await syncNewsFeed(undefined, ['POPULAR_STORE', 'MOST_ACTIVE_STORE', 'MOST_SEARCHED_STORE']);
+    await syncNewsFeed(
+      [buildStoreDeletedEvent(existingStore)],
+      ['POPULAR_STORE', 'MOST_ACTIVE_STORE', 'MOST_SEARCHED_STORE'],
+    );
   },
 
   async listStoresForPopularityRanking(): Promise<StoreRankingSnapshot[]> {
@@ -326,6 +379,23 @@ export const storeService = {
           ownerUserId: store.ownerUserId,
         }
       : null;
+  },
+
+  async findStoreSummariesByIds(storeIds: number[]): Promise<StoreSummaryWithOwner[]> {
+    if (storeIds.length === 0) {
+      return [];
+    }
+
+    const stores = await storeRepository.findStoreSummariesByIds(storeIds);
+    const storesById = new Map(stores.map((store) => [store.id, store]));
+
+    return storeIds
+      .map((storeId) => storesById.get(storeId))
+      .filter((store): store is NonNullable<typeof store> => Boolean(store))
+      .map((store) => ({
+        ...toStoreSummary(store),
+        ownerUserId: store.ownerUserId,
+      }));
   },
 
   async findMostSearchedStore(): Promise<MostSearchedStoreSnapshot | null> {

@@ -78,15 +78,41 @@ export const newsFeedRepository = {
     });
   },
 
-  listEntries(page: number, limit: number): Promise<NewsFeedItemRecord[]> {
-    return prisma.newsFeedItem.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
+  async listEntries(page: number, limit: number): Promise<NewsFeedItemRecord[]> {
+    const entryIds = await prisma.newsFeedItem.findMany({
+      orderBy: [
+        {
+          createdAt: 'desc',
+        },
+        {
+          id: 'desc',
+        },
+      ],
       skip: (page - 1) * limit,
       take: limit,
+      select: {
+        id: true,
+      },
+    });
+
+    if (entryIds.length === 0) {
+      return [];
+    }
+
+    const orderedIds = entryIds.map((entry) => entry.id);
+    const items = await prisma.newsFeedItem.findMany({
+      where: {
+        id: {
+          in: orderedIds,
+        },
+      },
       select: newsFeedListSelect,
     });
+    const itemById = new Map(items.map((item) => [item.id, item]));
+
+    return orderedIds
+      .map((id) => itemById.get(id))
+      .filter((item): item is NewsFeedItemRecord => item !== undefined);
   },
 
   deleteExpiredSavedEntries(now: Date): Promise<number> {

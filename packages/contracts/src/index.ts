@@ -1,6 +1,7 @@
 export * from './announcement';
 export * from './api';
 export * from './auth';
+export * from './chat';
 export * from './event-management';
 export * from './events';
 export * from './newsfeed';

@@ -9,6 +9,7 @@ const productSelect = {
   price: true,
   image: true,
   tag: true,
+  description: true,
   storeId: true,
   createdAt: true,
   updatedAt: true,
@@ -24,6 +25,7 @@ interface CreateProductRecordInput {
   price: string;
   image: string;
   tag?: string;
+  description?: string;
 }
 
 interface UpdateProductRecordInput {
@@ -31,6 +33,7 @@ interface UpdateProductRecordInput {
   price?: string;
   image?: string;
   tag?: string;
+  description?: string;
 }
 
 export const productRepository = {
@@ -71,6 +74,7 @@ export const productRepository = {
       price: payload.price,
       image: payload.image,
       tag: payload.tag,
+      description: payload.description,
       storeId,
     };
 
@@ -91,6 +95,7 @@ export const productRepository = {
     if (payload.price !== undefined) data.price = payload.price;
     if (payload.image !== undefined) data.image = payload.image;
     if (payload.tag !== undefined) data.tag = payload.tag;
+    if (payload.description !== undefined) data.description = payload.description;
 
     return prisma.storeProduct.update({
       where: {

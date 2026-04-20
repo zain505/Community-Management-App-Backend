@@ -2,6 +2,7 @@ export interface EventManagement {
   id: string;
   title: string;
   description: string;
+  image: string;
   location: string;
   startAt: string;
   endAt: string | null;
@@ -14,6 +15,7 @@ export interface EventManagement {
 export interface CreateEventManagementRequest {
   title: string;
   description: string;
+  image: string;
   location: string;
   startAt: string;
   endAt?: string | null;
@@ -22,6 +24,7 @@ export interface CreateEventManagementRequest {
 export interface UpdateEventManagementRequest {
   title?: string;
   description?: string;
+  image?: string;
   location?: string;
   startAt?: string;
   endAt?: string | null;

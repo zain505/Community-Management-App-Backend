@@ -125,6 +125,7 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   mobileNumber: 'mobileNumber',
   name: 'name',
+  usertype: 'usertype',
   passwordHash: 'passwordHash',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -154,9 +155,19 @@ exports.Prisma.EventManagementScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  image: 'image',
   location: 'location',
   startAt: 'startAt',
   endAt: 'endAt',
+  authorName: 'authorName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdByUserId: 'createdByUserId'
+};
+
+exports.Prisma.ChatMessageScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
   authorName: 'authorName',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -198,7 +209,15 @@ exports.Prisma.EventManagementOrderByRelevanceFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  image: 'image',
   location: 'location',
+  authorName: 'authorName',
+  createdByUserId: 'createdByUserId'
+};
+
+exports.Prisma.ChatMessageOrderByRelevanceFieldEnum = {
+  id: 'id',
+  content: 'content',
   authorName: 'authorName',
   createdByUserId: 'createdByUserId'
 };
@@ -208,7 +227,8 @@ exports.Prisma.ModelName = {
   User: 'User',
   RefreshToken: 'RefreshToken',
   Announcement: 'Announcement',
-  EventManagement: 'EventManagement'
+  EventManagement: 'EventManagement',
+  ChatMessage: 'ChatMessage'
 };
 
 /**

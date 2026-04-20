@@ -15,6 +15,7 @@ jest.mock('../../src/modules/newsfeed/newsfeed.repository', () => ({
 jest.mock('../../src/modules/store/store.client', () => ({
   storeClient: {
     listStoresForPopularityRanking: jest.fn(),
+    findStoreSummariesByIds: jest.fn(),
     findStoreBasicById: jest.fn(),
     findStoreSummaryById: jest.fn(),
     findMostSearchedStore: jest.fn(),
@@ -23,6 +24,7 @@ jest.mock('../../src/modules/store/store.client', () => ({
 
 jest.mock('../../src/modules/auth/auth.client', () => ({
   authClient: {
+    findUsersPublicByIds: jest.fn(),
     findUserPublicById: jest.fn(),
   },
 }));
@@ -35,7 +37,6 @@ import { storeClient } from '../../src/modules/store/store.client';
 const mockedAuthClient = jest.mocked(authClient);
 const mockedNewsFeedRepository = jest.mocked(newsFeedRepository);
 const mockedStoreClient = jest.mocked(storeClient);
-
 describe('newsfeed service', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -78,29 +79,33 @@ describe('newsfeed service', () => {
         createdAt: new Date('2026-03-14T08:00:00.000Z'),
       },
     ] as never);
-    mockedStoreClient.findStoreSummaryById.mockResolvedValue({
-      id: 7,
-      ownerUserId: 'user-123',
-      name: 'Fresh Mart',
-      location: 'Main Road',
-      rating: '4.5',
-      image: 'https://example.com/fresh-mart.png',
-      badges: ['Popular'],
-      delivery: '30 mins',
-      minOrderRs: '500',
-      openingTime: '09:00',
-      closingTime: '22:00',
-      phoneNumber: '03001234567',
-    });
-    mockedAuthClient.findUserPublicById.mockResolvedValue({
-      id: 'user-123',
-      name: 'Store Owner',
-      mobileNumber: '03009998888',
-      profile: {
-        image: null,
+    mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
+      {
+        id: 7,
+        ownerUserId: 'user-123',
+        name: 'Fresh Mart',
+        location: 'Main Road',
+        rating: '4.5',
+        image: 'https://example.com/fresh-mart.png',
+        badges: ['Popular'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
       },
-      createdAt: '2026-03-01T08:00:00.000Z',
-    });
+    ]);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Store Owner',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
 
     const feed = await newsFeedService.listNewsFeed(1, 10);
 
@@ -139,8 +144,8 @@ describe('newsfeed service', () => {
         createdAt: '2026-03-14T08:00:00.000Z',
       },
     ]);
-    expect(mockedStoreClient.findStoreSummaryById).toHaveBeenCalledWith(7);
-    expect(mockedAuthClient.findUserPublicById).toHaveBeenCalledWith('user-123');
+    expect(mockedStoreClient.findStoreSummariesByIds).toHaveBeenCalledWith([7]);
+    expect(mockedAuthClient.findUsersPublicByIds).toHaveBeenCalledWith(['user-123']);
   });
 
   it('attaches both store and product data for product feed items', async () => {
@@ -167,29 +172,33 @@ describe('newsfeed service', () => {
         createdAt: new Date('2026-03-14T08:00:00.000Z'),
       },
     ] as never);
-    mockedStoreClient.findStoreSummaryById.mockResolvedValue({
-      id: 7,
-      ownerUserId: 'user-123',
-      name: 'Fresh Mart',
-      location: 'Main Road',
-      rating: '4.5',
-      image: 'https://example.com/fresh-mart.png',
-      badges: ['Popular'],
-      delivery: '30 mins',
-      minOrderRs: '500',
-      openingTime: '09:00',
-      closingTime: '22:00',
-      phoneNumber: '03001234567',
-    });
-    mockedAuthClient.findUserPublicById.mockResolvedValue({
-      id: 'user-123',
-      name: 'Store Owner',
-      mobileNumber: '03009998888',
-      profile: {
-        image: null,
+    mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
+      {
+        id: 7,
+        ownerUserId: 'user-123',
+        name: 'Fresh Mart',
+        location: 'Main Road',
+        rating: '4.5',
+        image: 'https://example.com/fresh-mart.png',
+        badges: ['Popular'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
       },
-      createdAt: '2026-03-01T08:00:00.000Z',
-    });
+    ]);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Store Owner',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
 
     const feed = await newsFeedService.listNewsFeed(1, 10);
 
@@ -243,8 +252,118 @@ describe('newsfeed service', () => {
         createdAt: '2026-03-14T08:00:00.000Z',
       },
     ]);
-    expect(mockedStoreClient.findStoreSummaryById).toHaveBeenCalledWith(7);
-    expect(mockedAuthClient.findUserPublicById).toHaveBeenCalledWith('user-123');
+    expect(mockedStoreClient.findStoreSummariesByIds).toHaveBeenCalledWith([7]);
+    expect(mockedAuthClient.findUsersPublicByIds).toHaveBeenCalledWith(['user-123']);
+  });
+
+  it('preserves inline image payloads in the newsfeed response', async () => {
+    const inlineImage = `data:image/png;base64,${'A'.repeat(2048)}`;
+
+    mockedNewsFeedRepository.listEntries.mockResolvedValue([
+      {
+        id: 'feed-inline-images',
+        type: 'PRODUCT_UPDATED',
+        title: 'Fresh Mart updated a product.',
+        description: 'Orange Juice image was refreshed.',
+        storeId: 7,
+        storeName: 'Fresh Mart',
+        metadata: {
+          current: {
+            id: 'prod-1',
+            name: 'Orange Juice',
+            price: '550',
+            image: inlineImage,
+            tag: 'Fresh',
+          },
+          previousImage: inlineImage,
+        },
+        _count: {
+          likes: 1,
+        },
+        createdAt: new Date('2026-03-14T08:00:00.000Z'),
+      },
+    ] as never);
+    mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
+      {
+        id: 7,
+        ownerUserId: 'user-123',
+        name: 'Fresh Mart',
+        location: 'Main Road',
+        rating: '4.5',
+        image: inlineImage,
+        badges: ['Popular'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
+      },
+    ]);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Store Owner',
+        mobileNumber: '03009998888',
+        profile: {
+          image: inlineImage,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
+
+    const feed = await newsFeedService.listNewsFeed(1, 10);
+
+    expect(feed.items).toEqual([
+      {
+        id: 'feed-inline-images',
+        type: 'PRODUCT_UPDATED',
+        title: 'Fresh Mart updated a product.',
+        description: 'Orange Juice image was refreshed.',
+        storeId: 7,
+        storeName: 'Fresh Mart',
+        store: {
+          id: 7,
+          name: 'Fresh Mart',
+          location: 'Main Road',
+          rating: '4.5',
+           image: inlineImage,
+          badges: ['Popular'],
+          delivery: '30 mins',
+          minOrderRs: '500',
+          openingTime: '09:00',
+          closingTime: '22:00',
+          phoneNumber: '03001234567',
+        },
+        storeOwner: {
+          id: 'user-123',
+          name: 'Store Owner',
+          mobileNumber: '03009998888',
+          profile: {
+             image: inlineImage,
+          },
+          createdAt: '2026-03-01T08:00:00.000Z',
+        },
+        product: {
+          id: 'prod-1',
+          name: 'Orange Juice',
+          price: '550',
+           image: inlineImage,
+          tag: 'Fresh',
+        },
+        metadata: {
+          current: {
+            id: 'prod-1',
+            name: 'Orange Juice',
+            price: '550',
+             image: inlineImage,
+            tag: 'Fresh',
+          },
+           previousImage: inlineImage,
+        },
+        likesCount: 1,
+        createdAt: '2026-03-14T08:00:00.000Z',
+      },
+    ]);
   });
 
   it('saves a feed for one month and returns the enriched saved item', async () => {
@@ -266,29 +385,33 @@ describe('newsfeed service', () => {
         createdAt: new Date('2026-03-14T08:00:00.000Z'),
       },
     } as never);
-    mockedStoreClient.findStoreSummaryById.mockResolvedValue({
-      id: 7,
-      ownerUserId: 'user-123',
-      name: 'Fresh Mart',
-      location: 'Main Road',
-      rating: '4.5',
-      image: 'https://example.com/fresh-mart.png',
-      badges: ['Popular'],
-      delivery: '30 mins',
-      minOrderRs: '500',
-      openingTime: '09:00',
-      closingTime: '22:00',
-      phoneNumber: '03001234567',
-    });
-    mockedAuthClient.findUserPublicById.mockResolvedValue({
-      id: 'user-123',
-      name: 'Store Owner',
-      mobileNumber: '03009998888',
-      profile: {
-        image: null,
+    mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
+      {
+        id: 7,
+        ownerUserId: 'user-123',
+        name: 'Fresh Mart',
+        location: 'Main Road',
+        rating: '4.5',
+        image: 'https://example.com/fresh-mart.png',
+        badges: ['Popular'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
       },
-      createdAt: '2026-03-01T08:00:00.000Z',
-    });
+    ]);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Store Owner',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
 
     const savedFeed = await newsFeedService.saveNewsFeed('user-123', 'feed-3');
 
@@ -367,29 +490,33 @@ describe('newsfeed service', () => {
         },
       },
     ] as never);
-    mockedStoreClient.findStoreSummaryById.mockResolvedValue({
-      id: 7,
-      ownerUserId: 'user-123',
-      name: 'Fresh Mart',
-      location: 'Main Road',
-      rating: '4.5',
-      image: 'https://example.com/fresh-mart.png',
-      badges: ['Popular'],
-      delivery: '30 mins',
-      minOrderRs: '500',
-      openingTime: '09:00',
-      closingTime: '22:00',
-      phoneNumber: '03001234567',
-    });
-    mockedAuthClient.findUserPublicById.mockResolvedValue({
-      id: 'user-123',
-      name: 'Store Owner',
-      mobileNumber: '03009998888',
-      profile: {
-        image: null,
+    mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
+      {
+        id: 7,
+        ownerUserId: 'user-123',
+        name: 'Fresh Mart',
+        location: 'Main Road',
+        rating: '4.5',
+        image: 'https://example.com/fresh-mart.png',
+        badges: ['Popular'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
       },
-      createdAt: '2026-03-01T08:00:00.000Z',
-    });
+    ]);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Store Owner',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
 
     const savedFeeds = await newsFeedService.listSavedNewsFeed('user-123', 1, 10);
 

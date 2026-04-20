@@ -32,9 +32,9 @@ describe('newsfeed schemas', () => {
     const payload = newsFeedSyncBodySchema.parse({
       events: [
         {
-          type: 'ANNOUNCEMENT_CREATED',
-          title: 'New announcement: Water supply update',
-          description: 'Community Admin shared a community update. Water service resumes at 4pm.',
+          type: 'EVENT_MANAGEMENT_CREATED',
+          title: 'New community event: Water supply meeting',
+          description: 'Community Admin scheduled a community event at Main Hall.',
         },
       ],
       refreshMetrics: ['POPULAR_STORE'],
