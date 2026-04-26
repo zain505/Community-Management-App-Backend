@@ -1,8 +1,10 @@
+const mysqlPort = process.env.MYSQL_PORT ?? '3306';
+
 process.env.NODE_ENV = 'test';
 process.env.PORT = '4400';
 process.env.LOG_LEVEL = 'info';
 process.env.CORS_ORIGINS = 'http://localhost:3000';
-process.env.DATABASE_URL = 'mysql://root:root@127.0.0.1:3306/app_db';
+process.env.DATABASE_URL = `mysql://root:root@127.0.0.1:${mysqlPort}/app_db`;
 process.env.AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:4100';
 process.env.AUTH_SERVICE_TIMEOUT_MS = '10000';
 process.env.NEWSFEED_SERVICE_BASE_URL = 'http://127.0.0.1:4300';

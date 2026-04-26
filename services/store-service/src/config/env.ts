@@ -21,6 +21,8 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+  AUTH_SERVICE_BASE_URL: z.string().url().default('http://127.0.0.1:4100'),
+  AUTH_SERVICE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   NEWSFEED_SERVICE_BASE_URL: z.string().url().default('http://127.0.0.1:4300'),
   NEWSFEED_SERVICE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 });

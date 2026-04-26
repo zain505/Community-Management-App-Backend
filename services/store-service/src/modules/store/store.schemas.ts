@@ -17,6 +17,20 @@ const storeTimeSchema = z
   });
 
 const storeBadgeSchema = z.string().trim().min(1).max(40);
+const activeStoreSchema = z
+  .union([z.boolean(), z.literal(0), z.literal(1)])
+  .transform((value) => value === true || value === 1);
+const activeStoreQuerySchema = z.preprocess((value) => {
+  if (value === true || value === 1 || value === 'true' || value === '1') {
+    return true;
+  }
+
+  if (value === false || value === 0 || value === 'false' || value === '0') {
+    return false;
+  }
+
+  return value;
+}, z.boolean());
 
 const storeProductSchema = z.object({
   id: z.string().trim().min(1).max(64).optional(),
@@ -55,13 +69,15 @@ function normalizeStorePayload<T extends { contact?: string; phoneNumber?: strin
 
 const storePayloadSchema = z.object(storePayloadFields).strict();
 
-export const createStoreBodySchema = storePayloadSchema.refine(
-  (payload) => typeof payload.phoneNumber === 'string' || typeof payload.contact === 'string',
-  {
-    message: 'Phone number is required',
-    path: ['phoneNumber'],
-  },
-).transform(normalizeStorePayload);
+export const createStoreBodySchema = storePayloadSchema
+  .refine(
+    (payload) => typeof payload.phoneNumber === 'string' || typeof payload.contact === 'string',
+    {
+      message: 'Phone number is required',
+      path: ['phoneNumber'],
+    },
+  )
+  .transform(normalizeStorePayload);
 
 export const updateStoreBodySchema = storePayloadSchema
   .partial()
@@ -76,6 +92,10 @@ export const createStoreRatingBodySchema = z.object({
   description: z.string().trim().min(1).max(100).optional(),
 });
 
+export const updateStoreActivationBodySchema = z.object({
+  active: activeStoreSchema,
+});
+
 export const storeIdParamSchema = z.object({
   storeId: z.coerce.number().int().positive(),
 });
@@ -83,4 +103,8 @@ export const storeIdParamSchema = z.object({
 export const listStoresQuerySchema = z.object({
   search: z.string().trim().min(1).max(120).optional(),
   page: z.coerce.number().int().positive().default(1),
+});
+
+export const listStoresForAdminQuerySchema = listStoresQuerySchema.extend({
+  active: activeStoreQuerySchema.optional(),
 });

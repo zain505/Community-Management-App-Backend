@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `announcement` ALTER COLUMN `authorName` DROP DEFAULT;
+ALTER TABLE `Announcement` ALTER COLUMN `authorName` DROP DEFAULT;
 
 -- CreateTable
 CREATE TABLE `ChatMessage` (

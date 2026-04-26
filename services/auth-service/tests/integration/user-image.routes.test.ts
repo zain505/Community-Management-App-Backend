@@ -5,6 +5,7 @@ jest.mock('../../src/modules/auth/auth.service', () => ({
     refresh: jest.fn(),
     logout: jest.fn(),
     getUserStatus: jest.fn(),
+    updateUserActivation: jest.fn(),
     updateUserImage: jest.fn(),
   },
 }));

@@ -2,7 +2,9 @@ jest.mock('../../src/modules/store/store.service', () => ({
   storeService: {
     createMyStore: jest.fn(),
     listStores: jest.fn(),
+    listStoresForAdmin: jest.fn(),
     rateStore: jest.fn(),
+    updateStoreActivation: jest.fn(),
   },
 }));
 
@@ -30,6 +32,7 @@ describe('store routes', () => {
       {
         id: 18,
         name: 'Fresh Mart',
+        active: true,
         location: 'Main Road',
         rating: '4.5',
         image: 'data:image/png;base64,aGVsbG8=',
@@ -65,10 +68,50 @@ describe('store routes', () => {
     expect(mockedStoreService.listStores).toHaveBeenCalledWith(undefined, 1);
   });
 
+  it('passes admin store-list queries through for authenticated users', async () => {
+    mockedStoreService.listStoresForAdmin.mockResolvedValue([
+      {
+        id: 19,
+        name: 'Fresh Mart Closed',
+        active: false,
+        location: 'Main Road',
+        rating: '4.5',
+        image: 'data:image/png;base64,aGVsbG8=',
+        badges: ['Best Seller'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
+        reviews: [],
+      },
+    ]);
+
+    const response = await request(app)
+      .get('/v1/stores/admin?search=fresh&page=2&active=0')
+      .set('Authorization', `Bearer ${getAccessToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toEqual([
+      expect.objectContaining({
+        id: 19,
+        active: false,
+      }),
+    ]);
+    expect(mockedStoreService.listStoresForAdmin).toHaveBeenCalledWith(
+      'user_123',
+      'fresh',
+      2,
+      false,
+    );
+  });
+
   it('accepts large base64 store images for store creation', async () => {
     mockedStoreService.createMyStore.mockResolvedValue({
       id: 18,
       name: 'Fresh Mart',
+      active: true,
       location: 'Main Road',
       rating: '0',
       image: largeStoreImageBase64,
@@ -124,6 +167,7 @@ describe('store routes', () => {
     mockedStoreService.rateStore.mockResolvedValue({
       id: 18,
       name: 'Fresh Mart',
+      active: true,
       location: 'Main Road',
       rating: '4.5',
       image: 'data:image/png;base64,aGVsbG8=',
@@ -154,5 +198,35 @@ describe('store routes', () => {
       badges: ['Best Seller'],
       description: 'Fresh produce and helpful staff.',
     });
+  });
+
+  it('allows authenticated admins to update a store activation state', async () => {
+    mockedStoreService.updateStoreActivation.mockResolvedValue({
+      id: 18,
+      name: 'Fresh Mart',
+      active: false,
+      location: 'Main Road',
+      rating: '4.5',
+      image: 'data:image/png;base64,aGVsbG8=',
+      badges: ['Best Seller'],
+      delivery: '30 mins',
+      minOrderRs: '500',
+      openingTime: '09:00',
+      closingTime: '22:00',
+      phoneNumber: '03001234567',
+      products: [],
+    });
+
+    const response = await request(app)
+      .patch('/v1/stores/18/status')
+      .set('Authorization', `Bearer ${getAccessToken()}`)
+      .send({
+        active: 0,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.active).toBe(false);
+    expect(mockedStoreService.updateStoreActivation).toHaveBeenCalledWith('user_123', 18, false);
   });
 });

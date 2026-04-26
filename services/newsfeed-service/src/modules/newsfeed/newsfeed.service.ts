@@ -18,7 +18,11 @@ import { StatusCodes } from 'http-status-codes';
 import { type Prisma } from '../../generated/prisma';
 import { AppError } from '../../shared/app-error';
 import { authClient } from '../auth/auth.client';
-import { newsFeedRepository, type NewsFeedItemRecord, type SavedNewsFeedRecord } from './newsfeed.repository';
+import {
+  newsFeedRepository,
+  type NewsFeedItemRecord,
+  type SavedNewsFeedRecord,
+} from './newsfeed.repository';
 import { storeClient } from '../store/store.client';
 
 const DEFAULT_NEWSFEED_LIMIT = 20;
@@ -52,7 +56,10 @@ function sanitizeMetadataValue(value: unknown, key?: string): unknown {
   }
 
   return Object.fromEntries(
-    Object.entries(value).map(([nestedKey, nestedValue]) => [nestedKey, sanitizeMetadataValue(nestedValue, nestedKey)]),
+    Object.entries(value).map(([nestedKey, nestedValue]) => [
+      nestedKey,
+      sanitizeMetadataValue(nestedValue, nestedKey),
+    ]),
   );
 }
 
@@ -78,14 +85,20 @@ function toNewsFeedItem(item: NewsFeedItemRecord): NewsFeedItem {
   };
 }
 
-function toNewsFeedLikeResponse(newsFeedLike: { id: string; likesCount: number }): NewsFeedLikeResponse {
+function toNewsFeedLikeResponse(newsFeedLike: {
+  id: string;
+  likesCount: number;
+}): NewsFeedLikeResponse {
   return {
     id: newsFeedLike.id,
     likesCount: newsFeedLike.likesCount,
   };
 }
 
-function normalizePagination(page = 1, limit = DEFAULT_NEWSFEED_LIMIT): { page: number; limit: number } {
+function normalizePagination(
+  page = 1,
+  limit = DEFAULT_NEWSFEED_LIMIT,
+): { page: number; limit: number } {
   const normalizedPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const normalizedLimit = Number.isFinite(limit)
     ? Math.min(Math.max(Math.floor(limit), 1), MAX_NEWSFEED_LIMIT)
@@ -124,6 +137,7 @@ function toStoreSummary(store: StoreSummaryWithOwner): StoreSummary {
   return {
     id: store.id,
     name: store.name,
+    active: store.active,
     location: store.location,
     rating: store.rating,
     image: sanitizeImageValue(store.image),
@@ -204,16 +218,30 @@ interface NewsFeedEnrichmentData {
   storeOwnersById: Map<string, UserPublic>;
 }
 
-async function buildNewsFeedEnrichmentData(items: NewsFeedItemRecord[]): Promise<NewsFeedEnrichmentData> {
-  const storeIds = [...new Set(items.map((item) => item.storeId).filter((storeId): storeId is number => typeof storeId === 'number'))];
+async function buildNewsFeedEnrichmentData(
+  items: NewsFeedItemRecord[],
+): Promise<NewsFeedEnrichmentData> {
+  const storeIds = [
+    ...new Set(
+      items
+        .map((item) => item.storeId)
+        .filter((storeId): storeId is number => typeof storeId === 'number'),
+    ),
+  ];
   const stores =
     storeIds.length > 0 ? await storeClient.findStoreSummariesByIds(storeIds).catch(() => []) : [];
   const storeSummariesById = buildStoreSummaryMap(stores);
   const ownerUserIds = [
-    ...new Set(stores.map((store) => store.ownerUserId).filter((ownerUserId) => ownerUserId.trim().length > 0)),
+    ...new Set(
+      stores
+        .map((store) => store.ownerUserId)
+        .filter((ownerUserId) => ownerUserId.trim().length > 0),
+    ),
   ];
   const owners =
-    ownerUserIds.length > 0 ? await authClient.findUsersPublicByIds(ownerUserIds).catch(() => []) : [];
+    ownerUserIds.length > 0
+      ? await authClient.findUsersPublicByIds(ownerUserIds).catch(() => [])
+      : [];
 
   return {
     storeSummariesById,
@@ -227,12 +255,13 @@ function enrichNewsFeedItem(
 ): NewsFeedItem {
   const baseItem = toNewsFeedItem(item);
   const attachedStoreSnapshot =
-    typeof item.storeId === 'number' ? enrichmentData.storeSummariesById.get(item.storeId) ?? null : null;
+    typeof item.storeId === 'number'
+      ? (enrichmentData.storeSummariesById.get(item.storeId) ?? null)
+      : null;
   const attachedStore = attachedStoreSnapshot ? toStoreSummary(attachedStoreSnapshot) : undefined;
-  const attachedStoreOwner =
-    attachedStoreSnapshot?.ownerUserId
-      ? enrichmentData.storeOwnersById.get(attachedStoreSnapshot.ownerUserId)
-      : undefined;
+  const attachedStoreOwner = attachedStoreSnapshot?.ownerUserId
+    ? enrichmentData.storeOwnersById.get(attachedStoreSnapshot.ownerUserId)
+    : undefined;
 
   return {
     ...baseItem,
@@ -385,8 +414,15 @@ export const newsFeedService = {
 
     await newsFeedRepository.deleteExpiredSavedEntries(now);
 
-    const items = await newsFeedRepository.listSavedEntries(userId, now, pagination.page, pagination.limit);
-    const enrichmentData = await buildNewsFeedEnrichmentData(items.map((item) => item.newsFeedItem));
+    const items = await newsFeedRepository.listSavedEntries(
+      userId,
+      now,
+      pagination.page,
+      pagination.limit,
+    );
+    const enrichmentData = await buildNewsFeedEnrichmentData(
+      items.map((item) => item.newsFeedItem),
+    );
 
     return {
       items: await Promise.all(items.map((item) => toSavedNewsFeedItem(item, enrichmentData))),

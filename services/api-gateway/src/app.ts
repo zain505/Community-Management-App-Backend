@@ -10,6 +10,7 @@ import { globalRateLimiter } from './middleware/rate-limit';
 import { requestIdMiddleware } from './middleware/request-id';
 import { requestLogger } from './middleware/request-logger';
 import { healthRouter } from './modules/health/health.routes';
+import { isSocketIoRequestPath, proxySocketIoHttpRequest } from './modules/proxy/socket-io-proxy';
 import { proxyRouter } from './modules/proxy/proxy.routes';
 
 const requestBodyLimit = '8mb';
@@ -37,6 +38,15 @@ app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(cookieParser());
 app.use(globalRateLimiter);
+
+app.use((req, res, next) => {
+  if (!isSocketIoRequestPath(req.originalUrl)) {
+    next();
+    return;
+  }
+
+  void proxySocketIoHttpRequest(req, res);
+});
 
 app.use(healthRouter);
 app.use(proxyRouter);

@@ -1,9 +1,14 @@
+import http from 'node:http';
 import { app } from './app';
 import { env } from './config/env';
 import { logger } from './config/logger';
+import { attachSocketIoUpgradeProxy } from './modules/proxy/socket-io-proxy';
 
 async function bootstrap(): Promise<void> {
-  const server = app.listen(env.PORT, () => {
+  const server = http.createServer(app);
+  attachSocketIoUpgradeProxy(server);
+
+  server.listen(env.PORT, () => {
     logger.info({ port: env.PORT }, `${env.SERVICE_NAME} started`);
   });
   server.once('error', (error: NodeJS.ErrnoException) => {

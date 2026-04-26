@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `newsfeeditem` MODIFY `description` VARCHAR(191) NOT NULL;
+ALTER TABLE `NewsFeedItem` MODIFY `description` VARCHAR(191) NOT NULL;
 
 -- CreateTable
 CREATE TABLE `NewsFeedLike` (

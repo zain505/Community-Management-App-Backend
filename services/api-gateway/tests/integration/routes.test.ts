@@ -1,3 +1,4 @@
+import http, { type Server } from 'node:http';
 import request from 'supertest';
 import { app } from '../../src/app';
 
@@ -89,5 +90,46 @@ describe('routes', () => {
     expect(response.status).toBe(503);
     expect(response.body.success).toBe(false);
     expect(response.body.code).toBe('NEWSFEED_SERVICE_UNAVAILABLE');
+  });
+
+  it('proxies socket.io handshake traffic to app-service', async () => {
+    const mockAppService: Server = http.createServer((req, res) => {
+      if (req.url?.startsWith('/socket.io/')) {
+        res.statusCode = 200;
+        res.setHeader('content-type', 'text/plain; charset=UTF-8');
+        res.end('0{"sid":"socket-proxy-test","upgrades":["websocket"]}');
+        return;
+      }
+
+      res.statusCode = 404;
+      res.end();
+    });
+
+    await new Promise<void>((resolve) => {
+      mockAppService.listen(59996, '127.0.0.1', () => {
+        resolve();
+      });
+    });
+
+    try {
+      const response = await request(app)
+        .get('/socket.io/?EIO=4&transport=polling')
+        .set('origin', 'http://localhost:3000');
+
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('"sid":"socket-proxy-test"');
+      expect(response.headers['content-type']).toContain('text/plain');
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        mockAppService.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
   });
 });

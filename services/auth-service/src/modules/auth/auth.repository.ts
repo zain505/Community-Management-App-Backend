@@ -1,6 +1,8 @@
 import type { Prisma, RefreshToken, User } from '../../generated/prisma';
 import { prisma } from '../../lib/prisma';
 
+type ManagedUserRecord = Pick<User, 'id' | 'mobileNumber' | 'name' | 'usertype' | 'profile' | 'isActive' | 'createdAt'>;
+
 export const authRepository = {
   findUserByMobileNumber(mobileNumber: string): Promise<User | null> {
     return prisma.user.findFirst({ where: { mobileNumber } });
@@ -20,6 +22,23 @@ export const authRepository = {
     });
   },
 
+  findAllUsers(): Promise<ManagedUserRecord[]> {
+    return prisma.user.findMany({
+      select: {
+        id: true,
+        mobileNumber: true,
+        name: true,
+        usertype: true,
+        profile: true,
+        isActive: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  },
+
   createUser(data: Prisma.UserCreateInput): Promise<User> {
     return prisma.user.create({ data });
   },
@@ -28,6 +47,13 @@ export const authRepository = {
     return prisma.user.update({
       where: { id },
       data: { profile },
+    });
+  },
+
+  updateUserActiveStatus(id: string, isActive: boolean): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { isActive },
     });
   },
 
@@ -42,6 +68,16 @@ export const authRepository = {
   revokeRefreshToken(id: string): Promise<RefreshToken> {
     return prisma.refreshToken.update({
       where: { id },
+      data: { revokedAt: new Date() },
+    });
+  },
+
+  revokeActiveRefreshTokensByUserId(userId: string): Promise<Prisma.BatchPayload> {
+    return prisma.refreshToken.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+      },
       data: { revokedAt: new Date() },
     });
   },

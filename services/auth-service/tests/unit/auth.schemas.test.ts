@@ -1,4 +1,9 @@
-import { loginBodySchema, registerBodySchema, updateUserImageBodySchema } from '../../src/modules/auth/auth.schemas';
+import {
+  loginBodySchema,
+  registerBodySchema,
+  updateUserActivationBodySchema,
+  updateUserImageBodySchema,
+} from '../../src/modules/auth/auth.schemas';
 
 describe('auth schemas', () => {
   it('accepts a valid register payload', () => {
@@ -19,6 +24,27 @@ describe('auth schemas', () => {
     });
 
     expect(value.usertype).toBe(2);
+  });
+
+  it('accepts the seeded super admin login password', () => {
+    const value = loginBodySchema.parse({
+      mobileNumber: '03074029959',
+      password: 'root',
+      usertype: 0,
+    });
+
+    expect(value.password).toBe('root');
+    expect(value.usertype).toBe(0);
+  });
+
+  it('accepts a valid local mobile phone number', () => {
+    const value = loginBodySchema.parse({
+      mobileNumber: '03074029959',
+      password: 'root',
+      usertype: 0,
+    });
+
+    expect(value.mobileNumber).toBe('03074029959');
   });
 
   it('rejects short passwords', () => {
@@ -92,6 +118,22 @@ describe('auth schemas', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('accepts numeric activation payloads and normalizes them to booleans', () => {
+    const result = updateUserActivationBodySchema.parse({
+      isActive: 0,
+    });
+
+    expect(result.isActive).toBe(false);
+  });
+
+  it('rejects invalid activation payloads', () => {
+    const result = updateUserActivationBodySchema.safeParse({
+      isActive: 'inactive',
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it('rejects empty user image payloads', () => {

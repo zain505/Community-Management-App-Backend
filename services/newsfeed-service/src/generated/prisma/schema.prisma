@@ -53,6 +53,7 @@ model NewsFeedItem {
 
   @@index([storeId])
   @@index([createdAt])
+  @@index([createdAt, id])
   @@index([type])
 }
 

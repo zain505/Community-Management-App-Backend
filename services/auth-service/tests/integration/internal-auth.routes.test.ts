@@ -5,6 +5,8 @@ jest.mock('../../src/modules/auth/auth.service', () => ({
     refresh: jest.fn(),
     logout: jest.fn(),
     getUserStatus: jest.fn(),
+    getManagedUserStatus: jest.fn(),
+    updateUserActivation: jest.fn(),
     updateUserImage: jest.fn(),
   },
 }));
@@ -42,5 +44,30 @@ describe('internal auth routes', () => {
       isActive: true,
     });
     expect(mockedAuthService.getUserStatus).toHaveBeenCalledWith('user-123');
+  });
+
+  it('returns managed user status for admin-aware service-to-service lookups', async () => {
+    mockedAuthService.getManagedUserStatus.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community Admin',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+
+    const response = await request(app).get('/internal/auth/users/user-123/managed-status');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toMatchObject({
+      id: 'user-123',
+      usertype: 1,
+      isActive: true,
+    });
+    expect(mockedAuthService.getManagedUserStatus).toHaveBeenCalledWith('user-123');
   });
 });

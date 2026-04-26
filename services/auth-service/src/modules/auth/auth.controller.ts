@@ -1,6 +1,12 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import type { LoginRequest, LogoutRequest, RegisterRequest, TokenRefreshRequest } from '@community/contracts';
+import type {
+  LoginRequest,
+  LogoutRequest,
+  RegisterRequest,
+  TokenRefreshRequest,
+  UpdateUserActivationRequest,
+} from '@community/contracts';
 import { sendSuccess } from '../../lib/http';
 import { AppError } from '../../shared/app-error';
 import { authService } from './auth.service';
@@ -34,10 +40,45 @@ export async function getUserStatus(req: Request, res: Response): Promise<void> 
   sendSuccess(res, StatusCodes.OK, user);
 }
 
+export async function getManagedUserStatus(req: Request, res: Response): Promise<void> {
+  const user = await authService.getManagedUserStatus((req.params as { id: string }).id);
+  sendSuccess(res, StatusCodes.OK, user);
+}
+
 export async function listUsersPublic(req: Request, res: Response): Promise<void> {
   const query = req.query as unknown as { ids: string[] };
   const users = await authService.listUsersPublicByIds(query.ids);
   sendSuccess(res, StatusCodes.OK, users);
+}
+
+export async function listAllUsers(req: Request, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new AppError('Access token is required', {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      code: 'UNAUTHORIZED',
+    });
+  }
+
+  const users = await authService.listAllUsers(req.user.id);
+  sendSuccess(res, StatusCodes.OK, users);
+}
+
+export async function updateUserActivation(req: Request, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new AppError('Access token is required', {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      code: 'UNAUTHORIZED',
+    });
+  }
+
+  const payload = req.body as UpdateUserActivationRequest;
+  const updatedUser = await authService.updateUserActivation({
+    requesterId: req.user.id,
+    userId: (req.params as { id: string }).id,
+    isActive: payload.isActive,
+  });
+
+  sendSuccess(res, StatusCodes.OK, updatedUser);
 }
 
 export async function updateUserImage(req: Request, res: Response): Promise<void> {

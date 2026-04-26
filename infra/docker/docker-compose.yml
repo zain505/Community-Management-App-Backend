@@ -1,3 +1,19 @@
+name: community-app-backend
+
+x-backend-build: &backend-build
+  context: ../..
+  dockerfile: infra/docker/Dockerfile
+
+x-backend-service: &backend-service
+  build: *backend-build
+  image: community-app-backend:local
+  profiles:
+    - app
+  restart: unless-stopped
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+
 services:
   mysql:
     image: mysql:8.4
@@ -5,16 +21,27 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
       MYSQL_DATABASE: auth_db
       MYSQL_USER: community
       MYSQL_PASSWORD: community
     ports:
-      - '3306:3306'
+      - '${MYSQL_PORT:-3307}:3306'
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-ucommunity', '-pcommunity']
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          '127.0.0.1',
+          '--protocol=tcp',
+          '-ucommunity',
+          '-pcommunity',
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -25,8 +52,141 @@ services:
     restart: unless-stopped
     depends_on:
       - mysql
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
     ports:
       - '8080:8080'
 
+  migrate:
+    build: *backend-build
+    image: community-app-backend:local
+    container_name: community-migrate
+    profiles:
+      - app
+    restart: 'no'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ['sh', './infra/docker/run-migrations.sh']
+
+  auth-service:
+    <<: *backend-service
+    container_name: community-auth-service
+    env_file:
+      - ./env/auth-service.env
+    command: ['npm', 'run', 'start', '-w', 'services/auth-service']
+    ports:
+      - '4100:4100'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4100/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - auth_uploads:/app/services/auth-service/uploads
+
+  store-service:
+    <<: *backend-service
+    container_name: community-store-service
+    env_file:
+      - ./env/store-service.env
+    command: ['npm', 'run', 'start', '-w', 'services/store-service']
+    ports:
+      - '4200:4200'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4200/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  newsfeed-service:
+    <<: *backend-service
+    container_name: community-newsfeed-service
+    env_file:
+      - ./env/newsfeed-service.env
+    command: ['npm', 'run', 'start', '-w', 'services/newsfeed-service']
+    ports:
+      - '4300:4300'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4300/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  app-service:
+    <<: *backend-service
+    container_name: community-app-service
+    env_file:
+      - ./env/app-service.env
+    command: ['npm', 'run', 'start', '-w', 'services/app-service']
+    ports:
+      - '4400:4400'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4400/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  api-gateway:
+    <<: *backend-service
+    container_name: community-api-gateway
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      store-service:
+        condition: service_healthy
+      newsfeed-service:
+        condition: service_healthy
+      app-service:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - ./env/api-gateway.env
+    command: ['npm', 'run', 'start', '-w', 'services/api-gateway']
+    ports:
+      - '4000:4000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
 volumes:
   mysql_data:
+  auth_uploads:

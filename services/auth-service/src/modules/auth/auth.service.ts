@@ -6,19 +6,35 @@ import type {
   AuthResponse,
   AuthTokens,
   LoginRequest,
+  ManagedUserStatus,
   RegisterRequest,
+  RegisterResponse,
   UserProfile,
   UserPublic,
   UserStatus,
   UserType,
 } from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
-import { decodeTokenExpiration, hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../../lib/token';
+import {
+  decodeTokenExpiration,
+  hashToken,
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from '../../lib/token';
 import { verifyPassword, hashPassword } from '../../lib/password';
 import { AppError } from '../../shared/app-error';
 import { authRepository } from './auth.repository';
-import { buildUserImagePublicPath, resolveUserImagePublicPath, userImageUploadDir } from './user-image-storage';
-import { detectUserImageMimeType, getUserImageExtension, toBase64DataUrl } from './user-image.utils';
+import {
+  buildUserImagePublicPath,
+  resolveUserImagePublicPath,
+  userImageUploadDir,
+} from './user-image-storage';
+import {
+  detectUserImageMimeType,
+  getUserImageExtension,
+  toBase64DataUrl,
+} from './user-image.utils';
 
 const defaultUserProfile: UserProfile = {
   image: null,
@@ -120,6 +136,21 @@ function toUserStatus(user: {
   };
 }
 
+function toManagedUserStatus(user: {
+  id: string;
+  mobileNumber: string;
+  name: string;
+  usertype: number;
+  profile: Prisma.JsonValue | null;
+  isActive: boolean;
+  createdAt: Date;
+}): ManagedUserStatus {
+  return {
+    ...toUserStatus(user),
+    usertype: user.usertype as UserType,
+  };
+}
+
 async function deleteFileIfPresent(filePath: string | null | undefined): Promise<void> {
   if (!filePath) {
     return;
@@ -136,7 +167,10 @@ async function deleteFileIfPresent(filePath: string | null | undefined): Promise
   }
 }
 
-async function moveUploadedUserImage(userId: string, file: Express.UploadedUserImage): Promise<string> {
+async function moveUploadedUserImage(
+  userId: string,
+  file: Express.UploadedUserImage,
+): Promise<string> {
   const extension = getUserImageExtension(file.mimetype);
   const fileName = `${userId}-${Date.now()}-${randomUUID()}${extension}`;
   const destinationPath = path.join(userImageUploadDir, fileName);
@@ -159,6 +193,17 @@ async function deletePreviousUserImageIfManaged(publicPath: string | null): Prom
   }
 
   await deleteFileIfPresent(existingFilePath);
+}
+
+async function ensureActiveSuperAdmin(requesterId: string, action: string): Promise<void> {
+  const requester = await authRepository.findUserById(requesterId);
+
+  if (!requester || !requester.isActive || requester.usertype !== 0) {
+    throw new AppError(`Only active super admins can ${action}`, {
+      statusCode: StatusCodes.FORBIDDEN,
+      code: 'SUPER_ADMIN_REQUIRED',
+    });
+  }
 }
 
 async function issueTokens(user: { id: string; mobileNumber: string }): Promise<AuthTokens> {
@@ -198,6 +243,19 @@ export const authService = {
     return toUserStatus(user);
   },
 
+  async getManagedUserStatus(userId: string): Promise<ManagedUserStatus> {
+    const user = await authRepository.findUserById(userId);
+
+    if (!user) {
+      throw new AppError('User not found', {
+        statusCode: StatusCodes.NOT_FOUND,
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    return toManagedUserStatus(user);
+  },
+
   async listUsersPublicByIds(userIds: string[]): Promise<UserPublic[]> {
     if (userIds.length === 0) {
       return [];
@@ -214,7 +272,15 @@ export const authService = {
     );
   },
 
-  async register(payload: RegisterRequest): Promise<AuthResponse> {
+  async listAllUsers(requesterId: string): Promise<ManagedUserStatus[]> {
+    await ensureActiveSuperAdmin(requesterId, 'view all users');
+
+    const users = await authRepository.findAllUsers();
+
+    return users.map((user) => toManagedUserStatus(user));
+  },
+
+  async register(payload: RegisterRequest): Promise<RegisterResponse> {
     const existing = await authRepository.findUserByMobileNumber(payload.mobileNumber);
 
     if (existing) {
@@ -230,13 +296,22 @@ export const authService = {
       usertype: payload.usertype,
       profile: toStoredUserProfile(defaultUserProfile),
       passwordHash: await hashPassword(payload.password),
+      isActive: payload.usertype !== 1,
     });
+
+    if (!user.isActive) {
+      return {
+        user: toManagedUserStatus(user),
+        requiresActivation: true,
+      };
+    }
 
     const tokens = await issueTokens(user);
 
     return {
-      user: await toUserPublic(user),
+      user: toManagedUserStatus(user),
       tokens,
+      requiresActivation: false,
     };
   },
 
@@ -281,7 +356,11 @@ export const authService = {
     const hashedToken = hashToken(refreshToken);
     const existingRefreshToken = await authRepository.findRefreshTokenByHash(hashedToken);
 
-    if (!existingRefreshToken || existingRefreshToken.revokedAt || existingRefreshToken.expiresAt < new Date()) {
+    if (
+      !existingRefreshToken ||
+      existingRefreshToken.revokedAt ||
+      existingRefreshToken.expiresAt < new Date()
+    ) {
       throw new AppError('Refresh token is invalid or expired', {
         statusCode: StatusCodes.UNAUTHORIZED,
         code: 'INVALID_REFRESH_TOKEN',
@@ -329,13 +408,40 @@ export const authService = {
       return;
     }
 
-    const existingRefreshToken = await authRepository.findRefreshTokenByHash(hashToken(refreshToken));
+    const existingRefreshToken = await authRepository.findRefreshTokenByHash(
+      hashToken(refreshToken),
+    );
 
     if (!existingRefreshToken || existingRefreshToken.revokedAt) {
       return;
     }
 
     await authRepository.revokeRefreshToken(existingRefreshToken.id);
+  },
+
+  async updateUserActivation(params: {
+    requesterId: string;
+    userId: string;
+    isActive: boolean;
+  }): Promise<UserStatus> {
+    await ensureActiveSuperAdmin(params.requesterId, 'update account activation');
+
+    const user = await authRepository.findUserById(params.userId);
+
+    if (!user) {
+      throw new AppError('User not found', {
+        statusCode: StatusCodes.NOT_FOUND,
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    const updatedUser = await authRepository.updateUserActiveStatus(params.userId, params.isActive);
+
+    if (!params.isActive) {
+      await authRepository.revokeActiveRefreshTokensByUserId(params.userId);
+    }
+
+    return toUserStatus(updatedUser);
   },
 
   async updateUserImage(params: {

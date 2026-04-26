@@ -2,6 +2,7 @@ import type {
   CreateStoreRequest,
   CreateStoreRatingRequest,
   StoreListQuery,
+  UpdateStoreActivationRequest,
   UpdateStoreRequest,
 } from '@community/contracts';
 import type { Request, Response } from 'express';
@@ -9,6 +10,10 @@ import { StatusCodes } from 'http-status-codes';
 import { sendSuccess } from '../../lib/http';
 import { AppError } from '../../shared/app-error';
 import { storeService } from './store.service';
+
+type AdminStoreListQuery = StoreListQuery & {
+  active?: boolean;
+};
 
 function getAuthenticatedUserId(req: Request): string {
   const userId = req.user?.id;
@@ -33,6 +38,17 @@ export async function listStores(req: Request, res: Response): Promise<void> {
   sendSuccess(res, StatusCodes.OK, stores);
 }
 
+export async function listStoresForAdmin(req: Request, res: Response): Promise<void> {
+  const query = req.query as AdminStoreListQuery;
+  const stores = await storeService.listStoresForAdmin(
+    getAuthenticatedUserId(req),
+    query.search,
+    query.page,
+    query.active,
+  );
+  sendSuccess(res, StatusCodes.OK, stores);
+}
+
 export async function getMyStore(req: Request, res: Response): Promise<void> {
   const store = await storeService.getMyStore(getAuthenticatedUserId(req));
   sendSuccess(res, StatusCodes.OK, store);
@@ -48,7 +64,6 @@ export async function createMyStore(req: Request, res: Response): Promise<void> 
     getAuthenticatedUserId(req),
     req.body as CreateStoreRequest,
   );
-  console.log(">>>>>>>>>>>>>>>>>>",req.body);
   sendSuccess(res, StatusCodes.CREATED, store);
 }
 
@@ -56,6 +71,15 @@ export async function updateMyStore(req: Request, res: Response): Promise<void> 
   const store = await storeService.updateMyStore(
     getAuthenticatedUserId(req),
     req.body as UpdateStoreRequest,
+  );
+  sendSuccess(res, StatusCodes.OK, store);
+}
+
+export async function updateStoreActivation(req: Request, res: Response): Promise<void> {
+  const store = await storeService.updateStoreActivation(
+    getAuthenticatedUserId(req),
+    getStoreId(req),
+    (req.body as UpdateStoreActivationRequest).active,
   );
   sendSuccess(res, StatusCodes.OK, store);
 }

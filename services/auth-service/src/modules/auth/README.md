@@ -12,14 +12,14 @@
 
 ### Register
 
-- `mobileNumber`: international format (for example `+923001234567`)
+- `mobileNumber`: international format (for example `+923001234567`) or local format (for example `03074029959`)
 - `password`: 8 to 128 characters
 - `name`: 2 to 80 characters, trimmed
 
 ### Login
 
-- `mobileNumber`: international format (for example `+923001234567`)
-- `password`: 8 to 128 characters
+- `mobileNumber`: international format (for example `+923001234567`) or local format (for example `03074029959`)
+- `password`: 4 to 128 characters
 
 ### Refresh
 

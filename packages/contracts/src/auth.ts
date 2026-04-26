@@ -7,6 +7,10 @@ export interface RegisterRequest {
   usertype: UserType;
 }
 
+export interface UpdateUserActivationRequest {
+  isActive: boolean;
+}
+
 export interface LoginRequest {
   mobileNumber: string;
   password: string;
@@ -48,7 +52,17 @@ export interface UserStatus {
   createdAt: string;
 }
 
+export interface ManagedUserStatus extends UserStatus {
+  usertype: UserType;
+}
+
 export interface AuthResponse {
   user: UserPublic;
   tokens: AuthTokens;
+}
+
+export interface RegisterResponse {
+  user: ManagedUserStatus;
+  tokens?: AuthTokens;
+  requiresActivation: boolean;
 }

@@ -5,7 +5,7 @@ Microservices-ready Node.js starter using:
 - MySQL + Prisma
 - CORS + Helmet + Rate limiting
 - Shared contracts package
-- Docker Compose for local MySQL
+- Docker Compose for local MySQL and the full backend stack
 
 ## Workspace Layout
 
@@ -38,11 +38,10 @@ npm run env:setup
 
 3. Review the generated `services/*/.env` files and replace the placeholder JWT secrets.
 
-4. Make sure Docker Desktop is running, then start MySQL:
+4. Start MySQL and make sure your service env files point at the matching port:
 
-```bash
-npm run docker:up
-```
+- Local MySQL on your machine: use `127.0.0.1:3306`
+- Docker Compose MySQL: run `npm run docker:up` and use `127.0.0.1:3307`
 
 5. Generate Prisma client and run migrations:
 
@@ -62,6 +61,31 @@ If one of those services is already running on its configured port, `npm run dev
 If a service `.env` file is missing, `npm run dev` now creates it from that service's `.env.example` before startup.
 `npm run dev` also builds the shared `@community/contracts` package before launching services so a fresh checkout has the runtime contract files available.
 
+## Run The Full Backend In Docker
+
+If you want MySQL plus every backend service in containers, build and start the `app` profile:
+
+```bash
+npm run docker:up:app
+```
+
+This brings up:
+- `mysql` on `3307`
+- `adminer` on `8080`
+- `api-gateway` on `4000`
+- `auth-service` on `4100`
+- `store-service` on `4200`
+- `newsfeed-service` on `4300`
+- `app-service` on `4400`
+
+The full Docker stack uses the checked-in env files under `infra/docker/env/*.env`, so your existing `services/*/.env` files can stay tuned for local non-Docker development on `127.0.0.1:3306`. The Docker MySQL host port defaults to `3307` to avoid conflicts with a local MySQL service already using `3306`, and you can still override it with `MYSQL_PORT`. Update the placeholder JWT secrets there before using this outside local development.
+
+Stop everything and remove the named volumes with:
+
+```bash
+npm run docker:down
+```
+
 ## Fresh Environment Troubleshooting
 
 If you copied or moved the repository to a new folder and see `Cannot find module '@community/contracts/dist/index.js'`, remove existing installs and reinstall from the current project path so local `file:` dependencies are relinked correctly.
@@ -78,7 +102,7 @@ Remove-Item -Recurse -Force node_modules, services\*\node_modules, packages\*\no
 npm install
 ```
 
-If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. The included Docker setup expects `root:root` on `127.0.0.1:3306`.
+If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. Local non-Docker development uses `root:root` on `127.0.0.1:3306`, while the included Docker MySQL setup uses `root:root` on `127.0.0.1:3307`.
 
 ## API Endpoints
 
@@ -86,9 +110,12 @@ If Prisma reports `Authentication failed against database server`, make sure MyS
 - `GET /health`
 - `GET /ready`
 - `POST /v1/auth/register`
+  Admin signups (`usertype: 1`) are created inactive and must be activated by a super admin.
 - `POST /v1/auth/login`
 - `POST /v1/auth/refresh`
 - `POST /v1/auth/logout`
+- `PATCH /v1/auth/users/:id/status`
+  Super-admin-only account activation toggle with `{ "isActive": true | false | 1 | 0 }`
 
 `store-service`
 - `GET /health`

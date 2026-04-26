@@ -125,6 +125,7 @@ exports.Prisma.StoreScalarFieldEnum = {
   id: 'id',
   ownerUserId: 'ownerUserId',
   name: 'name',
+  active: 'active',
   location: 'location',
   rating: 'rating',
   image: 'image',

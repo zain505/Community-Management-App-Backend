@@ -2,12 +2,20 @@ jest.mock('../../src/modules/store/store.repository', () => ({
   storeRepository: {
     createForUser: jest.fn(),
     listStores: jest.fn(),
+    listStoresForAdmin: jest.fn(),
     incrementSearchCountByIds: jest.fn(),
     findStoreById: jest.fn(),
     findStoreByUserId: jest.fn(),
     deleteById: jest.fn(),
     addRatingForUser: jest.fn(),
     updateById: jest.fn(),
+    updateActiveStatusById: jest.fn(),
+  },
+}));
+
+jest.mock('../../src/modules/auth/auth-client', () => ({
+  authClient: {
+    getManagedUserStatus: jest.fn(),
   },
 }));
 
@@ -17,10 +25,12 @@ jest.mock('../../src/modules/newsfeed/newsfeed.client', () => ({
   },
 }));
 
+import { authClient } from '../../src/modules/auth/auth-client';
 import { newsFeedClient } from '../../src/modules/newsfeed/newsfeed.client';
 import { storeRepository } from '../../src/modules/store/store.repository';
 import { storeService } from '../../src/modules/store/store.service';
 
+const mockedAuthClient = jest.mocked(authClient);
 const mockedStoreRepository = jest.mocked(storeRepository);
 const mockedNewsFeedClient = jest.mocked(newsFeedClient);
 
@@ -32,6 +42,7 @@ function buildStoreRecord(overrides: Record<string, unknown> = {}) {
     id: 18,
     ownerUserId: 'user-123',
     name: 'Fresh Mart2',
+    active: true,
     location: 'Main Road',
     rating: '4.2',
     image: storeImageBase64,
@@ -161,6 +172,7 @@ describe('store service', () => {
       expect.objectContaining({
         id: 18,
         name: 'Fresh Mart2',
+        active: true,
         openingTime: '09:00',
         closingTime: '22:00',
         phoneNumber: '03001234567',
@@ -177,11 +189,45 @@ describe('store service', () => {
     expect(mockedStoreRepository.incrementSearchCountByIds).not.toHaveBeenCalled();
   });
 
+  it('allows active admin users to list stores for management without affecting search metrics', async () => {
+    mockedAuthClient.getManagedUserStatus.mockResolvedValue({
+      id: 'admin-123',
+      mobileNumber: '+923001234567',
+      name: 'Community Admin',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+    mockedStoreRepository.listStoresForAdmin.mockResolvedValue([
+      buildStoreRecord({
+        id: 19,
+        active: false,
+        name: 'Fresh Mart Closed',
+      }),
+    ]);
+
+    const stores = await storeService.listStoresForAdmin('admin-123', 'fresh', 2, false);
+
+    expect(stores).toEqual([
+      expect.objectContaining({
+        id: 19,
+        name: 'Fresh Mart Closed',
+        active: false,
+      }),
+    ]);
+    expect(mockedStoreRepository.listStoresForAdmin).toHaveBeenCalledWith('fresh', 2, false);
+    expect(mockedStoreRepository.incrementSearchCountByIds).not.toHaveBeenCalled();
+  });
+
   it('publishes only a store-created event when creating a store', async () => {
     mockedStoreRepository.findStoreByUserId.mockResolvedValue(null);
     mockedStoreRepository.createForUser.mockResolvedValue({
       id: 18,
       name: 'Fresh Mart2',
+      active: true,
       location: 'Main Road',
       rating: '0',
       image: storeImageBase64,
@@ -231,6 +277,75 @@ describe('store service', () => {
       phoneNumber: '03001234567',
       products: [],
     });
+  });
+
+  it('allows active admin users to deactivate a store without publishing a newsfeed update', async () => {
+    mockedAuthClient.getManagedUserStatus.mockResolvedValue({
+      id: 'admin-123',
+      mobileNumber: '+923001234567',
+      name: 'Community Admin',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+    mockedStoreRepository.findStoreById.mockResolvedValue(buildStoreRecord());
+    mockedStoreRepository.updateActiveStatusById.mockResolvedValue(
+      buildStoreRecord({
+        active: false,
+      }),
+    );
+    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+
+    const store = await storeService.updateStoreActivation('admin-123', 18, false);
+
+    expect(store.active).toBe(false);
+    expect(mockedStoreRepository.updateActiveStatusById).toHaveBeenCalledWith(18, false);
+    expect(mockedNewsFeedClient.syncBestEffort).not.toHaveBeenCalled();
+  });
+
+  it('rejects store activation changes from non-admin users', async () => {
+    mockedAuthClient.getManagedUserStatus.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+
+    await expect(storeService.updateStoreActivation('user-123', 18, false)).rejects.toMatchObject({
+      code: 'STORE_ADMIN_REQUIRED',
+      statusCode: 403,
+    });
+
+    expect(mockedStoreRepository.findStoreById).not.toHaveBeenCalled();
+  });
+
+  it('rejects store management list access from non-admin users', async () => {
+    mockedAuthClient.getManagedUserStatus.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+
+    await expect(storeService.listStoresForAdmin('user-123')).rejects.toMatchObject({
+      code: 'STORE_ADMIN_REQUIRED',
+      statusCode: 403,
+    });
+
+    expect(mockedStoreRepository.listStoresForAdmin).not.toHaveBeenCalled();
   });
 
   it('refreshes derived metrics after deleting a store', async () => {
@@ -307,21 +422,24 @@ describe('store service', () => {
     });
   });
 
-  it.each(storeFieldChangeCases)('$name', async ({ payload, updatedStoreOverrides, expectedEvent, expectedRefreshMetrics }) => {
-    const existingStore = buildStoreRecord();
-    const updatedStore = buildStoreRecord(updatedStoreOverrides);
+  it.each(storeFieldChangeCases)(
+    '$name',
+    async ({ payload, updatedStoreOverrides, expectedEvent, expectedRefreshMetrics }) => {
+      const existingStore = buildStoreRecord();
+      const updatedStore = buildStoreRecord(updatedStoreOverrides);
 
-    mockedStoreRepository.findStoreByUserId.mockResolvedValue(existingStore);
-    mockedStoreRepository.updateById.mockResolvedValue(updatedStore);
-    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+      mockedStoreRepository.findStoreByUserId.mockResolvedValue(existingStore);
+      mockedStoreRepository.updateById.mockResolvedValue(updatedStore);
+      mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
 
-    await storeService.updateMyStore('user-123', payload);
+      await storeService.updateMyStore('user-123', payload);
 
-    expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
-      events: [expectedEvent],
-      refreshMetrics: expectedRefreshMetrics,
-    });
-  });
+      expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
+        events: [expectedEvent],
+        refreshMetrics: expectedRefreshMetrics,
+      });
+    },
+  );
 
   it('publishes explicit events for location, image, delivery, min order, and phone number changes', async () => {
     const existingStore = buildStoreRecord();
@@ -530,6 +648,25 @@ describe('store service', () => {
     });
   });
 
+  it('rejects ratings for inactive stores', async () => {
+    mockedStoreRepository.findStoreById.mockResolvedValue(
+      buildStoreRecord({
+        active: false,
+      }),
+    );
+
+    await expect(
+      storeService.rateStore('user-123', 18, {
+        rating: 5,
+      }),
+    ).rejects.toMatchObject({
+      code: 'STORE_NOT_FOUND',
+      statusCode: 404,
+    });
+
+    expect(mockedStoreRepository.addRatingForUser).not.toHaveBeenCalled();
+  });
+
   it('publishes a profile event when store hours change', async () => {
     const existingStore = buildStoreRecord();
     const updatedStore = buildStoreRecord({
@@ -576,7 +713,9 @@ describe('store service', () => {
   it('publishes a friendly product-added event when a new product appears', async () => {
     const existingStore = buildStoreRecord();
     const updatedStore = buildStoreRecord({
-      products: [buildProductRecord({ id: 'prod-2', name: 'Chocolate Cake', price: '900', tag: 'Dessert' })],
+      products: [
+        buildProductRecord({ id: 'prod-2', name: 'Chocolate Cake', price: '900', tag: 'Dessert' }),
+      ],
     });
 
     mockedStoreRepository.findStoreByUserId.mockResolvedValue(existingStore);
@@ -685,14 +824,11 @@ describe('store service', () => {
     mockedStoreRepository.updateById.mockResolvedValue(updatedStore);
     mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
 
-    await storeService.updateMyStore(
-      'user-123',
-      {
-        name: 'Fresh Mart2',
-        updatedAt: '2026-03-15T08:00:00.000Z',
-        searchCount: 99,
-      } as never,
-    );
+    await storeService.updateMyStore('user-123', {
+      name: 'Fresh Mart2',
+      updatedAt: '2026-03-15T08:00:00.000Z',
+      searchCount: 99,
+    } as never);
 
     expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
       events: undefined,

@@ -1,6 +1,7 @@
 import type {
   CreateStoreRequest,
   CreateStoreRatingRequest,
+  ManagedUserStatus,
   MostSearchedStoreSnapshot,
   NewsFeedMetric,
   StoreReview,
@@ -16,6 +17,7 @@ import type {
 import { Prisma } from '../../generated/prisma';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../shared/app-error';
+import { authClient } from '../auth/auth-client';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
 import {
   storeRepository,
@@ -54,6 +56,7 @@ function toStoreReview(review: StoreReviewRecord): StoreReview {
 function toStoreSummary(store: {
   id: number;
   name: string;
+  active: boolean;
   location: string;
   rating: string;
   image: string;
@@ -68,6 +71,7 @@ function toStoreSummary(store: {
   return {
     id: store.id,
     name: store.name,
+    active: store.active,
     location: store.location,
     rating: store.rating,
     image: store.image,
@@ -179,6 +183,21 @@ function throwStoreNotFound(): never {
   });
 }
 
+function canManageStores(user: ManagedUserStatus): boolean {
+  return user.isActive && (user.usertype === 0 || user.usertype === 1);
+}
+
+async function ensureActiveStoreManager(requesterId: string, action: string): Promise<void> {
+  const requester = await authClient.getManagedUserStatus(requesterId);
+
+  if (!requester || !canManageStores(requester)) {
+    throw new AppError(`Only active admin users can ${action}`, {
+      statusCode: StatusCodes.FORBIDDEN,
+      code: 'STORE_ADMIN_REQUIRED',
+    });
+  }
+}
+
 function getUniqueConstraintTargets(error: Prisma.PrismaClientKnownRequestError): string[] {
   const target = error.meta?.target;
 
@@ -226,7 +245,10 @@ function handlePrismaError(error: unknown): never {
   throw error;
 }
 
-async function syncNewsFeed(events?: NewsFeedSyncEvent[], refreshMetrics?: NewsFeedMetric[]): Promise<void> {
+async function syncNewsFeed(
+  events?: NewsFeedSyncEvent[],
+  refreshMetrics?: NewsFeedMetric[],
+): Promise<void> {
   await newsFeedClient.syncBestEffort({
     events: events && events.length > 0 ? events : undefined,
     refreshMetrics: refreshMetrics && refreshMetrics.length > 0 ? refreshMetrics : undefined,
@@ -241,6 +263,19 @@ export const storeService = {
       await storeRepository.incrementSearchCountByIds(stores.map((store) => store.id));
       await syncNewsFeed(undefined, ['MOST_SEARCHED_STORE']);
     }
+
+    return stores.map(toStoreSummary);
+  },
+
+  async listStoresForAdmin(
+    requesterId: string,
+    search?: string,
+    page = 1,
+    active?: boolean,
+  ): Promise<StoreSummary[]> {
+    await ensureActiveStoreManager(requesterId, 'view stores for management');
+
+    const stores = await storeRepository.listStoresForAdmin(search, page, active);
 
     return stores.map(toStoreSummary);
   },
@@ -292,7 +327,9 @@ export const storeService = {
     }
 
     const productMatches =
-      payload.products !== undefined ? matchStoreProducts(existingStore.products, payload.products) : undefined;
+      payload.products !== undefined
+        ? matchStoreProducts(existingStore.products, payload.products)
+        : undefined;
     const productChanges = productMatches ? buildProductChanges(productMatches) : [];
     const updatedStore = await storeRepository.updateById(
       existingStore.id,
@@ -311,6 +348,28 @@ export const storeService = {
     return toStoreDetails(updatedStore);
   },
 
+  async updateStoreActivation(
+    requesterId: string,
+    storeId: number,
+    active: boolean,
+  ): Promise<StoreDetails> {
+    await ensureActiveStoreManager(requesterId, 'update store activation');
+
+    const existingStore = await storeRepository.findStoreById(storeId);
+
+    if (!existingStore) {
+      throwStoreNotFound();
+    }
+
+    if (existingStore.active === active) {
+      return toStoreDetails(existingStore);
+    }
+
+    const updatedStore = await storeRepository.updateActiveStatusById(storeId, active);
+
+    return toStoreDetails(updatedStore);
+  },
+
   async rateStore(
     userId: string,
     storeId: number,
@@ -319,6 +378,10 @@ export const storeService = {
     const existingStore = await storeRepository.findStoreById(storeId);
 
     if (!existingStore) {
+      throwStoreNotFound();
+    }
+
+    if (!existingStore.active) {
       throwStoreNotFound();
     }
 

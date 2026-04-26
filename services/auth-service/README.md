@@ -6,6 +6,7 @@ Reference implementation for the first microservice in this workspace.
 
 - user authentication
 - access/refresh token lifecycle
+- privileged account activation workflow
 - auth-ready health endpoints
 
 ## Local Commands

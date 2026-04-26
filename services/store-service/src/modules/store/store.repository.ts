@@ -51,6 +51,7 @@ const storeSummaryWithOwnerSelect = {
   id: true,
   ownerUserId: true,
   name: true,
+  active: true,
   location: true,
   rating: true,
   image: true,
@@ -130,7 +131,9 @@ interface UpdateStoreRecordInput {
   products?: StoreProductWriteInput[];
 }
 
-function toProductCreateInput(product: StoreProductWriteInput): Prisma.StoreProductCreateWithoutStoreInput {
+function toProductCreateInput(
+  product: StoreProductWriteInput,
+): Prisma.StoreProductCreateWithoutStoreInput {
   const data: Prisma.StoreProductCreateWithoutStoreInput = {
     name: product.name,
     price: product.price,
@@ -150,7 +153,23 @@ function formatStoreRating(value: number): string {
   return Number(value.toFixed(2)).toString();
 }
 
-function toProductUpdateInput(product: StoreProductWriteInput): Prisma.StoreProductUpdateWithoutStoreInput {
+function buildStoreListWhere(search?: string, active?: boolean): Prisma.StoreWhereInput {
+  const where: Prisma.StoreWhereInput = {};
+
+  if (active !== undefined) {
+    where.active = active;
+  }
+
+  if (search) {
+    where.OR = [{ name: { contains: search } }, { location: { contains: search } }];
+  }
+
+  return where;
+}
+
+function toProductUpdateInput(
+  product: StoreProductWriteInput,
+): Prisma.StoreProductUpdateWithoutStoreInput {
   return {
     name: product.name,
     price: product.price,
@@ -196,17 +215,20 @@ function buildProductRelationUpdate(
 
 export const storeRepository = {
   listStores(search?: string, page = 1): Promise<StoreListRecord[]> {
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search } },
-            { location: { contains: search } },
-          ],
-        }
-      : undefined;
-
     return prisma.store.findMany({
-      where,
+      where: buildStoreListWhere(search, true),
+      skip: (page - 1) * STORES_PER_PAGE,
+      take: STORES_PER_PAGE,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: storeListInclude,
+    });
+  },
+
+  listStoresForAdmin(search?: string, page = 1, active?: boolean): Promise<StoreListRecord[]> {
+    return prisma.store.findMany({
+      where: buildStoreListWhere(search, active),
       skip: (page - 1) * STORES_PER_PAGE,
       take: STORES_PER_PAGE,
       orderBy: {
@@ -256,10 +278,14 @@ export const storeRepository = {
     });
   },
 
-  createForUser(ownerUserId: string, payload: CreateStoreRecordInput): Promise<StoreWithProductsRecord> {
+  createForUser(
+    ownerUserId: string,
+    payload: CreateStoreRecordInput,
+  ): Promise<StoreWithProductsRecord> {
     return prisma.store.create({
       data: {
         name: payload.name,
+        active: true,
         location: payload.location,
         rating: '0',
         image: payload.image,
@@ -283,12 +309,18 @@ export const storeRepository = {
 
   listStoresForPopularityRanking(): Promise<StoreRankingRecord[]> {
     return prisma.store.findMany({
+      where: {
+        active: true,
+      },
       select: storeRankingSelect,
     });
   },
 
   findMostSearchedStore(): Promise<MostSearchedStoreRecord | null> {
     return prisma.store.findFirst({
+      where: {
+        active: true,
+      },
       orderBy: [
         {
           searchCount: 'desc',
@@ -302,18 +334,20 @@ export const storeRepository = {
   },
 
   findStoreBasicById(storeId: number): Promise<StoreBasicRecord | null> {
-    return prisma.store.findUnique({
+    return prisma.store.findFirst({
       where: {
         id: storeId,
+        active: true,
       },
       select: storeBasicSelect,
     });
   },
 
   findStoreSummaryById(storeId: number): Promise<StoreSummaryWithOwnerRecord | null> {
-    return prisma.store.findUnique({
+    return prisma.store.findFirst({
       where: {
         id: storeId,
+        active: true,
       },
       select: storeSummaryWithOwnerSelect,
     });
@@ -325,6 +359,7 @@ export const storeRepository = {
         id: {
           in: storeIds,
         },
+        active: true,
       },
       select: storeSummaryWithOwnerSelect,
     });
@@ -395,6 +430,14 @@ export const storeRepository = {
     return prisma.store.update({
       where: { id: storeId },
       data,
+      include: storeWithProductsInclude,
+    });
+  },
+
+  updateActiveStatusById(storeId: number, active: boolean): Promise<StoreWithProductsRecord> {
+    return prisma.store.update({
+      where: { id: storeId },
+      data: { active },
       include: storeWithProductsInclude,
     });
   },

@@ -1127,6 +1127,7 @@ export namespace Prisma {
     id: number | null
     ownerUserId: string | null
     name: string | null
+    active: boolean | null
     location: string | null
     rating: string | null
     image: string | null
@@ -1144,6 +1145,7 @@ export namespace Prisma {
     id: number | null
     ownerUserId: string | null
     name: string | null
+    active: boolean | null
     location: string | null
     rating: string | null
     image: string | null
@@ -1161,6 +1163,7 @@ export namespace Prisma {
     id: number
     ownerUserId: number
     name: number
+    active: number
     location: number
     rating: number
     image: number
@@ -1191,6 +1194,7 @@ export namespace Prisma {
     id?: true
     ownerUserId?: true
     name?: true
+    active?: true
     location?: true
     rating?: true
     image?: true
@@ -1208,6 +1212,7 @@ export namespace Prisma {
     id?: true
     ownerUserId?: true
     name?: true
+    active?: true
     location?: true
     rating?: true
     image?: true
@@ -1225,6 +1230,7 @@ export namespace Prisma {
     id?: true
     ownerUserId?: true
     name?: true
+    active?: true
     location?: true
     rating?: true
     image?: true
@@ -1330,6 +1336,7 @@ export namespace Prisma {
     id: number
     ownerUserId: string
     name: string
+    active: boolean
     location: string
     rating: string
     image: string
@@ -1367,6 +1374,7 @@ export namespace Prisma {
     id?: boolean
     ownerUserId?: boolean
     name?: boolean
+    active?: boolean
     location?: boolean
     rating?: boolean
     image?: boolean
@@ -1390,6 +1398,7 @@ export namespace Prisma {
     id?: boolean
     ownerUserId?: boolean
     name?: boolean
+    active?: boolean
     location?: boolean
     rating?: boolean
     image?: boolean
@@ -1404,7 +1413,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type StoreOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerUserId" | "name" | "location" | "rating" | "image" | "badges" | "delivery" | "minOrderRs" | "openingTime" | "closingTime" | "phoneNumber" | "searchCount" | "createdAt" | "updatedAt", ExtArgs["result"]["store"]>
+  export type StoreOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ownerUserId" | "name" | "active" | "location" | "rating" | "image" | "badges" | "delivery" | "minOrderRs" | "openingTime" | "closingTime" | "phoneNumber" | "searchCount" | "createdAt" | "updatedAt", ExtArgs["result"]["store"]>
   export type StoreInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     products?: boolean | Store$productsArgs<ExtArgs>
     ratings?: boolean | Store$ratingsArgs<ExtArgs>
@@ -1421,6 +1430,7 @@ export namespace Prisma {
       id: number
       ownerUserId: string
       name: string
+      active: boolean
       location: string
       rating: string
       image: string
@@ -1807,6 +1817,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Store", 'Int'>
     readonly ownerUserId: FieldRef<"Store", 'String'>
     readonly name: FieldRef<"Store", 'String'>
+    readonly active: FieldRef<"Store", 'Boolean'>
     readonly location: FieldRef<"Store", 'String'>
     readonly rating: FieldRef<"Store", 'String'>
     readonly image: FieldRef<"Store", 'String'>
@@ -4246,6 +4257,7 @@ export namespace Prisma {
     id: 'id',
     ownerUserId: 'ownerUserId',
     name: 'name',
+    active: 'active',
     location: 'location',
     rating: 'rating',
     image: 'image',
@@ -4388,6 +4400,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -4432,6 +4451,7 @@ export namespace Prisma {
     id?: IntFilter<"Store"> | number
     ownerUserId?: StringFilter<"Store"> | string
     name?: StringFilter<"Store"> | string
+    active?: BoolFilter<"Store"> | boolean
     location?: StringFilter<"Store"> | string
     rating?: StringFilter<"Store"> | string
     image?: StringFilter<"Store"> | string
@@ -4452,6 +4472,7 @@ export namespace Prisma {
     id?: SortOrder
     ownerUserId?: SortOrder
     name?: SortOrder
+    active?: SortOrder
     location?: SortOrder
     rating?: SortOrder
     image?: SortOrder
@@ -4476,6 +4497,7 @@ export namespace Prisma {
     OR?: StoreWhereInput[]
     NOT?: StoreWhereInput | StoreWhereInput[]
     name?: StringFilter<"Store"> | string
+    active?: BoolFilter<"Store"> | boolean
     location?: StringFilter<"Store"> | string
     rating?: StringFilter<"Store"> | string
     image?: StringFilter<"Store"> | string
@@ -4496,6 +4518,7 @@ export namespace Prisma {
     id?: SortOrder
     ownerUserId?: SortOrder
     name?: SortOrder
+    active?: SortOrder
     location?: SortOrder
     rating?: SortOrder
     image?: SortOrder
@@ -4522,6 +4545,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"Store"> | number
     ownerUserId?: StringWithAggregatesFilter<"Store"> | string
     name?: StringWithAggregatesFilter<"Store"> | string
+    active?: BoolWithAggregatesFilter<"Store"> | boolean
     location?: StringWithAggregatesFilter<"Store"> | string
     rating?: StringWithAggregatesFilter<"Store"> | string
     image?: StringWithAggregatesFilter<"Store"> | string
@@ -4686,6 +4710,7 @@ export namespace Prisma {
   export type StoreCreateInput = {
     ownerUserId: string
     name: string
+    active?: boolean
     location: string
     rating: string
     image: string
@@ -4706,6 +4731,7 @@ export namespace Prisma {
     id?: number
     ownerUserId: string
     name: string
+    active?: boolean
     location: string
     rating: string
     image: string
@@ -4725,6 +4751,7 @@ export namespace Prisma {
   export type StoreUpdateInput = {
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
@@ -4745,6 +4772,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
@@ -4765,6 +4793,7 @@ export namespace Prisma {
     id?: number
     ownerUserId: string
     name: string
+    active?: boolean
     location: string
     rating: string
     image: string
@@ -4782,6 +4811,7 @@ export namespace Prisma {
   export type StoreUpdateManyMutationInput = {
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
@@ -4800,6 +4830,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
@@ -4988,6 +5019,11 @@ export namespace Prisma {
     search?: string
     not?: NestedStringFilter<$PrismaModel> | string
   }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
   export type JsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -5058,6 +5094,7 @@ export namespace Prisma {
     id?: SortOrder
     ownerUserId?: SortOrder
     name?: SortOrder
+    active?: SortOrder
     location?: SortOrder
     rating?: SortOrder
     image?: SortOrder
@@ -5081,6 +5118,7 @@ export namespace Prisma {
     id?: SortOrder
     ownerUserId?: SortOrder
     name?: SortOrder
+    active?: SortOrder
     location?: SortOrder
     rating?: SortOrder
     image?: SortOrder
@@ -5098,6 +5136,7 @@ export namespace Prisma {
     id?: SortOrder
     ownerUserId?: SortOrder
     name?: SortOrder
+    active?: SortOrder
     location?: SortOrder
     rating?: SortOrder
     image?: SortOrder
@@ -5148,6 +5187,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
   export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -5390,6 +5437,10 @@ export namespace Prisma {
     set?: string
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -5524,6 +5575,11 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -5578,6 +5634,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedIntNullableFilter<$PrismaModel = never> = {
@@ -5810,6 +5874,7 @@ export namespace Prisma {
   export type StoreCreateWithoutProductsInput = {
     ownerUserId: string
     name: string
+    active?: boolean
     location: string
     rating: string
     image: string
@@ -5829,6 +5894,7 @@ export namespace Prisma {
     id?: number
     ownerUserId: string
     name: string
+    active?: boolean
     location: string
     rating: string
     image: string
@@ -5863,6 +5929,7 @@ export namespace Prisma {
   export type StoreUpdateWithoutProductsInput = {
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
@@ -5882,6 +5949,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
@@ -5900,6 +5968,7 @@ export namespace Prisma {
   export type StoreCreateWithoutRatingsInput = {
     ownerUserId: string
     name: string
+    active?: boolean
     location: string
     rating: string
     image: string
@@ -5919,6 +5988,7 @@ export namespace Prisma {
     id?: number
     ownerUserId: string
     name: string
+    active?: boolean
     location: string
     rating: string
     image: string
@@ -5953,6 +6023,7 @@ export namespace Prisma {
   export type StoreUpdateWithoutRatingsInput = {
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string
@@ -5972,6 +6043,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     ownerUserId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
     location?: StringFieldUpdateOperationsInput | string
     rating?: StringFieldUpdateOperationsInput | string
     image?: StringFieldUpdateOperationsInput | string

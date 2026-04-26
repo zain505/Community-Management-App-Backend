@@ -6,15 +6,15 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-generated-prisma.mjs",
     "start": "node dist/server.js",
     "test": "jest --runInBand",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\" \"*.json\"",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
+    "prisma:migrate": "prisma migrate dev && npm run prisma:seed",
+    "prisma:deploy": "prisma migrate deploy && npm run prisma:seed",
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "prisma": {

@@ -26,6 +26,7 @@ export interface StoreReview {
 export interface StoreSummary {
   id: number;
   name: string;
+  active: boolean;
   location: string;
   rating: string;
   image: string;
@@ -68,6 +69,10 @@ export interface UpdateStoreRequest {
   closingTime?: string;
   phoneNumber?: string;
   products?: StoreProductInput[];
+}
+
+export interface UpdateStoreActivationRequest {
+  active: boolean;
 }
 
 export interface CreateStoreRatingRequest {

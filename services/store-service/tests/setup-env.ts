@@ -1,8 +1,10 @@
+const mysqlPort = process.env.MYSQL_PORT ?? '3306';
+
 process.env.NODE_ENV = 'test';
 process.env.PORT = '4200';
 process.env.LOG_LEVEL = 'info';
 process.env.CORS_ORIGINS = 'http://localhost:3000';
-process.env.DATABASE_URL = 'mysql://root:root@127.0.0.1:3306/store_db';
+process.env.DATABASE_URL = `mysql://root:root@127.0.0.1:${mysqlPort}/store_db`;
 process.env.JWT_ACCESS_SECRET = '12345678901234567890123456789012';
 process.env.JWT_REFRESH_SECRET = '12345678901234567890123456789012';
 process.env.JWT_ACCESS_TTL = '15m';
@@ -11,5 +13,7 @@ process.env.BCRYPT_SALT_ROUNDS = '8';
 process.env.RATE_LIMIT_WINDOW_MS = '60000';
 process.env.RATE_LIMIT_MAX = '100';
 process.env.LOGIN_RATE_LIMIT_MAX = '10';
+process.env.AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:59997';
+process.env.AUTH_SERVICE_TIMEOUT_MS = '200';
 process.env.NEWSFEED_SERVICE_BASE_URL = 'http://127.0.0.1:59998';
 process.env.NEWSFEED_SERVICE_TIMEOUT_MS = '200';

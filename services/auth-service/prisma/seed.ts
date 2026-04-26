@@ -1,26 +1,87 @@
+import type { Prisma } from '../src/generated/prisma';
 import { PrismaClient } from '../src/generated/prisma';
-import { hashPassword } from '../src/lib/password';
+import { hashPassword, verifyPassword } from '../src/lib/password';
 
 const prisma = new PrismaClient();
+const defaultSuperAdmin = {
+  mobileNumber: '03074029959',
+  name: 'Super Admin',
+  usertype: 0,
+  isActive: true,
+  password: 'root',
+} as const;
+const legacyDefaultMobileNumbers = ['+923000000000'] as const;
+const legacyDefaultPassword = 'AdminPass123!';
+
+async function shouldResetDefaultPassword(passwordHash: string): Promise<boolean> {
+  if (await verifyPassword(defaultSuperAdmin.password, passwordHash)) {
+    return false;
+  }
+
+  return verifyPassword(legacyDefaultPassword, passwordHash);
+}
 
 async function main(): Promise<void> {
-  const mobileNumber = '+923000000000';
-  const existing = await prisma.user.findFirst({ where: { mobileNumber } });
+  const existingUsers = await prisma.user.findMany({
+    where: {
+      mobileNumber: {
+        in: [defaultSuperAdmin.mobileNumber, ...legacyDefaultMobileNumbers],
+      },
+    },
+    orderBy: {
+      createdAt: 'asc',
+    },
+  });
+  const existing =
+    existingUsers.find((user) => user.mobileNumber === defaultSuperAdmin.mobileNumber) ??
+    existingUsers[0];
 
-  if (existing) {
+  if (!existing) {
+    await prisma.user.create({
+      data: {
+        mobileNumber: defaultSuperAdmin.mobileNumber,
+        name: defaultSuperAdmin.name,
+        usertype: defaultSuperAdmin.usertype,
+        isActive: defaultSuperAdmin.isActive,
+        profile: {
+          image: null,
+        },
+        passwordHash: await hashPassword(defaultSuperAdmin.password),
+      },
+    });
+
     return;
   }
 
-  await prisma.user.create({
-    data: {
-      mobileNumber,
-      name: 'Community Admin',
-      usertype: 1,
-      profile: {
-        image: null,
-      },
-      passwordHash: await hashPassword('AdminPass123!'),
-    },
+  const updateData: Prisma.UserUpdateInput = {};
+
+  if (existing.name !== defaultSuperAdmin.name) {
+    updateData.name = defaultSuperAdmin.name;
+  }
+
+  if (existing.mobileNumber !== defaultSuperAdmin.mobileNumber) {
+    updateData.mobileNumber = defaultSuperAdmin.mobileNumber;
+  }
+
+  if (existing.usertype !== defaultSuperAdmin.usertype) {
+    updateData.usertype = defaultSuperAdmin.usertype;
+  }
+
+  if (existing.isActive !== defaultSuperAdmin.isActive) {
+    updateData.isActive = defaultSuperAdmin.isActive;
+  }
+
+  if (await shouldResetDefaultPassword(existing.passwordHash)) {
+    updateData.passwordHash = await hashPassword(defaultSuperAdmin.password);
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: existing.id },
+    data: updateData,
   });
 }
 

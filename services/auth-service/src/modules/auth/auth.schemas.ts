@@ -3,9 +3,13 @@ import { z } from 'zod';
 const mobileNumberSchema = z
   .string()
   .trim()
-  .regex(/^\+?[1-9]\d{7,14}$/, 'Mobile phone number must be in international format');
+  .regex(
+    /^(?:\+?[1-9]\d{7,14}|03\d{9})$/,
+    'Mobile phone number must be in international format or local format like 03074029959',
+  );
 const reservedAdminNamePattern = /\b(?:super\s+admin|admin)\b/i;
 const userTypeSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+const isActiveSchema = z.union([z.boolean(), z.literal(0), z.literal(1)]).transform((value) => value === true || value === 1);
 
 export const registerBodySchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -26,7 +30,7 @@ export const registerBodySchema = z.object({
 
 export const loginBodySchema = z.object({
   mobileNumber: mobileNumberSchema,
-  password: z.string().min(8).max(128),
+  password: z.string().min(4).max(128),
   usertype: userTypeSchema.default(2),
 });
 
@@ -40,6 +44,10 @@ export const logoutBodySchema = z.object({
 
 export const updateUserImageBodySchema = z.object({
   image: z.string().trim().min(1),
+});
+
+export const updateUserActivationBodySchema = z.object({
+  isActive: isActiveSchema,
 });
 
 export const userIdParamSchema = z.object({
