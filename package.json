@@ -10,7 +10,7 @@
   "scripts": {
     "contracts:build": "npm run build -w packages/contracts",
     "env:setup": "node ./scripts/setup-service-envs.mjs",
-    "postinstall": "node -e \"const fs=require('node:fs');const path=require('node:path');const {execFileSync}=require('node:child_process');const candidates=[process.env.INIT_CWD,process.env.PWD,process.cwd()].filter(Boolean);const cwd=process.cwd();const normalizedCwd=cwd.replace(/\\\\/g,'/');const marker='/nodevenv/';const markerIndex=normalizedCwd.indexOf(marker);if(markerIndex!==-1){const prefix=normalizedCwd.slice(0,markerIndex);const suffix=normalizedCwd.slice(markerIndex+marker.length).split('/').filter(Boolean);if(suffix.length>=3&&/^\\d+$/.test(suffix[suffix.length-2])&&suffix[suffix.length-1]==='lib'){candidates.push(path.join(prefix,...suffix.slice(0,-2)));}}const root=candidates.find((dir)=>{try{const pkg=JSON.parse(fs.readFileSync(path.join(dir,'package.json'),'utf8'));return Array.isArray(pkg.workspaces);}catch{return false;}});if(!root){console.error('[postinstall] Unable to resolve project root for workspace install.');process.exit(1);}execFileSync(process.execPath,[path.join(root,'scripts','postinstall-runner.js')],{cwd:root,stdio:'inherit'});\"",
+    "postinstall": "node -e \"const path=require('node:path');const root=process.env.npm_package_json?path.dirname(process.env.npm_package_json):(process.env.INIT_CWD||process.cwd());require(path.join(root,'scripts','postinstall-bootstrap.js'));\"",
     "start": "node ./server.js",
     "dev": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs",
     "dev:restart": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs --restart",
