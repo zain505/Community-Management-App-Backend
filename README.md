@@ -101,6 +101,7 @@ Use this setup instead:
 
 Important notes:
 - The previous `Script exit code: 127` happened because cPanel was running `docker:up:app`, and shared Node.js hosting does not provide `docker compose`.
+- cPanel may run `postinstall` from a `nodevenv/.../lib` directory instead of the repository root. The install wrapper now redirects that step back to the real project root before running workspace commands.
 - The public app should be the `api-gateway`. The new root launcher starts the other services behind it on localhost-only URLs such as `127.0.0.1:4100` and `127.0.0.1:4200`.
 - Keep each service `.env` file present under `services/*/.env`. The launcher overrides internal service URLs and the public gateway port automatically.
 - Run Prisma migrations separately with `npm run prisma:deploy` after your database credentials are correct.
