@@ -86,6 +86,25 @@ Stop everything and remove the named volumes with:
 npm run docker:down
 ```
 
+## cPanel Deployment
+
+This repository is not a single root Express app, so cPanel should not be pointed at `server.ts` and it should not run any Docker script.
+
+Use this setup instead:
+
+1. Keep the application root at the repository root.
+2. Set the application startup file to `server.js`.
+3. Run `npm install` from cPanel so the root `postinstall` script can:
+   - build `packages/contracts/dist`
+   - generate Prisma clients for the server platform
+4. Restart the Node.js app from cPanel.
+
+Important notes:
+- The previous `Script exit code: 127` happened because cPanel was running `docker:up:app`, and shared Node.js hosting does not provide `docker compose`.
+- The public app should be the `api-gateway`. The new root launcher starts the other services behind it on localhost-only URLs such as `127.0.0.1:4100` and `127.0.0.1:4200`.
+- Keep each service `.env` file present under `services/*/.env`. The launcher overrides internal service URLs and the public gateway port automatically.
+- Run Prisma migrations separately with `npm run prisma:deploy` after your database credentials are correct.
+
 ## Fresh Environment Troubleshooting
 
 If you copied or moved the repository to a new folder and see `Cannot find module '@community/contracts/dist/index.js'`, remove existing installs and reinstall from the current project path so local `file:` dependencies are relinked correctly.

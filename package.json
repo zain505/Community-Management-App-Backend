@@ -10,6 +10,8 @@
   "scripts": {
     "contracts:build": "npm run build -w packages/contracts",
     "env:setup": "node ./scripts/setup-service-envs.mjs",
+    "postinstall": "npm run contracts:build && npm run prisma:generate",
+    "start": "node ./server.js",
     "dev": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs",
     "dev:restart": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs --restart",
     "dev:restart:auth": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs --restart=auth-service",
@@ -51,6 +53,10 @@
     "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "docker:up:app": "docker compose -f infra/docker/docker-compose.yml --profile app up -d --build",
     "docker:down": "docker compose -f infra/docker/docker-compose.yml down -v"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
   },
   "engines": {
     "node": ">=20.14.0"

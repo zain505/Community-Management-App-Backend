@@ -48,6 +48,12 @@ const proxyRoutes: ProxyRouteConfig[] = [
     unavailableMessage: 'App service is unavailable',
   },
   {
+    prefix: '/v1/chat',
+    targetBaseUrl: env.APP_SERVICE_BASE_URL,
+    unavailableCode: 'APP_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'App service is unavailable',
+  },
+  {
     prefix: '/v1/event-management',
     targetBaseUrl: env.APP_SERVICE_BASE_URL,
     unavailableCode: 'APP_SERVICE_UNAVAILABLE',
