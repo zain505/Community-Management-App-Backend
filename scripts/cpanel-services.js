@@ -1,5 +1,5 @@
 const { spawn } = require('node:child_process');
-const { existsSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const path = require('node:path');
 const readline = require('node:readline');
 
@@ -92,6 +92,59 @@ function getErrorMessage(error) {
   return String(error);
 }
 
+function readJsonFile(filePath) {
+  try {
+    return JSON.parse(readFileSync(filePath, 'utf8'));
+  } catch (error) {
+    console.error(`[cpanel] Failed to read ${filePath}.`);
+    console.error(`[cpanel] ${getErrorMessage(error)}`);
+    process.exit(1);
+  }
+}
+
+function validateServiceRuntimeDependencies() {
+  const unresolvedDependencies = [];
+
+  for (const service of services) {
+    const packageJsonPath = path.join(service.cwd, 'package.json');
+    const packageJson = readJsonFile(packageJsonPath);
+    const dependencyNames = Object.keys(packageJson.dependencies || {});
+    const missingDependencies = dependencyNames.filter((dependencyName) => {
+      try {
+        require.resolve(dependencyName, { paths: [service.cwd, rootDir] });
+        return false;
+      } catch {
+        return true;
+      }
+    });
+
+    if (missingDependencies.length > 0) {
+      unresolvedDependencies.push({
+        service: service.name,
+        dependencies: missingDependencies,
+      });
+    }
+  }
+
+  if (unresolvedDependencies.length === 0) {
+    return;
+  }
+
+  console.error('[cpanel] Missing runtime dependencies for one or more services.');
+  for (const entry of unresolvedDependencies) {
+    console.error(
+      `[cpanel] ${entry.service} cannot resolve: ${entry.dependencies.join(', ')}.`,
+    );
+  }
+  console.error(
+    '[cpanel] Redeploy the latest package.json/package-lock.json, then run "npm install" from the repository root in cPanel before restarting the app.',
+  );
+  console.error(
+    '[cpanel] Some shared hosting installs only the root package dependencies, so the root manifest must stay in sync with service runtime dependencies.',
+  );
+  process.exit(1);
+}
+
 function validateRuntimePrerequisites() {
   if (!existsSync(contractsEntryPath)) {
     console.error('[cpanel] Missing packages/contracts/dist/index.js.');
@@ -106,6 +159,8 @@ function validateRuntimePrerequisites() {
       process.exit(1);
     }
   }
+
+  validateServiceRuntimeDependencies();
 }
 
 function prefixOutput(serviceName, stream, input) {

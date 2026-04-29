@@ -97,6 +97,7 @@ Use this setup instead:
 3. Run `npm install` from cPanel so the root `postinstall` script can:
    - build `packages/contracts/dist`
    - generate Prisma clients for the server platform
+   - install the root-level runtime dependency mirror used by shared hosting environments that do not fully install workspace package dependencies
 4. Restart the Node.js app from cPanel.
 
 Important notes:
