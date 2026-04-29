@@ -5,7 +5,13 @@ const readline = require('node:readline');
 
 const rootDir = path.resolve(__dirname, '..');
 const tsNodeRegisterPath = resolveTsNodeRegisterPath();
+const workspaceRuntimeAliasRegisterPath = path.join(
+  rootDir,
+  'scripts',
+  'register-workspace-runtime-aliases.js',
+);
 const contractsEntryPath = path.join(rootDir, 'packages', 'contracts', 'dist', 'index.js');
+const contractsSourceEntryPath = path.join(rootDir, 'packages', 'contracts', 'src', 'index.ts');
 
 const internalPorts = {
   auth: process.env.AUTH_SERVICE_PORT || '4100',
@@ -110,6 +116,13 @@ function validateServiceRuntimeDependencies() {
     const packageJson = readJsonFile(packageJsonPath);
     const dependencyNames = Object.keys(packageJson.dependencies || {});
     const missingDependencies = dependencyNames.filter((dependencyName) => {
+      if (
+        dependencyName === '@community/contracts' &&
+        (existsSync(contractsEntryPath) || existsSync(contractsSourceEntryPath))
+      ) {
+        return false;
+      }
+
       try {
         require.resolve(dependencyName, { paths: [service.cwd, rootDir] });
         return false;
@@ -146,9 +159,11 @@ function validateServiceRuntimeDependencies() {
 }
 
 function validateRuntimePrerequisites() {
-  if (!existsSync(contractsEntryPath)) {
-    console.error('[cpanel] Missing packages/contracts/dist/index.js.');
-    console.error('[cpanel] Run "npm install" so postinstall can build the shared contracts package.');
+  if (!existsSync(contractsEntryPath) && !existsSync(contractsSourceEntryPath)) {
+    console.error('[cpanel] Missing packages/contracts runtime sources.');
+    console.error(
+      '[cpanel] Ensure the repository includes packages/contracts and rerun "npm install" from the repository root.',
+    );
     process.exit(1);
   }
 
@@ -208,16 +223,20 @@ function handleChildExit(service, code, signal) {
 }
 
 function startService(service) {
-  const child = spawn(process.execPath, ['-r', tsNodeRegisterPath, service.entry], {
-    cwd: service.cwd,
-    env: {
-      ...process.env,
-      NODE_ENV: process.env.NODE_ENV || 'production',
-      TS_NODE_PROJECT: path.join(service.cwd, 'tsconfig.json'),
-      ...service.env,
+  const child = spawn(
+    process.execPath,
+    ['-r', tsNodeRegisterPath, '-r', workspaceRuntimeAliasRegisterPath, service.entry],
+    {
+      cwd: service.cwd,
+      env: {
+        ...process.env,
+        NODE_ENV: process.env.NODE_ENV || 'production',
+        TS_NODE_PROJECT: path.join(service.cwd, 'tsconfig.json'),
+        ...service.env,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
     },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  );
 
   service.child = child;
 
