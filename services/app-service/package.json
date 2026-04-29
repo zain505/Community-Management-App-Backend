@@ -5,9 +5,9 @@
   "description": "App microservice template using Express, TypeScript, and MySQL/Prisma.",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --require ../../scripts/register-workspace-runtime-aliases.js src/server.ts",
     "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-generated-prisma.mjs",
-    "start": "node dist/server.js",
+    "start": "node -r ../../scripts/register-workspace-runtime-aliases.js dist/server.js",
     "test": "jest --runInBand",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\" \"*.json\"",
