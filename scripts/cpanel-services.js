@@ -13,6 +13,9 @@ const workspaceRuntimeAliasRegisterPath = path.join(
 const contractsEntryPath = path.join(rootDir, 'packages', 'contracts', 'dist', 'index.js');
 const contractsSourceEntryPath = path.join(rootDir, 'packages', 'contracts', 'src', 'index.ts');
 const installTimeOnlyDependencies = new Set(['prisma']);
+const inheritedChildEnv = { ...process.env };
+
+delete inheritedChildEnv.DATABASE_URL;
 
 const internalPorts = {
   auth: process.env.AUTH_SERVICE_PORT || '4100',
@@ -26,6 +29,8 @@ const publicPort = process.env.PORT || process.env.API_GATEWAY_PORT || '4000';
 const services = [
   {
     name: 'auth-service',
+    envFile: path.join(rootDir, 'services', 'auth-service', '.env'),
+    databaseUrlEnvKeys: ['AUTH_SERVICE_DATABASE_URL', 'AUTH_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'auth-service'),
     entry: 'src/server.ts',
     env: {
@@ -34,6 +39,8 @@ const services = [
   },
   {
     name: 'store-service',
+    envFile: path.join(rootDir, 'services', 'store-service', '.env'),
+    databaseUrlEnvKeys: ['STORE_SERVICE_DATABASE_URL', 'STORE_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'store-service'),
     entry: 'src/server.ts',
     env: {
@@ -44,6 +51,8 @@ const services = [
   },
   {
     name: 'newsfeed-service',
+    envFile: path.join(rootDir, 'services', 'newsfeed-service', '.env'),
+    databaseUrlEnvKeys: ['NEWSFEED_SERVICE_DATABASE_URL', 'NEWSFEED_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'newsfeed-service'),
     entry: 'src/server.ts',
     env: {
@@ -54,6 +63,8 @@ const services = [
   },
   {
     name: 'app-service',
+    envFile: path.join(rootDir, 'services', 'app-service', '.env'),
+    databaseUrlEnvKeys: ['APP_SERVICE_DATABASE_URL', 'APP_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'app-service'),
     entry: 'src/server.ts',
     env: {
@@ -64,6 +75,13 @@ const services = [
   },
   {
     name: 'api-gateway',
+    envFile: path.join(rootDir, 'services', 'api-gateway', '.env'),
+    databaseUrlEnvKeys: [
+      'API_GATEWAY_DATABASE_URL',
+      'GATEWAY_DATABASE_URL',
+      'AUTH_SERVICE_DATABASE_URL',
+      'AUTH_DATABASE_URL',
+    ],
     cwd: path.join(rootDir, 'services', 'api-gateway'),
     entry: 'src/server.ts',
     env: {
@@ -107,6 +125,113 @@ function readJsonFile(filePath) {
     console.error(`[cpanel] ${getErrorMessage(error)}`);
     process.exit(1);
   }
+}
+
+function parseEnvFile(filePath) {
+  try {
+    const entries = {};
+    const content = readFileSync(filePath, 'utf8');
+
+    for (const rawLine of content.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) {
+        continue;
+      }
+
+      const separator = line.indexOf('=');
+      if (separator === -1) {
+        continue;
+      }
+
+      const key = line.slice(0, separator).trim();
+      let value = line.slice(separator + 1).trim();
+
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+
+      entries[key] = value;
+    }
+
+    return entries;
+  } catch {
+    return {};
+  }
+}
+
+function getFirstNonEmptyValue(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim() !== '') {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function resolveNamedEnvironmentValue(keys) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.trim() !== '') {
+      return {
+        key,
+        value,
+      };
+    }
+  }
+
+  return null;
+}
+
+function resolveServiceDatabaseUrl(service) {
+  const envOverride = resolveNamedEnvironmentValue(service.databaseUrlEnvKeys || []);
+
+  if (envOverride) {
+    return {
+      source: envOverride.key,
+      value: envOverride.value,
+    };
+  }
+
+  const fileEntries = parseEnvFile(service.envFile);
+  const fileValue = getFirstNonEmptyValue(fileEntries.DATABASE_URL);
+
+  if (fileValue) {
+    return {
+      source: path.relative(rootDir, service.envFile),
+      value: fileValue,
+    };
+  }
+
+  return null;
+}
+
+function isLocalDevelopmentDatabaseUrl(databaseUrl) {
+  return /^mysql:\/\/root:root@(?:127\.0\.0\.1|localhost)(?::3306|:3307)?\//i.test(databaseUrl);
+}
+
+function warnAboutSuspiciousProductionDatabaseUrl(service) {
+  const resolvedDatabaseUrl = resolveServiceDatabaseUrl(service);
+  if (!resolvedDatabaseUrl) {
+    return;
+  }
+
+  if (!isLocalDevelopmentDatabaseUrl(resolvedDatabaseUrl.value)) {
+    return;
+  }
+
+  console.warn(
+    `[cpanel] ${service.name} is using a local development DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
+  );
+  console.warn(
+    `[cpanel] Set one of ${service.databaseUrlEnvKeys.join(', ')} in cPanel or update ${path.relative(
+      rootDir,
+      service.envFile,
+    )} before restarting.`,
+  );
 }
 
 function validateServiceRuntimeDependencies() {
@@ -226,16 +351,18 @@ function handleChildExit(service, code, signal) {
 }
 
 function startService(service) {
+  const databaseUrlOverride = resolveNamedEnvironmentValue(service.databaseUrlEnvKeys || []);
   const child = spawn(
     process.execPath,
     ['-r', tsNodeRegisterPath, '-r', workspaceRuntimeAliasRegisterPath, service.entry],
     {
       cwd: service.cwd,
       env: {
-        ...process.env,
+        ...inheritedChildEnv,
         NODE_ENV: process.env.NODE_ENV || 'production',
         TS_NODE_PROJECT: path.join(service.cwd, 'tsconfig.json'),
         ...service.env,
+        ...(databaseUrlOverride ? { DATABASE_URL: databaseUrlOverride.value } : {}),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     },
@@ -262,6 +389,10 @@ function main() {
 
   console.log('[cpanel] Starting Community Management backend services.');
   console.log(`[cpanel] Public gateway port: ${publicPort}`);
+
+  for (const service of services) {
+    warnAboutSuspiciousProductionDatabaseUrl(service);
+  }
 
   for (const service of services) {
     startService(service);

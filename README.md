@@ -98,13 +98,20 @@ Use this setup instead:
    - build `packages/contracts/dist`
    - generate Prisma clients for the server platform
    - install the root-level runtime dependency mirror used by shared hosting environments that do not fully install workspace package dependencies
-4. Restart the Node.js app from cPanel.
+4. Configure database URLs for the child services in cPanel before restarting:
+   - `AUTH_SERVICE_DATABASE_URL`
+   - `STORE_SERVICE_DATABASE_URL`
+   - `NEWSFEED_SERVICE_DATABASE_URL`
+   - `APP_SERVICE_DATABASE_URL`
+   - optional: `API_GATEWAY_DATABASE_URL` if you do not want the gateway to reuse the auth database URL
+5. Restart the Node.js app from cPanel.
 
 Important notes:
 - The previous `Script exit code: 127` happened because cPanel was running `docker:up:app`, and shared Node.js hosting does not provide `docker compose`.
 - cPanel may run `postinstall` from a `nodevenv/.../lib` directory instead of the repository root. The install wrapper now redirects that step back to the real project root before running workspace commands.
 - The public app should be the `api-gateway`. The new root launcher starts the other services behind it on localhost-only URLs such as `127.0.0.1:4100` and `127.0.0.1:4200`.
-- Keep each service `.env` file present under `services/*/.env`. The launcher overrides internal service URLs and the public gateway port automatically.
+- Keep each service `.env` file present under `services/*/.env`. The launcher overrides internal service URLs, the public gateway port, and any per-service `DATABASE_URL` values provided through the cPanel environment.
+- A single root-level `DATABASE_URL` is not enough for this repo because each service owns its own database. Use the service-specific variables above or update each `services/*/.env` file directly.
 - Run Prisma migrations separately with `npm run prisma:deploy` after your database credentials are correct.
 
 ## Fresh Environment Troubleshooting
@@ -123,7 +130,7 @@ Remove-Item -Recurse -Force node_modules, services\*\node_modules, packages\*\no
 npm install
 ```
 
-If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. Local non-Docker development uses `root:root` on `127.0.0.1:3306`, while the included Docker MySQL setup uses `root:root` on `127.0.0.1:3307`.
+If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. Local non-Docker development uses `root:root` on `127.0.0.1:3306`, while the included Docker MySQL setup uses `root:root` on `127.0.0.1:3307`. On cPanel, if logs mention the `root` MySQL user, that means the service fell back to the local template value instead of a real production `*_DATABASE_URL`.
 
 ## API Endpoints
 
