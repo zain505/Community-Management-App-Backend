@@ -12,6 +12,7 @@ const workspaceRuntimeAliasRegisterPath = path.join(
 );
 const contractsEntryPath = path.join(rootDir, 'packages', 'contracts', 'dist', 'index.js');
 const contractsSourceEntryPath = path.join(rootDir, 'packages', 'contracts', 'src', 'index.ts');
+const installTimeOnlyDependencies = new Set(['prisma']);
 
 const internalPorts = {
   auth: process.env.AUTH_SERVICE_PORT || '4100',
@@ -114,7 +115,9 @@ function validateServiceRuntimeDependencies() {
   for (const service of services) {
     const packageJsonPath = path.join(service.cwd, 'package.json');
     const packageJson = readJsonFile(packageJsonPath);
-    const dependencyNames = Object.keys(packageJson.dependencies || {});
+    const dependencyNames = Object.keys(packageJson.dependencies || {}).filter(
+      (dependencyName) => !installTimeOnlyDependencies.has(dependencyName),
+    );
     const missingDependencies = dependencyNames.filter((dependencyName) => {
       if (
         dependencyName === '@community/contracts' &&
