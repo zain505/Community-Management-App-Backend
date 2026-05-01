@@ -4,7 +4,6 @@ const path = require('node:path');
 const readline = require('node:readline');
 
 const rootDir = path.resolve(__dirname, '..');
-const tsNodeRegisterPath = resolveTsNodeRegisterPath();
 const workspaceRuntimeAliasRegisterPath = path.join(
   rootDir,
   'scripts',
@@ -32,7 +31,8 @@ const services = [
     envFile: path.join(rootDir, 'services', 'auth-service', '.env'),
     databaseUrlEnvKeys: ['AUTH_SERVICE_DATABASE_URL', 'AUTH_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'auth-service'),
-    entry: 'src/server.ts',
+    sourceEntry: 'src/server.ts',
+    compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.auth,
     },
@@ -42,7 +42,8 @@ const services = [
     envFile: path.join(rootDir, 'services', 'store-service', '.env'),
     databaseUrlEnvKeys: ['STORE_SERVICE_DATABASE_URL', 'STORE_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'store-service'),
-    entry: 'src/server.ts',
+    sourceEntry: 'src/server.ts',
+    compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.store,
       AUTH_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.auth}`,
@@ -54,7 +55,8 @@ const services = [
     envFile: path.join(rootDir, 'services', 'newsfeed-service', '.env'),
     databaseUrlEnvKeys: ['NEWSFEED_SERVICE_DATABASE_URL', 'NEWSFEED_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'newsfeed-service'),
-    entry: 'src/server.ts',
+    sourceEntry: 'src/server.ts',
+    compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.newsfeed,
       AUTH_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.auth}`,
@@ -66,7 +68,8 @@ const services = [
     envFile: path.join(rootDir, 'services', 'app-service', '.env'),
     databaseUrlEnvKeys: ['APP_SERVICE_DATABASE_URL', 'APP_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'app-service'),
-    entry: 'src/server.ts',
+    sourceEntry: 'src/server.ts',
+    compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.app,
       AUTH_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.auth}`,
@@ -83,7 +86,8 @@ const services = [
       'AUTH_DATABASE_URL',
     ],
     cwd: path.join(rootDir, 'services', 'api-gateway'),
-    entry: 'src/server.ts',
+    sourceEntry: 'src/server.ts',
+    compiledEntry: 'dist/server.js',
     env: {
       PORT: publicPort,
       AUTH_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.auth}`,
@@ -213,6 +217,10 @@ function isLocalDevelopmentDatabaseUrl(databaseUrl) {
   return /^mysql:\/\/root:root@(?:127\.0\.0\.1|localhost)(?::3306|:3307)?\//i.test(databaseUrl);
 }
 
+function shouldAllowLocalDevelopmentDatabaseUrls() {
+  return (process.env.NODE_ENV || 'production') === 'development';
+}
+
 function warnAboutSuspiciousProductionDatabaseUrl(service) {
   const resolvedDatabaseUrl = resolveServiceDatabaseUrl(service);
   if (!resolvedDatabaseUrl) {
@@ -232,6 +240,72 @@ function warnAboutSuspiciousProductionDatabaseUrl(service) {
       service.envFile,
     )} before restarting.`,
   );
+}
+
+function warnAboutIgnoredRootDatabaseUrl() {
+  const rootDatabaseUrl = getFirstNonEmptyValue(process.env.DATABASE_URL);
+
+  if (!rootDatabaseUrl) {
+    return;
+  }
+
+  console.warn(
+    '[cpanel] Ignoring root-level DATABASE_URL for npm start because each service resolves its own database connection.',
+  );
+  console.warn(
+    '[cpanel] Set AUTH_SERVICE_DATABASE_URL, STORE_SERVICE_DATABASE_URL, NEWSFEED_SERVICE_DATABASE_URL, APP_SERVICE_DATABASE_URL, and optionally API_GATEWAY_DATABASE_URL in cPanel instead.',
+  );
+}
+
+function validateProductionDatabaseUrls() {
+  if (shouldAllowLocalDevelopmentDatabaseUrls()) {
+    return;
+  }
+
+  const invalidServices = [];
+
+  for (const service of services) {
+    const resolvedDatabaseUrl = resolveServiceDatabaseUrl(service);
+    if (!resolvedDatabaseUrl || !isLocalDevelopmentDatabaseUrl(resolvedDatabaseUrl.value)) {
+      continue;
+    }
+
+    invalidServices.push({
+      service,
+      resolvedDatabaseUrl,
+    });
+  }
+
+  if (invalidServices.length === 0) {
+    return;
+  }
+
+  console.error(
+    '[cpanel] Refusing to start because one or more services still resolve to local development DATABASE_URL values.',
+  );
+  console.error(
+    '[cpanel] This usually means the service-specific *_DATABASE_URL variables are missing in cPanel.',
+  );
+
+  for (const { service, resolvedDatabaseUrl } of invalidServices) {
+    console.error(
+      `[cpanel] ${service.name} resolved DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
+    );
+    console.error(
+      `[cpanel] Set one of ${service.databaseUrlEnvKeys.join(', ')} in cPanel or update ${path.relative(
+        rootDir,
+        service.envFile,
+      )} before restarting.`,
+    );
+  }
+
+  if (getFirstNonEmptyValue(process.env.DATABASE_URL)) {
+    console.error(
+      '[cpanel] A root-level DATABASE_URL was provided, but npm start does not use it because each service owns its own database.',
+    );
+  }
+
+  process.exit(1);
 }
 
 function validateServiceRuntimeDependencies() {
@@ -296,14 +370,42 @@ function validateRuntimePrerequisites() {
   }
 
   for (const service of services) {
-    const serviceEntryPath = path.join(service.cwd, service.entry);
-    if (!existsSync(serviceEntryPath)) {
-      console.error(`[cpanel] Missing service entry file: ${serviceEntryPath}`);
+    const compiledEntryPath = path.join(service.cwd, service.compiledEntry);
+    const sourceEntryPath = path.join(service.cwd, service.sourceEntry);
+    if (!existsSync(compiledEntryPath) && !existsSync(sourceEntryPath)) {
+      console.error(
+        `[cpanel] Missing service entry files: ${compiledEntryPath} and ${sourceEntryPath}`,
+      );
       process.exit(1);
     }
   }
 
   validateServiceRuntimeDependencies();
+}
+
+function resolveServiceLaunchTarget(service) {
+  const compiledEntryPath = path.join(service.cwd, service.compiledEntry);
+  if (existsSync(compiledEntryPath)) {
+    return {
+      mode: 'compiled',
+      args: ['-r', workspaceRuntimeAliasRegisterPath, service.compiledEntry],
+      env: {},
+    };
+  }
+
+  return {
+    mode: 'ts-node',
+    args: [
+      '-r',
+      resolveTsNodeRegisterPath(),
+      '-r',
+      workspaceRuntimeAliasRegisterPath,
+      service.sourceEntry,
+    ],
+    env: {
+      TS_NODE_PROJECT: path.join(service.cwd, 'tsconfig.json'),
+    },
+  };
 }
 
 function prefixOutput(serviceName, stream, input) {
@@ -352,15 +454,26 @@ function handleChildExit(service, code, signal) {
 
 function startService(service) {
   const databaseUrlOverride = resolveNamedEnvironmentValue(service.databaseUrlEnvKeys || []);
+  const launchTarget = resolveServiceLaunchTarget(service);
+
+  if (launchTarget.mode === 'ts-node' && (process.env.NODE_ENV || 'production') !== 'development') {
+    console.warn(
+      `[cpanel] ${service.name} is falling back to ts-node because ${service.compiledEntry} is missing.`,
+    );
+    console.warn(
+      `[cpanel] Run "npm install" again with the latest deploy so postinstall can build production files.`,
+    );
+  }
+
   const child = spawn(
     process.execPath,
-    ['-r', tsNodeRegisterPath, '-r', workspaceRuntimeAliasRegisterPath, service.entry],
+    launchTarget.args,
     {
       cwd: service.cwd,
       env: {
         ...inheritedChildEnv,
         NODE_ENV: process.env.NODE_ENV || 'production',
-        TS_NODE_PROJECT: path.join(service.cwd, 'tsconfig.json'),
+        ...launchTarget.env,
         ...service.env,
         ...(databaseUrlOverride ? { DATABASE_URL: databaseUrlOverride.value } : {}),
       },
@@ -386,6 +499,8 @@ function startService(service) {
 
 function main() {
   validateRuntimePrerequisites();
+  warnAboutIgnoredRootDatabaseUrl();
+  validateProductionDatabaseUrls();
 
   console.log('[cpanel] Starting Community Management backend services.');
   console.log(`[cpanel] Public gateway port: ${publicPort}`);

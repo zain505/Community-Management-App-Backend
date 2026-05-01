@@ -97,6 +97,7 @@ Use this setup instead:
 3. Run `npm install` from cPanel so the root `postinstall` script can:
    - build `packages/contracts/dist`
    - generate Prisma clients for the server platform
+   - compile each service to `dist/server.js` for lower-memory production startup
    - install the root-level runtime dependency mirror used by shared hosting environments that do not fully install workspace package dependencies
 4. Configure database URLs for the child services in cPanel before restarting:
    - `AUTH_SERVICE_DATABASE_URL`
@@ -112,6 +113,7 @@ Important notes:
 - The public app should be the `api-gateway`. The new root launcher starts the other services behind it on localhost-only URLs such as `127.0.0.1:4100` and `127.0.0.1:4200`.
 - Keep each service `.env` file present under `services/*/.env`. The launcher overrides internal service URLs, the public gateway port, and any per-service `DATABASE_URL` values provided through the cPanel environment.
 - A single root-level `DATABASE_URL` is not enough for this repo because each service owns its own database. Use the service-specific variables above or update each `services/*/.env` file directly.
+- `npm start` now fails fast outside `NODE_ENV=development` if a service still resolves to the local `root:root@127.0.0.1` template URL, so cPanel shows a clear config error before Prisma child processes start crashing.
 - Run Prisma migrations separately with `npm run prisma:deploy` after your database credentials are correct.
 
 ## Fresh Environment Troubleshooting
