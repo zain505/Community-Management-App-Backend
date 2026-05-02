@@ -30,11 +30,13 @@ Microservices-ready Node.js starter using:
 npm install
 ```
 
-2. Create per-service env files from `services/*/.env.example`:
+2. Create per-service env files for local development:
 
 ```bash
 npm run env:setup
 ```
+
+`npm run env:setup` now prefers `services/*/.env.development.example` when it exists, so the production-ready `services/*/.env.example` files can stay tuned for VPS deployment.
 
 3. Review the generated `services/*/.env` files and replace the placeholder JWT secrets.
 
@@ -58,8 +60,53 @@ npm run dev
 
 This starts `api-gateway`, `auth-service`, `store-service`, `newsfeed-service`, and `app-service`.
 If one of those services is already running on its configured port, `npm run dev` reuses the healthy instance instead of failing with `EADDRINUSE`.
-If a service `.env` file is missing, `npm run dev` now creates it from that service's `.env.example` before startup.
+If a service `.env` file is missing, `npm run dev` now creates it from that service's `.env.development.example` when available, otherwise it falls back to `.env.example`.
 `npm run dev` also builds the shared `@community/contracts` package before launching services so a fresh checkout has the runtime contract files available.
+
+## Production Deployment
+
+Use the production templates under `services/*/.env.example`, then keep only `api-gateway` behind Nginx and leave the other services on loopback ports.
+
+1. Create production env files on the VPS:
+
+```bash
+cp services/api-gateway/.env.example services/api-gateway/.env
+cp services/auth-service/.env.example services/auth-service/.env
+cp services/store-service/.env.example services/store-service/.env
+cp services/newsfeed-service/.env.example services/newsfeed-service/.env
+cp services/app-service/.env.example services/app-service/.env
+```
+
+2. Edit the copied `services/*/.env` files with real database credentials and long JWT secrets.
+
+3. Install dependencies:
+
+```bash
+npm install
+```
+
+4. Build the compiled production files:
+
+```bash
+npm run build
+```
+
+5. Start every compiled service with PM2:
+
+```bash
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
+```
+
+Helpful PM2 commands:
+
+```bash
+npm run pm2:restart
+npm run pm2:logs
+```
+
+If you want to verify the compiled services without PM2 first, `npm start` now launches the built `dist/server.js` entrypoint for each service and fails fast if the production build is missing.
 
 ## Run The Full Backend In Docker
 

@@ -17,7 +17,7 @@ import { sendError } from '../../lib/http';
 
 const SOCKET_IO_PATH_PREFIX = '/socket.io';
 
-const socketIoTarget = new URL(env.APP_SERVICE_BASE_URL);
+const socketIoTarget = new URL(env.APP_SERVICE_URL);
 
 function getTargetPort(): number {
   if (socketIoTarget.port) {

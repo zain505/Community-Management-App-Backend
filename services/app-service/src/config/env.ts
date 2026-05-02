@@ -6,16 +6,30 @@ dotenv.config({
   path: process.env.ENV_FILE || path.resolve(__dirname, '../../.env'),
 });
 
+const DEFAULT_PORT = 4400;
+const DEFAULT_CORS_ORIGINS = [
+  'http://hzhtechco.site',
+  'https://hzhtechco.site',
+  'http://www.hzhtechco.site',
+  'https://www.hzhtechco.site',
+  'http://localhost:3000',
+  'http://localhost:5173',
+].join(',');
+const DEFAULT_AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:4100';
+const DEFAULT_NEWSFEED_SERVICE_BASE_URL = 'http://127.0.0.1:4300';
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   SERVICE_NAME: z.string().default('app-service'),
-  PORT: z.coerce.number().int().positive().default(4400),
+  // PORT is usually injected by PM2 in production and falls back to 4400 locally.
+  PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  CORS_ORIGINS: z.string().default('http://localhost:3000'),
+  CORS_ORIGINS: z.string().default(DEFAULT_CORS_ORIGINS),
   DATABASE_URL: z.string().min(1),
-  AUTH_SERVICE_BASE_URL: z.string().url().default('http://127.0.0.1:4100'),
+  // Internal service URLs stay on loopback when PM2 runs the services behind Nginx.
+  AUTH_SERVICE_BASE_URL: z.string().url().default(DEFAULT_AUTH_SERVICE_BASE_URL),
   AUTH_SERVICE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
-  NEWSFEED_SERVICE_BASE_URL: z.string().url().default('http://127.0.0.1:4300'),
+  NEWSFEED_SERVICE_BASE_URL: z.string().url().default(DEFAULT_NEWSFEED_SERVICE_BASE_URL),
   NEWSFEED_SERVICE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),

@@ -36,6 +36,13 @@ describe('routes', () => {
     expect(response.headers['x-request-id']).toBeTruthy();
   });
 
+  it('allows the production frontend origin through CORS', async () => {
+    const response = await request(app).get('/health').set('origin', 'https://hzhtechco.site');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBe('https://hzhtechco.site');
+  });
+
   it('reports auth-service unavailability', async () => {
     const response = await request(app).post('/v1/auth/register').send({});
 

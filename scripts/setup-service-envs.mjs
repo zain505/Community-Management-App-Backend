@@ -15,12 +15,14 @@ let createdCount = 0;
 const missingTemplates = [];
 
 for (const serviceDirectory of serviceDirectories) {
+  const devEnvExamplePath = path.join(serviceDirectory, '.env.development.example');
   const envExamplePath = path.join(serviceDirectory, '.env.example');
   const envPath = path.join(serviceDirectory, '.env');
   const relativeEnvPath = path.relative(rootDir, envPath);
-  const relativeEnvExamplePath = path.relative(rootDir, envExamplePath);
+  const envTemplatePath = existsSync(devEnvExamplePath) ? devEnvExamplePath : envExamplePath;
+  const relativeEnvTemplatePath = path.relative(rootDir, envTemplatePath);
 
-  if (!existsSync(envExamplePath)) {
+  if (!existsSync(envExamplePath) && !existsSync(devEnvExamplePath)) {
     missingTemplates.push(path.relative(rootDir, serviceDirectory));
     continue;
   }
@@ -30,9 +32,9 @@ for (const serviceDirectory of serviceDirectories) {
     continue;
   }
 
-  copyFileSync(envExamplePath, envPath);
+  copyFileSync(envTemplatePath, envPath);
   createdCount += 1;
-  console.log(`[env:setup] Created ${relativeEnvPath} from ${relativeEnvExamplePath}.`);
+  console.log(`[env:setup] Created ${relativeEnvPath} from ${relativeEnvTemplatePath}.`);
 }
 
 if (missingTemplates.length > 0) {

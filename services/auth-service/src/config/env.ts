@@ -6,12 +6,23 @@ dotenv.config({
   path: process.env.ENV_FILE || path.resolve(__dirname, '../../.env'),
 });
 
+const DEFAULT_PORT = 4100;
+const DEFAULT_CORS_ORIGINS = [
+  'http://hzhtechco.site',
+  'https://hzhtechco.site',
+  'http://www.hzhtechco.site',
+  'https://www.hzhtechco.site',
+  'http://localhost:3000',
+  'http://localhost:5173',
+].join(',');
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   SERVICE_NAME: z.string().default('auth-service'),
-  PORT: z.coerce.number().int().positive().default(4100),
+  // PORT is usually injected by PM2 in production and falls back to 4100 locally.
+  PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  CORS_ORIGINS: z.string().default('http://localhost:3000'),
+  CORS_ORIGINS: z.string().default(DEFAULT_CORS_ORIGINS),
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),

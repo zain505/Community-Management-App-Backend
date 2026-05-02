@@ -8,7 +8,7 @@ import { sendError } from '../../lib/http';
 const storeProxyRouter = Router();
 
 function buildTargetUrl(req: Request): string {
-  return `${env.STORE_SERVICE_BASE_URL}${req.originalUrl}`;
+  return `${env.STORE_SERVICE_URL}${req.originalUrl}`;
 }
 
 function getForwardHeaders(req: Request): Record<string, string> {

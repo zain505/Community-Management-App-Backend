@@ -31,7 +31,6 @@ const services = [
     envFile: path.join(rootDir, 'services', 'auth-service', '.env'),
     databaseUrlEnvKeys: ['AUTH_SERVICE_DATABASE_URL', 'AUTH_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'auth-service'),
-    sourceEntry: 'src/server.ts',
     compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.auth,
@@ -42,7 +41,6 @@ const services = [
     envFile: path.join(rootDir, 'services', 'store-service', '.env'),
     databaseUrlEnvKeys: ['STORE_SERVICE_DATABASE_URL', 'STORE_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'store-service'),
-    sourceEntry: 'src/server.ts',
     compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.store,
@@ -55,7 +53,6 @@ const services = [
     envFile: path.join(rootDir, 'services', 'newsfeed-service', '.env'),
     databaseUrlEnvKeys: ['NEWSFEED_SERVICE_DATABASE_URL', 'NEWSFEED_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'newsfeed-service'),
-    sourceEntry: 'src/server.ts',
     compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.newsfeed,
@@ -68,7 +65,6 @@ const services = [
     envFile: path.join(rootDir, 'services', 'app-service', '.env'),
     databaseUrlEnvKeys: ['APP_SERVICE_DATABASE_URL', 'APP_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'app-service'),
-    sourceEntry: 'src/server.ts',
     compiledEntry: 'dist/server.js',
     env: {
       PORT: internalPorts.app,
@@ -86,14 +82,14 @@ const services = [
       'AUTH_DATABASE_URL',
     ],
     cwd: path.join(rootDir, 'services', 'api-gateway'),
-    sourceEntry: 'src/server.ts',
     compiledEntry: 'dist/server.js',
     env: {
       PORT: publicPort,
-      AUTH_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.auth}`,
-      STORE_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.store}`,
-      NEWSFEED_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.newsfeed}`,
-      APP_SERVICE_BASE_URL: `http://127.0.0.1:${internalPorts.app}`,
+      // The public gateway reaches the private services over loopback on the same VPS.
+      AUTH_SERVICE_URL: `http://127.0.0.1:${internalPorts.auth}`,
+      STORE_SERVICE_URL: `http://127.0.0.1:${internalPorts.store}`,
+      NEWSFEED_SERVICE_URL: `http://127.0.0.1:${internalPorts.newsfeed}`,
+      APP_SERVICE_URL: `http://127.0.0.1:${internalPorts.app}`,
     },
   },
 ];
@@ -101,17 +97,6 @@ const services = [
 let shuttingDown = false;
 let remainingChildren = services.length;
 let exitCode = 0;
-
-function resolveTsNodeRegisterPath() {
-  try {
-    return require.resolve('ts-node/register/transpile-only');
-  } catch (error) {
-    console.error('[cpanel] Missing ts-node runtime dependency.');
-    console.error('[cpanel] Run "npm install" from the repository root before starting the app.');
-    console.error(`[cpanel] ${getErrorMessage(error)}`);
-    process.exit(1);
-  }
-}
 
 function getErrorMessage(error) {
   if (error instanceof Error) {
@@ -371,11 +356,9 @@ function validateRuntimePrerequisites() {
 
   for (const service of services) {
     const compiledEntryPath = path.join(service.cwd, service.compiledEntry);
-    const sourceEntryPath = path.join(service.cwd, service.sourceEntry);
-    if (!existsSync(compiledEntryPath) && !existsSync(sourceEntryPath)) {
-      console.error(
-        `[cpanel] Missing service entry files: ${compiledEntryPath} and ${sourceEntryPath}`,
-      );
+    if (!existsSync(compiledEntryPath)) {
+      console.error(`[cpanel] Missing compiled service entry: ${compiledEntryPath}`);
+      console.error('[cpanel] Run "npm run build" from the repository root before starting production services.');
       process.exit(1);
     }
   }
@@ -384,27 +367,14 @@ function validateRuntimePrerequisites() {
 }
 
 function resolveServiceLaunchTarget(service) {
-  const compiledEntryPath = path.join(service.cwd, service.compiledEntry);
-  if (existsSync(compiledEntryPath)) {
-    return {
-      mode: 'compiled',
-      args: ['-r', workspaceRuntimeAliasRegisterPath, service.compiledEntry],
-      env: {},
-    };
-  }
-
   return {
-    mode: 'ts-node',
+    mode: 'compiled',
     args: [
       '-r',
-      resolveTsNodeRegisterPath(),
-      '-r',
       workspaceRuntimeAliasRegisterPath,
-      service.sourceEntry,
+      service.compiledEntry,
     ],
-    env: {
-      TS_NODE_PROJECT: path.join(service.cwd, 'tsconfig.json'),
-    },
+    env: {},
   };
 }
 
@@ -455,15 +425,6 @@ function handleChildExit(service, code, signal) {
 function startService(service) {
   const databaseUrlOverride = resolveNamedEnvironmentValue(service.databaseUrlEnvKeys || []);
   const launchTarget = resolveServiceLaunchTarget(service);
-
-  if (launchTarget.mode === 'ts-node' && (process.env.NODE_ENV || 'production') !== 'development') {
-    console.warn(
-      `[cpanel] ${service.name} is falling back to ts-node because ${service.compiledEntry} is missing.`,
-    );
-    console.warn(
-      `[cpanel] Run "npm install" again with the latest deploy so postinstall can build production files.`,
-    );
-  }
 
   const child = spawn(
     process.execPath,

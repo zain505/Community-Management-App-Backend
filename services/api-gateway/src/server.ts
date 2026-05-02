@@ -5,14 +5,17 @@ import { logger } from './config/logger';
 import { attachSocketIoUpgradeProxy } from './modules/proxy/socket-io-proxy';
 
 async function bootstrap(): Promise<void> {
+  // env.PORT resolves process.env.PORT first, with the schema default as a local fallback.
+  const PORT = env.PORT;
+  const HOST = '0.0.0.0';
   const server = http.createServer(app);
   attachSocketIoUpgradeProxy(server);
 
-  server.listen(env.PORT, () => {
-    logger.info({ port: env.PORT }, `${env.SERVICE_NAME} started`);
+  server.listen(PORT, HOST, () => {
+    logger.info({ host: HOST, port: PORT }, `${env.SERVICE_NAME} started`);
   });
   server.once('error', (error: NodeJS.ErrnoException) => {
-    logger.error({ err: error, port: env.PORT }, 'Failed to listen on configured port');
+    logger.error({ err: error, host: HOST, port: PORT }, 'Failed to listen on configured port');
     process.exit(1);
   });
 

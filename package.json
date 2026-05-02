@@ -52,7 +52,10 @@
     "create:service": "node ./scripts/clone-service.mjs",
     "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "docker:up:app": "docker compose -f infra/docker/docker-compose.yml --profile app up -d --build",
-    "docker:down": "docker compose -f infra/docker/docker-compose.yml down -v"
+    "docker:down": "docker compose -f infra/docker/docker-compose.yml down -v",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:restart": "pm2 restart ecosystem.config.js --update-env",
+    "pm2:logs": "pm2 logs"
   },
   "dependencies": {
     "@community/contracts": "file:packages/contracts",

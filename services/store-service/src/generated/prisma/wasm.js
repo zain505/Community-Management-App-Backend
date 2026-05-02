@@ -226,7 +226,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\store-service\\src\\generated\\prisma",
+      "value": "E:\\Node Js\\Community-Management-App-Backend\\services\\store-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -240,7 +240,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "E:\\Node Js\\community-app-backend\\Community-Management-App-Backend\\services\\store-service\\prisma\\schema.prisma",
+    "sourceFilePath": "E:\\Node Js\\Community-Management-App-Backend\\services\\store-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

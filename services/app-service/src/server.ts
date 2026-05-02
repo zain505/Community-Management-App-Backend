@@ -9,18 +9,21 @@ import { setupChatSocketServer } from './modules/chat/chat.socket';
 import { assertDatabaseConnection } from './modules/health/health.service';
 
 async function bootstrap(): Promise<void> {
+  // env.PORT resolves process.env.PORT first, with the schema default as a local fallback.
+  const PORT = env.PORT;
+  const HOST = '0.0.0.0';
   await assertDatabaseConnection();
   const stopChatRetentionScheduler = startChatRetentionScheduler();
   const server = http.createServer(app);
   const chatSocketServer = setupChatSocketServer(server);
 
-  server.listen(env.PORT, () => {
-    logger.info({ port: env.PORT }, `${env.SERVICE_NAME} started`);
-    console.log(`[CHAT_SOCKET_READY] Socket.IO listening at http://localhost:${env.PORT}${CHAT_SOCKET_NAMESPACE}`);
+  server.listen(PORT, HOST, () => {
+    logger.info({ host: HOST, port: PORT }, `${env.SERVICE_NAME} started`);
+    console.log(`[CHAT_SOCKET_READY] Socket.IO listening at http://127.0.0.1:${PORT}${CHAT_SOCKET_NAMESPACE}`);
   });
 
   server.once('error', async (error: NodeJS.ErrnoException) => {
-    logger.error({ err: error, port: env.PORT }, 'Failed to listen on configured port');
+    logger.error({ err: error, host: HOST, port: PORT }, 'Failed to listen on configured port');
     stopChatRetentionScheduler();
     await chatSocketServer.close();
     await prisma.$disconnect();

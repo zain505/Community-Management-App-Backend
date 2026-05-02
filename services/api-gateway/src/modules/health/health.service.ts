@@ -21,10 +21,10 @@ export async function checkDownstreamReadiness(): Promise<{
   app: boolean;
 }> {
   const [auth, store, newsfeed, app] = await Promise.all([
-    checkService(env.AUTH_SERVICE_BASE_URL),
-    checkService(env.STORE_SERVICE_BASE_URL),
-    checkService(env.NEWSFEED_SERVICE_BASE_URL),
-    checkService(env.APP_SERVICE_BASE_URL),
+    checkService(env.AUTH_SERVICE_URL),
+    checkService(env.STORE_SERVICE_URL),
+    checkService(env.NEWSFEED_SERVICE_URL),
+    checkService(env.APP_SERVICE_URL),
   ]);
 
   return {
