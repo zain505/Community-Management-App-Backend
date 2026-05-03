@@ -1,6 +1,7 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import { parseTrustProxySetting } from './trust-proxy';
 
 dotenv.config({
   path: process.env.ENV_FILE || path.resolve(__dirname, '../../.env'),
@@ -33,6 +34,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   CORS_ORIGINS: z.string().default(DEFAULT_CORS_ORIGINS),
+  TRUST_PROXY: z.string().optional(),
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
@@ -67,4 +69,5 @@ export const env = {
   CORS_ORIGINS: rawEnv.CORS_ORIGINS.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  TRUST_PROXY: parseTrustProxySetting(rawEnv.TRUST_PROXY, rawEnv.NODE_ENV),
 };

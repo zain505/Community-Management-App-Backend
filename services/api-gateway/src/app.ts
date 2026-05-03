@@ -29,6 +29,7 @@ const corsOptions: CorsOptions = {
 export const app = express();
 
 app.disable('x-powered-by');
+app.set('trust proxy', env.TRUST_PROXY);
 app.use(requestIdMiddleware);
 app.use(requestLogger);
 app.use(helmet());
