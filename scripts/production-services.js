@@ -85,7 +85,6 @@ const services = [
     compiledEntry: 'dist/server.js',
     env: {
       PORT: publicPort,
-      // The public gateway reaches the private services over loopback on the same VPS.
       AUTH_SERVICE_URL: `http://127.0.0.1:${internalPorts.auth}`,
       STORE_SERVICE_URL: `http://127.0.0.1:${internalPorts.store}`,
       NEWSFEED_SERVICE_URL: `http://127.0.0.1:${internalPorts.newsfeed}`,
@@ -110,8 +109,8 @@ function readJsonFile(filePath) {
   try {
     return JSON.parse(readFileSync(filePath, 'utf8'));
   } catch (error) {
-    console.error(`[cpanel] Failed to read ${filePath}.`);
-    console.error(`[cpanel] ${getErrorMessage(error)}`);
+    console.error(`[production] Failed to read ${filePath}.`);
+    console.error(`[production] ${getErrorMessage(error)}`);
     process.exit(1);
   }
 }
@@ -217,10 +216,10 @@ function warnAboutSuspiciousProductionDatabaseUrl(service) {
   }
 
   console.warn(
-    `[cpanel] ${service.name} is using a local development DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
+    `[production] ${service.name} is using a local development DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
   );
   console.warn(
-    `[cpanel] Set one of ${service.databaseUrlEnvKeys.join(', ')} in cPanel or update ${path.relative(
+    `[production] Set one of ${service.databaseUrlEnvKeys.join(', ')} or update ${path.relative(
       rootDir,
       service.envFile,
     )} before restarting.`,
@@ -235,10 +234,10 @@ function warnAboutIgnoredRootDatabaseUrl() {
   }
 
   console.warn(
-    '[cpanel] Ignoring root-level DATABASE_URL for npm start because each service resolves its own database connection.',
+    '[production] Ignoring root-level DATABASE_URL because each service resolves its own database connection.',
   );
   console.warn(
-    '[cpanel] Set AUTH_SERVICE_DATABASE_URL, STORE_SERVICE_DATABASE_URL, NEWSFEED_SERVICE_DATABASE_URL, APP_SERVICE_DATABASE_URL, and optionally API_GATEWAY_DATABASE_URL in cPanel instead.',
+    '[production] Set service-specific *_DATABASE_URL variables or update each services/*/.env file instead.',
   );
 }
 
@@ -266,18 +265,18 @@ function validateProductionDatabaseUrls() {
   }
 
   console.error(
-    '[cpanel] Refusing to start because one or more services still resolve to local development DATABASE_URL values.',
+    '[production] Refusing to start because one or more services still resolve to local development DATABASE_URL values.',
   );
   console.error(
-    '[cpanel] This usually means the service-specific *_DATABASE_URL variables are missing in cPanel.',
+    '[production] Update the affected services/*/.env files or provide service-specific *_DATABASE_URL environment variables.',
   );
 
   for (const { service, resolvedDatabaseUrl } of invalidServices) {
     console.error(
-      `[cpanel] ${service.name} resolved DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
+      `[production] ${service.name} resolved DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
     );
     console.error(
-      `[cpanel] Set one of ${service.databaseUrlEnvKeys.join(', ')} in cPanel or update ${path.relative(
+      `[production] Set one of ${service.databaseUrlEnvKeys.join(', ')} or update ${path.relative(
         rootDir,
         service.envFile,
       )} before restarting.`,
@@ -286,7 +285,7 @@ function validateProductionDatabaseUrls() {
 
   if (getFirstNonEmptyValue(process.env.DATABASE_URL)) {
     console.error(
-      '[cpanel] A root-level DATABASE_URL was provided, but npm start does not use it because each service owns its own database.',
+      '[production] A root-level DATABASE_URL was provided, but each service owns its own database connection.',
     );
   }
 
@@ -330,26 +329,23 @@ function validateServiceRuntimeDependencies() {
     return;
   }
 
-  console.error('[cpanel] Missing runtime dependencies for one or more services.');
+  console.error('[production] Missing runtime dependencies for one or more services.');
   for (const entry of unresolvedDependencies) {
     console.error(
-      `[cpanel] ${entry.service} cannot resolve: ${entry.dependencies.join(', ')}.`,
+      `[production] ${entry.service} cannot resolve: ${entry.dependencies.join(', ')}.`,
     );
   }
   console.error(
-    '[cpanel] Redeploy the latest package.json/package-lock.json, then run "npm install" from the repository root in cPanel before restarting the app.',
-  );
-  console.error(
-    '[cpanel] Some shared hosting installs only the root package dependencies, so the root manifest must stay in sync with service runtime dependencies.',
+    '[production] Run "npm install" from the repository root, then rebuild before restarting the services.',
   );
   process.exit(1);
 }
 
 function validateRuntimePrerequisites() {
   if (!existsSync(contractsEntryPath) && !existsSync(contractsSourceEntryPath)) {
-    console.error('[cpanel] Missing packages/contracts runtime sources.');
+    console.error('[production] Missing packages/contracts runtime sources.');
     console.error(
-      '[cpanel] Ensure the repository includes packages/contracts and rerun "npm install" from the repository root.',
+      '[production] Ensure the repository includes packages/contracts and rerun "npm install" from the repository root.',
     );
     process.exit(1);
   }
@@ -357,8 +353,10 @@ function validateRuntimePrerequisites() {
   for (const service of services) {
     const compiledEntryPath = path.join(service.cwd, service.compiledEntry);
     if (!existsSync(compiledEntryPath)) {
-      console.error(`[cpanel] Missing compiled service entry: ${compiledEntryPath}`);
-      console.error('[cpanel] Run "npm run build" from the repository root before starting production services.');
+      console.error(`[production] Missing compiled service entry: ${compiledEntryPath}`);
+      console.error(
+        '[production] Run "npm run build" from the repository root before starting production services.',
+      );
       process.exit(1);
     }
   }
@@ -368,12 +366,7 @@ function validateRuntimePrerequisites() {
 
 function resolveServiceLaunchTarget(service) {
   return {
-    mode: 'compiled',
-    args: [
-      '-r',
-      workspaceRuntimeAliasRegisterPath,
-      service.compiledEntry,
-    ],
+    args: ['-r', workspaceRuntimeAliasRegisterPath, service.compiledEntry],
     env: {},
   };
 }
@@ -398,7 +391,7 @@ function stopAllChildren(reason) {
   }
 
   shuttingDown = true;
-  console.log(`[cpanel] Shutting down all services (${reason}).`);
+  console.log(`[production] Shutting down all services (${reason}).`);
 
   for (const service of services) {
     if (service.child && !service.child.killed) {
@@ -410,7 +403,7 @@ function stopAllChildren(reason) {
 function handleChildExit(service, code, signal) {
   remainingChildren -= 1;
   const reason = signal ? `signal=${signal}` : `code=${code ?? 0}`;
-  console.log(`[cpanel] ${service.name} exited (${reason}).`);
+  console.log(`[production] ${service.name} exited (${reason}).`);
 
   if (!shuttingDown) {
     exitCode = code ?? 1;
@@ -426,21 +419,17 @@ function startService(service) {
   const databaseUrlOverride = resolveNamedEnvironmentValue(service.databaseUrlEnvKeys || []);
   const launchTarget = resolveServiceLaunchTarget(service);
 
-  const child = spawn(
-    process.execPath,
-    launchTarget.args,
-    {
-      cwd: service.cwd,
-      env: {
-        ...inheritedChildEnv,
-        NODE_ENV: process.env.NODE_ENV || 'production',
-        ...launchTarget.env,
-        ...service.env,
-        ...(databaseUrlOverride ? { DATABASE_URL: databaseUrlOverride.value } : {}),
-      },
-      stdio: ['ignore', 'pipe', 'pipe'],
+  const child = spawn(process.execPath, launchTarget.args, {
+    cwd: service.cwd,
+    env: {
+      ...inheritedChildEnv,
+      NODE_ENV: process.env.NODE_ENV || 'production',
+      ...launchTarget.env,
+      ...service.env,
+      ...(databaseUrlOverride ? { DATABASE_URL: databaseUrlOverride.value } : {}),
     },
-  );
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 
   service.child = child;
 
@@ -463,8 +452,8 @@ function main() {
   warnAboutIgnoredRootDatabaseUrl();
   validateProductionDatabaseUrls();
 
-  console.log('[cpanel] Starting Community Management backend services.');
-  console.log(`[cpanel] Public gateway port: ${publicPort}`);
+  console.log('[production] Starting Community Management backend services.');
+  console.log(`[production] Public gateway port: ${publicPort}`);
 
   for (const service of services) {
     warnAboutSuspiciousProductionDatabaseUrl(service);

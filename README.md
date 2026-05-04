@@ -106,7 +106,11 @@ npm run pm2:restart
 npm run pm2:logs
 ```
 
-If you want to verify the compiled services without PM2 first, `npm start` now launches the built `dist/server.js` entrypoint for each service and fails fast if the production build is missing.
+If you want to build and run only the compiled JavaScript services without PM2 first, use `npm run start:dist`.
+
+If you already built the repo, `npm start` runs the root production launcher, wires the loopback service URLs for you, and fails fast if the production build is missing or a service still points at the local `root:root` database template.
+
+A single root-level `DATABASE_URL` is not enough for this repo because each service owns its own database. Use the `services/*/.env` files or provide service-specific `*_DATABASE_URL` environment variables instead.
 
 ## Run The Full Backend In Docker
 
@@ -133,36 +137,6 @@ Stop everything and remove the named volumes with:
 npm run docker:down
 ```
 
-## cPanel Deployment
-
-This repository is not a single root Express app, so cPanel should not be pointed at `server.ts` and it should not run any Docker script.
-
-Use this setup instead:
-
-1. Keep the application root at the repository root.
-2. Set the application startup file to `server.js`.
-3. Run `npm install` from cPanel so the root `postinstall` script can:
-   - build `packages/contracts/dist`
-   - generate Prisma clients for the server platform
-   - compile each service to `dist/server.js` for lower-memory production startup
-   - install the root-level runtime dependency mirror used by shared hosting environments that do not fully install workspace package dependencies
-4. Configure database URLs for the child services in cPanel before restarting:
-   - `AUTH_SERVICE_DATABASE_URL`
-   - `STORE_SERVICE_DATABASE_URL`
-   - `NEWSFEED_SERVICE_DATABASE_URL`
-   - `APP_SERVICE_DATABASE_URL`
-   - optional: `API_GATEWAY_DATABASE_URL` if you do not want the gateway to reuse the auth database URL
-5. Restart the Node.js app from cPanel.
-
-Important notes:
-- The previous `Script exit code: 127` happened because cPanel was running `docker:up:app`, and shared Node.js hosting does not provide `docker compose`.
-- cPanel may run `postinstall` from a `nodevenv/.../lib` directory instead of the repository root. The install wrapper now redirects that step back to the real project root before running workspace commands.
-- The public app should be the `api-gateway`. The new root launcher starts the other services behind it on localhost-only URLs such as `127.0.0.1:4100` and `127.0.0.1:4200`.
-- Keep each service `.env` file present under `services/*/.env`. The launcher overrides internal service URLs, the public gateway port, and any per-service `DATABASE_URL` values provided through the cPanel environment.
-- A single root-level `DATABASE_URL` is not enough for this repo because each service owns its own database. Use the service-specific variables above or update each `services/*/.env` file directly.
-- `npm start` now fails fast outside `NODE_ENV=development` if a service still resolves to the local `root:root@127.0.0.1` template URL, so cPanel shows a clear config error before Prisma child processes start crashing.
-- Run Prisma migrations separately with `npm run prisma:deploy` after your database credentials are correct.
-
 ## Fresh Environment Troubleshooting
 
 If you copied or moved the repository to a new folder and see `Cannot find module '@community/contracts/dist/index.js'`, remove existing installs and reinstall from the current project path so local `file:` dependencies are relinked correctly.
@@ -179,7 +153,7 @@ Remove-Item -Recurse -Force node_modules, services\*\node_modules, packages\*\no
 npm install
 ```
 
-If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. Local non-Docker development uses `root:root` on `127.0.0.1:3306`, while the included Docker MySQL setup uses `root:root` on `127.0.0.1:3307`. On cPanel, if logs mention the `root` MySQL user, that means the service fell back to the local template value instead of a real production `*_DATABASE_URL`.
+If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. Local non-Docker development uses `root:root` on `127.0.0.1:3306`, while the included Docker MySQL setup uses `root:root` on `127.0.0.1:3307`. In production, if logs mention the `root` MySQL user, that means a service fell back to the local template value instead of your real `*_DATABASE_URL`.
 
 ## API Endpoints
 

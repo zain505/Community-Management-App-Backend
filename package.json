@@ -10,8 +10,9 @@
   "scripts": {
     "contracts:build": "npm run build -w packages/contracts",
     "env:setup": "node ./scripts/setup-service-envs.mjs",
-    "postinstall": "node -e \"const fs=require('node:fs');const path=require('node:path');const dirs=[process.env.npm_package_json&&path.dirname(process.env.npm_package_json),process.env.INIT_CWD,process.env.PWD,process.cwd()].filter(Boolean);const parts=(process.cwd()||'').split('/nodevenv/');if(parts.length===2){const suffix=parts[1].split('/').filter(Boolean);if(suffix.length>=3&&suffix[suffix.length-1]==='lib'){dirs.push(path.join(parts[0],...suffix.slice(0,-2)));}}const target=dirs.map((dir)=>path.resolve(dir,'scripts','postinstall-bootstrap.js')).find((file)=>fs.existsSync(file));if(!target){console.error('[postinstall] Unable to locate scripts/postinstall-bootstrap.js.');process.exit(1);}require(target);\"",
-    "start": "node ./server.js",
+    "postinstall": "node ./scripts/postinstall-runner.js",
+    "start": "node ./scripts/production-services.js",
+    "start:dist": "npm run build && npm start",
     "dev": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs",
     "dev:restart": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs --restart",
     "dev:restart:auth": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs --restart=auth-service",
