@@ -3,11 +3,21 @@ export type TrustProxySetting = boolean | number | string | string[];
 export function parseTrustProxySetting(
   value: string | undefined,
   nodeEnv: string,
+  processEnv: NodeJS.ProcessEnv = process.env,
 ): TrustProxySetting {
   const normalizedValue = value?.trim();
 
   if (!normalizedValue) {
-    return nodeEnv === 'production' ? 1 : false;
+    if (nodeEnv === 'production') {
+      return 1;
+    }
+
+    if (typeof processEnv.pm_id === 'string' && processEnv.pm_id.trim() !== '') {
+      // PM2-managed gateways on the VPS commonly sit behind a same-host reverse proxy.
+      return 'loopback';
+    }
+
+    return false;
   }
 
   const lowercaseValue = normalizedValue.toLowerCase();

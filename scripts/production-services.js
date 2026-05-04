@@ -85,6 +85,7 @@ const services = [
     compiledEntry: 'dist/server.js',
     env: {
       PORT: publicPort,
+      TRUST_PROXY: process.env.TRUST_PROXY || '1',
       AUTH_SERVICE_URL: `http://127.0.0.1:${internalPorts.auth}`,
       STORE_SERVICE_URL: `http://127.0.0.1:${internalPorts.store}`,
       NEWSFEED_SERVICE_URL: `http://127.0.0.1:${internalPorts.newsfeed}`,

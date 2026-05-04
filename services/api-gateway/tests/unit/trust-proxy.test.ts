@@ -10,6 +10,10 @@ describe('parseTrustProxySetting', () => {
     expect(parseTrustProxySetting(undefined, 'test')).toBe(false);
   });
 
+  it('defaults PM2-managed non-production runtimes to loopback proxies', () => {
+    expect(parseTrustProxySetting(undefined, 'development', { pm_id: '0' })).toBe('loopback');
+  });
+
   it('parses boolean values', () => {
     expect(parseTrustProxySetting('true', 'production')).toBe(true);
     expect(parseTrustProxySetting('false', 'production')).toBe(false);

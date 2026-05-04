@@ -31,6 +31,7 @@ module.exports = {
   apps: [
     createServiceApp('api-gateway', 'services/api-gateway', 4000, {
       // The gateway talks to the private services over loopback on the same VPS.
+      TRUST_PROXY: process.env.TRUST_PROXY || '1',
       AUTH_SERVICE_URL: 'http://127.0.0.1:4100',
       STORE_SERVICE_URL: 'http://127.0.0.1:4200',
       NEWSFEED_SERVICE_URL: 'http://127.0.0.1:4300',
