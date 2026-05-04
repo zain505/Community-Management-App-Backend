@@ -1,4 +1,4 @@
-import type { Prisma, RefreshToken, User } from '@prisma/client';
+import type { Prisma, RefreshToken, User } from '../../generated/prisma';
 import { prisma } from '../../lib/prisma';
 
 export const authRepository = {

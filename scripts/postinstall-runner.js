@@ -53,6 +53,4 @@ function runScript(scriptName) {
   }
 }
 
-runScript('contracts:build');
-runScript('prisma:generate');
 runScript('build');
