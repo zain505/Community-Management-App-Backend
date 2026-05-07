@@ -79,6 +79,7 @@ function buildTargetUrl(req: Request, route: ProxyRouteConfig): string {
 function getForwardHeaders(req: Request): Record<string, string> {
   const headers: Record<string, string> = {
     'x-request-id': req.requestId,
+    'accept-encoding': 'identity',
   };
 
   const authorization = req.header('authorization');
