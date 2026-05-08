@@ -172,6 +172,22 @@ describe('store schemas', () => {
     expect(query.page).toBe(1);
   });
 
+  it('treats an empty store list search string as no search filter', () => {
+    const query = listStoresQuerySchema.parse({
+      search: '',
+    });
+
+    expect(query.search).toBeUndefined();
+  });
+
+  it('trims store list search strings', () => {
+    const query = listStoresQuerySchema.parse({
+      search: '  fresh mart  ',
+    });
+
+    expect(query.search).toBe('fresh mart');
+  });
+
   it('rejects non-positive store list page', () => {
     const result = listStoresQuerySchema.safeParse({
       page: 0,

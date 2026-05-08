@@ -161,7 +161,18 @@ function buildStoreListWhere(search?: string, active?: boolean): Prisma.StoreWhe
   }
 
   if (search) {
-    where.OR = [{ name: { contains: search } }, { location: { contains: search } }];
+    where.OR = [
+      { name: { contains: search } },
+      { location: { contains: search } },
+      { phoneNumber: { contains: search } },
+      {
+        products: {
+          some: {
+            name: { contains: search },
+          },
+        },
+      },
+    ];
   }
 
   return where;

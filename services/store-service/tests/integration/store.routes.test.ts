@@ -68,6 +68,26 @@ describe('store routes', () => {
     expect(mockedStoreService.listStores).toHaveBeenCalledWith(undefined, 1);
   });
 
+  it('treats an empty public store search query as no search filter', async () => {
+    mockedStoreService.listStores.mockResolvedValue([]);
+
+    const response = await request(app).get('/v1/stores?search=');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(mockedStoreService.listStores).toHaveBeenCalledWith(undefined, 1);
+  });
+
+  it('passes a trimmed public store search query through to the service', async () => {
+    mockedStoreService.listStores.mockResolvedValue([]);
+
+    const response = await request(app).get('/v1/stores?search=%20fresh%20mart%20&page=1');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(mockedStoreService.listStores).toHaveBeenCalledWith('fresh mart', 1);
+  });
+
   it('passes admin store-list queries through for authenticated users', async () => {
     mockedStoreService.listStoresForAdmin.mockResolvedValue([
       {

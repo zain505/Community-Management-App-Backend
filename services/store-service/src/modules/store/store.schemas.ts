@@ -31,6 +31,14 @@ const activeStoreQuerySchema = z.preprocess((value) => {
 
   return value;
 }, z.boolean());
+const searchQuerySchema = z.preprocess((value) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : undefined;
+}, z.string().min(1).max(120).optional());
 
 const storeProductSchema = z.object({
   id: z.string().trim().min(1).max(64).optional(),
@@ -101,7 +109,7 @@ export const storeIdParamSchema = z.object({
 });
 
 export const listStoresQuerySchema = z.object({
-  search: z.string().trim().min(1).max(120).optional(),
+  search: searchQuerySchema,
   page: z.coerce.number().int().positive().default(1),
 });
 
