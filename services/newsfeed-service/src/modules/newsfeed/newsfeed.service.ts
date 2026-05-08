@@ -17,6 +17,11 @@ import type {
 import { StatusCodes } from 'http-status-codes';
 import { type Prisma } from '../../generated/prisma';
 import { AppError } from '../../shared/app-error';
+import {
+  invalidateNewsFeedListCache,
+  readNewsFeedListCache,
+  writeNewsFeedListCache,
+} from './newsfeed.cache';
 import { authClient } from '../auth/auth.client';
 import {
   newsFeedRepository,
@@ -377,14 +382,22 @@ async function refreshMetric(metric: NewsFeedMetric, context: MetricRefreshConte
 export const newsFeedService = {
   async listNewsFeed(page = 1, limit = DEFAULT_NEWSFEED_LIMIT): Promise<NewsFeedListResponse> {
     const pagination = normalizePagination(page, limit);
+    const cachedFeed = await readNewsFeedListCache(pagination.page, pagination.limit);
+
+    if (cachedFeed) {
+      return cachedFeed;
+    }
 
     const items = await newsFeedRepository.listEntries(pagination.page, pagination.limit);
-
-    return {
+    const payload = {
       items: await enrichNewsFeedItems(items),
       page: pagination.page,
       limit: pagination.limit,
-    };
+    } satisfies NewsFeedListResponse;
+
+    await writeNewsFeedListCache(pagination.page, pagination.limit, payload);
+
+    return payload;
   },
 
   async saveNewsFeed(userId: string, newsFeedId: string): Promise<SavedNewsFeedItem> {
@@ -438,6 +451,7 @@ export const newsFeedService = {
       throwNewsFeedNotFound();
     }
 
+    await invalidateNewsFeedListCache();
     return toNewsFeedLikeResponse(likedEntry);
   },
 
@@ -453,6 +467,8 @@ export const newsFeedService = {
     for (const metric of refreshMetrics) {
       await refreshMetric(metric, metricRefreshContext);
     }
+
+    await invalidateNewsFeedListCache();
   },
 
   async refreshPopularStoreMetric(

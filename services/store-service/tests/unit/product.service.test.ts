@@ -21,14 +21,20 @@ jest.mock('../../src/modules/newsfeed/newsfeed.client', () => ({
   },
 }));
 
+jest.mock('../../src/modules/store/store.cache', () => ({
+  invalidateStoreListCache: jest.fn(),
+}));
+
 import { newsFeedClient } from '../../src/modules/newsfeed/newsfeed.client';
 import { productRepository } from '../../src/modules/product/product.repository';
 import { productService } from '../../src/modules/product/product.service';
+import { invalidateStoreListCache } from '../../src/modules/store/store.cache';
 import { storeRepository } from '../../src/modules/store/store.repository';
 
 const mockedProductRepository = jest.mocked(productRepository);
 const mockedStoreRepository = jest.mocked(storeRepository);
 const mockedNewsFeedClient = jest.mocked(newsFeedClient);
+const mockedInvalidateStoreListCache = jest.mocked(invalidateStoreListCache);
 
 function buildStoreRecord(overrides: Record<string, unknown> = {}) {
   return {
@@ -56,13 +62,12 @@ function buildProductRecord(overrides: Record<string, unknown> = {}) {
 describe('product service', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockedInvalidateStoreListCache.mockResolvedValue(undefined);
   });
 
   it('lists products for a store after confirming the store exists', async () => {
     mockedStoreRepository.findStoreBasicById.mockResolvedValue(buildStoreRecord());
-    mockedProductRepository.listByStoreId.mockResolvedValue([
-      buildProductRecord(),
-    ]);
+    mockedProductRepository.listByStoreId.mockResolvedValue([buildProductRecord()]);
 
     const products = await productService.listProductsByStoreId(18, 'Orange', 2);
 
@@ -131,6 +136,7 @@ describe('product service', () => {
       ],
       refreshMetrics: ['MOST_ACTIVE_STORE'],
     });
+    expect(mockedInvalidateStoreListCache).toHaveBeenCalled();
   });
 
   it('publishes a product-updated event when updating a product', async () => {
@@ -177,6 +183,7 @@ describe('product service', () => {
       ],
       refreshMetrics: ['MOST_ACTIVE_STORE'],
     });
+    expect(mockedInvalidateStoreListCache).toHaveBeenCalled();
   });
 
   it('publishes a product-deleted event when deleting a product', async () => {
@@ -188,6 +195,7 @@ describe('product service', () => {
     await productService.deleteMyProduct('user-123', 'prod-1');
 
     expect(mockedProductRepository.deleteById).toHaveBeenCalledWith('prod-1');
+    expect(mockedInvalidateStoreListCache).toHaveBeenCalled();
     expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
       events: [
         {

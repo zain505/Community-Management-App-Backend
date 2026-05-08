@@ -46,6 +46,18 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: community-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   adminer:
     image: adminer:4
     container_name: community-adminer
@@ -95,6 +107,11 @@ services:
   store-service:
     <<: *backend-service
     container_name: community-store-service
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     env_file:
       - ./env/store-service.env
     command: ['npm', 'run', 'start', '-w', 'services/store-service']
@@ -116,6 +133,11 @@ services:
   newsfeed-service:
     <<: *backend-service
     container_name: community-newsfeed-service
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     env_file:
       - ./env/newsfeed-service.env
     command: ['npm', 'run', 'start', '-w', 'services/newsfeed-service']

@@ -25,14 +25,23 @@ jest.mock('../../src/modules/newsfeed/newsfeed.client', () => ({
   },
 }));
 
+jest.mock('../../src/modules/store/store.cache', () => ({
+  invalidateStoreListCache: jest.fn(),
+  readStoreListCache: jest.fn(),
+  shouldSyncMostSearchedMetric: jest.fn(),
+  writeStoreListCache: jest.fn(),
+}));
+
 import { authClient } from '../../src/modules/auth/auth-client';
 import { newsFeedClient } from '../../src/modules/newsfeed/newsfeed.client';
+import * as storeCache from '../../src/modules/store/store.cache';
 import { storeRepository } from '../../src/modules/store/store.repository';
 import { storeService } from '../../src/modules/store/store.service';
 
 const mockedAuthClient = jest.mocked(authClient);
 const mockedStoreRepository = jest.mocked(storeRepository);
 const mockedNewsFeedClient = jest.mocked(newsFeedClient);
+const mockedStoreCache = jest.mocked(storeCache);
 
 const storeImageBase64 = 'data:image/png;base64,aGVsbG8=';
 const updatedStoreImageBase64 = 'data:image/png;base64,d29ybGQ=';
@@ -153,6 +162,10 @@ const storeFieldChangeCases = [
 describe('store service', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockedStoreCache.invalidateStoreListCache.mockResolvedValue(undefined);
+    mockedStoreCache.readStoreListCache.mockResolvedValue(null);
+    mockedStoreCache.shouldSyncMostSearchedMetric.mockResolvedValue(true);
+    mockedStoreCache.writeStoreListCache.mockResolvedValue(false);
   });
 
   it('includes phoneNumber and reviews in store list responses', async () => {
@@ -187,6 +200,64 @@ describe('store service', () => {
       }),
     ]);
     expect(mockedStoreRepository.incrementSearchCountByIds).not.toHaveBeenCalled();
+    expect(mockedStoreCache.writeStoreListCache).toHaveBeenCalledWith(
+      undefined,
+      1,
+      expect.any(Array),
+    );
+  });
+
+  it('returns cached public store lists without hitting the repository', async () => {
+    mockedStoreCache.readStoreListCache.mockResolvedValue([
+      {
+        id: 18,
+        name: 'Fresh Mart2',
+        active: true,
+        location: 'Main Road',
+        rating: '4.2',
+        image: storeImageBase64,
+        badges: [],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
+        reviews: [],
+      },
+    ]);
+
+    const stores = await storeService.listStores(undefined, 1);
+
+    expect(stores).toEqual([
+      expect.objectContaining({
+        id: 18,
+        name: 'Fresh Mart2',
+      }),
+    ]);
+    expect(mockedStoreRepository.listStores).not.toHaveBeenCalled();
+    expect(mockedStoreCache.writeStoreListCache).not.toHaveBeenCalled();
+  });
+
+  it('bypasses the list cache for search queries and debounces metric sync', async () => {
+    mockedStoreRepository.listStores.mockResolvedValue([buildStoreRecord()]);
+    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+
+    const stores = await storeService.listStores('Fresh', 1);
+
+    expect(stores).toEqual([
+      expect.objectContaining({
+        id: 18,
+        name: 'Fresh Mart2',
+      }),
+    ]);
+    expect(mockedStoreCache.readStoreListCache).not.toHaveBeenCalled();
+    expect(mockedStoreRepository.incrementSearchCountByIds).toHaveBeenCalledWith([18]);
+    expect(mockedStoreCache.shouldSyncMostSearchedMetric).toHaveBeenCalled();
+    expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
+      events: undefined,
+      refreshMetrics: ['MOST_SEARCHED_STORE'],
+    });
+    expect(mockedStoreCache.writeStoreListCache).not.toHaveBeenCalled();
   });
 
   it('allows active admin users to list stores for management without affecting search metrics', async () => {
@@ -265,6 +336,7 @@ describe('store service', () => {
       ],
       refreshMetrics: undefined,
     });
+    expect(mockedStoreCache.invalidateStoreListCache).toHaveBeenCalled();
     expect(mockedStoreRepository.createForUser).toHaveBeenCalledWith('user-123', {
       name: 'Fresh Mart2',
       location: 'Main Road',
@@ -361,6 +433,7 @@ describe('store service', () => {
     await storeService.deleteMyStore('user-123');
 
     expect(mockedStoreRepository.deleteById).toHaveBeenCalledWith(7);
+    expect(mockedStoreCache.invalidateStoreListCache).toHaveBeenCalled();
     expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
       events: [
         {
@@ -561,6 +634,7 @@ describe('store service', () => {
     );
     expect(store.rating).toBe('4.6');
     expect(store.badges).toEqual(['Featured', 'Fast Delivery']);
+    expect(mockedStoreCache.invalidateStoreListCache).toHaveBeenCalled();
     expect(store.reviews).toEqual([
       {
         id: 12,

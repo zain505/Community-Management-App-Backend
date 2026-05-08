@@ -41,10 +41,14 @@ module.exports = {
     createServiceApp('store-service', 'services/store-service', 4200, {
       AUTH_SERVICE_BASE_URL: 'http://127.0.0.1:4100',
       NEWSFEED_SERVICE_BASE_URL: 'http://127.0.0.1:4300',
+      REDIS_ENABLED: process.env.REDIS_ENABLED || 'false',
+      REDIS_URL: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
     }),
     createServiceApp('newsfeed-service', 'services/newsfeed-service', 4300, {
       AUTH_SERVICE_BASE_URL: 'http://127.0.0.1:4100',
       STORE_SERVICE_BASE_URL: 'http://127.0.0.1:4200',
+      REDIS_ENABLED: process.env.REDIS_ENABLED || 'false',
+      REDIS_URL: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
     }),
     createServiceApp('app-service', 'services/app-service', 4400, {
       AUTH_SERVICE_BASE_URL: 'http://127.0.0.1:4100',

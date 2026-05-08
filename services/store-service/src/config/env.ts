@@ -17,6 +17,27 @@ const DEFAULT_CORS_ORIGINS = [
 ].join(',');
 const DEFAULT_AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:4100';
 const DEFAULT_NEWSFEED_SERVICE_BASE_URL = 'http://127.0.0.1:4300';
+const DEFAULT_REDIS_URL = 'redis://127.0.0.1:6379';
+
+const booleanFlagSchema = z.preprocess((value) => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (['true', '1', 'yes', 'on'].includes(normalizedValue)) {
+      return true;
+    }
+
+    if (['false', '0', 'no', 'off'].includes(normalizedValue)) {
+      return false;
+    }
+  }
+
+  return value;
+}, z.boolean());
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -39,6 +60,11 @@ const envSchema = z.object({
   AUTH_SERVICE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   NEWSFEED_SERVICE_BASE_URL: z.string().url().default(DEFAULT_NEWSFEED_SERVICE_BASE_URL),
   NEWSFEED_SERVICE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  REDIS_ENABLED: booleanFlagSchema.default(false),
+  REDIS_URL: z.string().url().default(DEFAULT_REDIS_URL),
+  REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().default(2_000),
+  STORE_LIST_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
+  STORE_SEARCH_SYNC_DEBOUNCE_SECONDS: z.coerce.number().int().positive().default(15),
 });
 
 const parsed = envSchema.safeParse(process.env);

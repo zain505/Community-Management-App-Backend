@@ -29,12 +29,20 @@ jest.mock('../../src/modules/auth/auth.client', () => ({
   },
 }));
 
+jest.mock('../../src/modules/newsfeed/newsfeed.cache', () => ({
+  invalidateNewsFeedListCache: jest.fn(),
+  readNewsFeedListCache: jest.fn(),
+  writeNewsFeedListCache: jest.fn(),
+}));
+
 import { authClient } from '../../src/modules/auth/auth.client';
+import * as newsFeedCache from '../../src/modules/newsfeed/newsfeed.cache';
 import { newsFeedRepository } from '../../src/modules/newsfeed/newsfeed.repository';
 import { newsFeedService } from '../../src/modules/newsfeed/newsfeed.service';
 import { storeClient } from '../../src/modules/store/store.client';
 
 const mockedAuthClient = jest.mocked(authClient);
+const mockedNewsFeedCache = jest.mocked(newsFeedCache);
 const mockedNewsFeedRepository = jest.mocked(newsFeedRepository);
 const mockedStoreClient = jest.mocked(storeClient);
 describe('newsfeed service', () => {
@@ -42,6 +50,9 @@ describe('newsfeed service', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-03-19T12:00:00.000Z'));
     jest.resetAllMocks();
+    mockedNewsFeedCache.invalidateNewsFeedListCache.mockResolvedValue(undefined);
+    mockedNewsFeedCache.readNewsFeedListCache.mockResolvedValue(null);
+    mockedNewsFeedCache.writeNewsFeedListCache.mockResolvedValue(false);
     mockedNewsFeedRepository.createEntry.mockResolvedValue({
       id: 'feed-1',
       type: 'STORE_CREATED',
@@ -61,6 +72,42 @@ describe('newsfeed service', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('returns cached public newsfeed pages without hitting the repository', async () => {
+    mockedNewsFeedCache.readNewsFeedListCache.mockResolvedValue({
+      items: [
+        {
+          id: 'feed-cached',
+          type: 'STORE_CREATED',
+          title: 'Cached feed',
+          description: 'Returned from cache.',
+          likesCount: 0,
+          createdAt: '2026-03-14T08:00:00.000Z',
+        },
+      ],
+      page: 1,
+      limit: 10,
+    });
+
+    const feed = await newsFeedService.listNewsFeed(1, 10);
+
+    expect(feed).toEqual({
+      items: [
+        {
+          id: 'feed-cached',
+          type: 'STORE_CREATED',
+          title: 'Cached feed',
+          description: 'Returned from cache.',
+          likesCount: 0,
+          createdAt: '2026-03-14T08:00:00.000Z',
+        },
+      ],
+      page: 1,
+      limit: 10,
+    });
+    expect(mockedNewsFeedRepository.listEntries).not.toHaveBeenCalled();
+    expect(mockedNewsFeedCache.writeNewsFeedListCache).not.toHaveBeenCalled();
   });
 
   it('attaches store data for store-only feed items', async () => {
@@ -148,6 +195,14 @@ describe('newsfeed service', () => {
     ]);
     expect(mockedStoreClient.findStoreSummariesByIds).toHaveBeenCalledWith([7]);
     expect(mockedAuthClient.findUsersPublicByIds).toHaveBeenCalledWith(['user-123']);
+    expect(mockedNewsFeedCache.writeNewsFeedListCache).toHaveBeenCalledWith(
+      1,
+      10,
+      expect.objectContaining({
+        page: 1,
+        limit: 10,
+      }),
+    );
   });
 
   it('attaches both store and product data for product feed items', async () => {
@@ -628,6 +683,7 @@ describe('newsfeed service', () => {
       metadata: undefined,
     });
     expect(mockedNewsFeedRepository.upsertMetricState).toHaveBeenCalledWith('MOST_ACTIVE_STORE', 7);
+    expect(mockedNewsFeedCache.invalidateNewsFeedListCache).toHaveBeenCalled();
   });
 
   it('still creates a metric feed when the derived winner is a different store', async () => {
@@ -661,6 +717,7 @@ describe('newsfeed service', () => {
       metadata: undefined,
     });
     expect(mockedNewsFeedRepository.upsertMetricState).toHaveBeenCalledWith('MOST_ACTIVE_STORE', 9);
+    expect(mockedNewsFeedCache.invalidateNewsFeedListCache).toHaveBeenCalled();
   });
 
   it('returns the latest likes count after a user likes a feed item', async () => {
@@ -676,6 +733,7 @@ describe('newsfeed service', () => {
       likesCount: 3,
     });
     expect(mockedNewsFeedRepository.likeEntry).toHaveBeenCalledWith('feed-1', 'user-123');
+    expect(mockedNewsFeedCache.invalidateNewsFeedListCache).toHaveBeenCalled();
   });
 
   it('throws when saving a missing feed item', async () => {

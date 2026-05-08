@@ -9,6 +9,7 @@ import { Prisma } from '../../generated/prisma';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../shared/app-error';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
+import { invalidateStoreListCache } from '../store/store.cache';
 import {
   buildProductAddedEvent,
   buildProductDeletedEvent,
@@ -67,7 +68,10 @@ function handlePrismaError(error: unknown): never {
   throw error;
 }
 
-async function syncNewsFeed(events?: NewsFeedSyncEvent[], refreshMetrics?: NewsFeedMetric[]): Promise<void> {
+async function syncNewsFeed(
+  events?: NewsFeedSyncEvent[],
+  refreshMetrics?: NewsFeedMetric[],
+): Promise<void> {
   await newsFeedClient.syncBestEffort({
     events: events && events.length > 0 ? events : undefined,
     refreshMetrics: refreshMetrics && refreshMetrics.length > 0 ? refreshMetrics : undefined,
@@ -123,6 +127,7 @@ export const productService = {
 
     try {
       const product = await productRepository.createForStore(store.id, buildCreatePayload(payload));
+      await invalidateStoreListCache();
       await syncNewsFeed(
         [
           buildProductAddedEvent({
@@ -138,7 +143,11 @@ export const productService = {
     }
   },
 
-  async updateMyProduct(userId: string, productId: string, payload: UpdateProductRequest): Promise<Product> {
+  async updateMyProduct(
+    userId: string,
+    productId: string,
+    payload: UpdateProductRequest,
+  ): Promise<Product> {
     const store = await getStoreForUser(userId);
     const existingProduct = await productRepository.findByIdForStore(productId, store.id);
 
@@ -146,8 +155,12 @@ export const productService = {
       throwProductNotFound();
     }
 
-    const updatedProduct = await productRepository.updateById(productId, buildUpdatePayload(payload));
+    const updatedProduct = await productRepository.updateById(
+      productId,
+      buildUpdatePayload(payload),
+    );
 
+    await invalidateStoreListCache();
     await syncNewsFeed(
       [
         buildProductUpdatedEvent({
@@ -171,6 +184,7 @@ export const productService = {
     }
 
     await productRepository.deleteById(productId);
+    await invalidateStoreListCache();
     await syncNewsFeed(
       [
         buildProductDeletedEvent({

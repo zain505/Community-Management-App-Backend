@@ -17,6 +17,12 @@ import type {
 import { Prisma } from '../../generated/prisma';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../shared/app-error';
+import {
+  invalidateStoreListCache,
+  readStoreListCache,
+  shouldSyncMostSearchedMetric,
+  writeStoreListCache,
+} from './store.cache';
 import { authClient } from '../auth/auth-client';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
 import {
@@ -257,14 +263,28 @@ async function syncNewsFeed(
 
 export const storeService = {
   async listStores(search?: string, page = 1): Promise<StoreSummary[]> {
+    if (!hasSearchTerm(search)) {
+      const cachedStores = await readStoreListCache(search, page);
+
+      if (cachedStores) {
+        return cachedStores;
+      }
+    }
+
     const stores = await storeRepository.listStores(search, page);
+    const storeSummaries = stores.map(toStoreSummary);
 
     if (hasSearchTerm(search) && stores.length > 0) {
       await storeRepository.incrementSearchCountByIds(stores.map((store) => store.id));
-      await syncNewsFeed(undefined, ['MOST_SEARCHED_STORE']);
+
+      if (await shouldSyncMostSearchedMetric()) {
+        await syncNewsFeed(undefined, ['MOST_SEARCHED_STORE']);
+      }
+    } else if (!hasSearchTerm(search)) {
+      await writeStoreListCache(search, page, storeSummaries);
     }
 
-    return stores.map(toStoreSummary);
+    return storeSummaries;
   },
 
   async listStoresForAdmin(
@@ -312,6 +332,7 @@ export const storeService = {
 
     try {
       const store = await storeRepository.createForUser(userId, buildCreatePayload(payload));
+      await invalidateStoreListCache();
       await syncNewsFeed([buildStoreCreatedEvent(store)]);
       return toStoreDetails(store);
     } catch (error) {
@@ -343,6 +364,7 @@ export const storeService = {
       productChanges,
     });
 
+    await invalidateStoreListCache();
     await syncNewsFeed(newsFeedEvents, refreshMetrics);
 
     return toStoreDetails(updatedStore);
@@ -366,6 +388,7 @@ export const storeService = {
     }
 
     const updatedStore = await storeRepository.updateActiveStatusById(storeId, active);
+    await invalidateStoreListCache();
 
     return toStoreDetails(updatedStore);
   },
@@ -402,6 +425,7 @@ export const storeService = {
         productChanges: [],
       });
 
+      await invalidateStoreListCache();
       await syncNewsFeed(events, refreshMetrics);
 
       return toStoreDetails(updatedStore);
@@ -418,6 +442,7 @@ export const storeService = {
     }
 
     await storeRepository.deleteById(existingStore.id);
+    await invalidateStoreListCache();
     await syncNewsFeed(
       [buildStoreDeletedEvent(existingStore)],
       ['POPULAR_STORE', 'MOST_ACTIVE_STORE', 'MOST_SEARCHED_STORE'],
