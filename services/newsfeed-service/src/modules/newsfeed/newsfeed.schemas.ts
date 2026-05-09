@@ -1,10 +1,13 @@
 import {
+  NEWS_FEED_APPROVAL_STATUSES,
   NEWS_FEED_EVENT_TYPES,
   NEWS_FEED_METRICS,
+  type NewsFeedApprovalStatus,
   type NewsFeedEventType,
   type NewsFeedMetric,
 } from '@community/contracts';
 import { z } from 'zod';
+import { imageSchema } from '../../shared/image-schema';
 
 export const listNewsFeedQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -23,10 +26,18 @@ const newsFeedMetricSchema = z.enum(
   Object.values(NEWS_FEED_METRICS) as [NewsFeedMetric, ...NewsFeedMetric[]],
 );
 
+const newsFeedApprovalStatusSchema = z.enum(
+  Object.values(NEWS_FEED_APPROVAL_STATUSES) as [
+    NewsFeedApprovalStatus,
+    ...NewsFeedApprovalStatus[],
+  ],
+);
+
 const newsFeedSyncEventSchema = z.object({
   type: newsFeedEventTypeSchema,
   title: z.string().trim().min(1).max(191),
   description: z.string().trim().min(1).max(5_000),
+  image: imageSchema.optional(),
   storeId: z.coerce.number().int().positive().optional(),
   storeName: z.string().trim().min(1).max(191).optional(),
   metadata: z.record(z.unknown()).optional(),
@@ -40,3 +51,19 @@ export const newsFeedSyncBodySchema = z
   .refine((payload) => Boolean(payload.events?.length || payload.refreshMetrics?.length), {
     message: 'At least one sync action is required',
   });
+
+export const createNewsFeedPostBodySchema = z.object({
+  title: z.string().trim().min(1).max(191),
+  description: z.string().trim().min(1).max(5_000),
+  image: imageSchema.optional(),
+});
+
+export const listUserSubmittedNewsFeedQuerySchema = listNewsFeedQuerySchema.extend({
+  status: newsFeedApprovalStatusSchema.default('PENDING'),
+});
+
+export const reviewNewsFeedPostBodySchema = z.object({
+  status: newsFeedApprovalStatusSchema.refine((value) => value !== 'PENDING', {
+    message: 'Status must be APPROVED or DISAPPROVED',
+  }),
+});

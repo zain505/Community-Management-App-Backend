@@ -124,8 +124,12 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.NewsFeedItemScalarFieldEnum = {
   id: 'id',
   type: 'type',
+  source: 'source',
+  approvalStatus: 'approvalStatus',
   title: 'title',
   description: 'description',
+  image: 'image',
+  authorUserId: 'authorUserId',
   storeId: 'storeId',
   storeName: 'storeName',
   metadata: 'metadata',
@@ -183,6 +187,8 @@ exports.Prisma.NewsFeedItemOrderByRelevanceFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  image: 'image',
+  authorUserId: 'authorUserId',
   storeName: 'storeName'
 };
 
@@ -217,9 +223,21 @@ exports.NewsFeedEventType = exports.$Enums.NewsFeedEventType = {
   EVENT_MANAGEMENT_CREATED: 'EVENT_MANAGEMENT_CREATED',
   EVENT_MANAGEMENT_UPDATED: 'EVENT_MANAGEMENT_UPDATED',
   EVENT_MANAGEMENT_DELETED: 'EVENT_MANAGEMENT_DELETED',
+  USER_POST: 'USER_POST',
   POPULAR_STORE_CHANGED: 'POPULAR_STORE_CHANGED',
   MOST_ACTIVE_STORE_CHANGED: 'MOST_ACTIVE_STORE_CHANGED',
   MOST_SEARCHED_STORE_CHANGED: 'MOST_SEARCHED_STORE_CHANGED'
+};
+
+exports.NewsFeedSource = exports.$Enums.NewsFeedSource = {
+  SYSTEM: 'SYSTEM',
+  USER_POST: 'USER_POST'
+};
+
+exports.NewsFeedApprovalStatus = exports.$Enums.NewsFeedApprovalStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  DISAPPROVED: 'DISAPPROVED'
 };
 
 exports.NewsFeedMetric = exports.$Enums.NewsFeedMetric = {

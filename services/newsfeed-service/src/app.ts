@@ -1,3 +1,4 @@
+import path from 'node:path';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors, { type CorsOptions } from 'cors';
@@ -33,11 +34,12 @@ app.use(requestLogger);
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(compression());
-// Product sync events can include inline product images in metadata.
+// Sync events and user posts can still arrive with base64 images before they are persisted as files.
 app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(cookieParser());
 app.use(globalRateLimiter);
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 app.use(healthRouter);
 app.use('/v1/newsfeed', newsFeedRouter);

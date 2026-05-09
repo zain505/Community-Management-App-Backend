@@ -9,6 +9,7 @@ import type {
   StoreBasicSnapshot,
   StoreDetails,
   StoreProduct,
+  StoreProductInput,
   StoreRankingSnapshot,
   StoreSummary,
   StoreSummaryWithOwner,
@@ -16,7 +17,14 @@ import type {
 } from '@community/contracts';
 import { Prisma } from '../../generated/prisma';
 import { StatusCodes } from 'http-status-codes';
+import { logger } from '../../config/logger';
 import { AppError } from '../../shared/app-error';
+import {
+  deleteManagedImages,
+  isBase64ImageInput,
+  isManagedImagePublicPath,
+  persistBase64Image,
+} from '../../shared/image-storage';
 import {
   invalidateStoreListCache,
   readStoreListCache,
@@ -129,19 +137,204 @@ function toMostSearchedStoreSnapshot(store: {
   };
 }
 
-function buildCreatePayload(payload: CreateStoreRequest) {
+interface NormalizedStorePayloadResult<TPayload> {
+  createdImageUrls: string[];
+  payload: TPayload;
+}
+
+interface NormalizedProductImagesResult<TProduct extends { image: string }> {
+  createdImageUrls: string[];
+  products: TProduct[] | undefined;
+}
+
+async function cleanupManagedStoreImagesBestEffort(
+  imageUrls: string[],
+  action: string,
+): Promise<void> {
+  if (imageUrls.length === 0) {
+    return;
+  }
+
+  try {
+    await deleteManagedImages(imageUrls);
+  } catch (error) {
+    logger.error({ error, action, imageUrls }, 'Failed to clean up managed store images');
+  }
+}
+
+async function normalizeProductImages<TProduct extends { image: string }>(
+  products?: TProduct[],
+): Promise<NormalizedProductImagesResult<TProduct>> {
+  if (!products) {
+    return {
+      createdImageUrls: [],
+      products: undefined,
+    };
+  }
+
+  const createdImageUrls: string[] = [];
+  const normalizedProducts = [];
+
+  try {
+    for (const product of products) {
+      if (!isBase64ImageInput(product.image)) {
+        normalizedProducts.push(product);
+        continue;
+      }
+
+      const image = await persistBase64Image(product.image, 'product');
+      createdImageUrls.push(image);
+      normalizedProducts.push({
+        ...product,
+        image,
+      });
+    }
+  } catch (error) {
+    await cleanupManagedStoreImagesBestEffort(
+      createdImageUrls,
+      'product image normalization rollback',
+    );
+    throw error;
+  }
+
   return {
-    ...payload,
-    badges: [],
-    products: payload.products ?? [],
+    createdImageUrls,
+    products: normalizedProducts,
   };
 }
 
-function buildUpdatePayload(payload: UpdateStoreRequest) {
-  return {
-    ...payload,
-    products: payload.products ?? undefined,
-  };
+async function buildCreatePayload(
+  payload: CreateStoreRequest,
+): Promise<NormalizedStorePayloadResult<{
+  badges: string[];
+  closingTime: string;
+  delivery: string;
+  image: string;
+  location: string;
+  minOrderRs: string;
+  name: string;
+  openingTime: string;
+  phoneNumber: string;
+  products: StoreProductInput[];
+}>> {
+  const normalizedProducts = await normalizeProductImages(payload.products ?? []);
+  const createdImageUrls = [...normalizedProducts.createdImageUrls];
+
+  try {
+    const image = isBase64ImageInput(payload.image)
+      ? await persistBase64Image(payload.image, 'store')
+      : payload.image;
+
+    if (image !== payload.image) {
+      createdImageUrls.push(image);
+    }
+
+    return {
+      createdImageUrls,
+      payload: {
+        ...payload,
+        badges: [],
+        image,
+        products: normalizedProducts.products ?? [],
+      },
+    };
+  } catch (error) {
+    await cleanupManagedStoreImagesBestEffort(
+      createdImageUrls,
+      'store image normalization rollback',
+    );
+    throw error;
+  }
+}
+
+async function buildUpdatePayload(
+  payload: UpdateStoreRequest,
+): Promise<NormalizedStorePayloadResult<{
+  closingTime?: string;
+  delivery?: string;
+  image?: string;
+  location?: string;
+  minOrderRs?: string;
+  name?: string;
+  openingTime?: string;
+  phoneNumber?: string;
+  products?: StoreProductInput[];
+}>> {
+  const normalizedProducts = await normalizeProductImages(payload.products);
+  const createdImageUrls = [...normalizedProducts.createdImageUrls];
+
+  try {
+    const image =
+      payload.image === undefined || !isBase64ImageInput(payload.image)
+        ? payload.image
+        : await persistBase64Image(payload.image, 'store');
+
+    if (image !== undefined && image !== payload.image) {
+      createdImageUrls.push(image);
+    }
+
+    return {
+      createdImageUrls,
+      payload: {
+        ...payload,
+        image,
+        products: normalizedProducts.products ?? undefined,
+      },
+    };
+  } catch (error) {
+    await cleanupManagedStoreImagesBestEffort(
+      createdImageUrls,
+      'store update image normalization rollback',
+    );
+    throw error;
+  }
+}
+
+function collectManagedImageUrls(store: Pick<StoreWithProductsRecord, 'image' | 'products'>): string[] {
+  const imageUrls = new Set<string>();
+
+  if (isManagedImagePublicPath(store.image)) {
+    imageUrls.add(store.image);
+  }
+
+  for (const product of store.products) {
+    if (isManagedImagePublicPath(product.image)) {
+      imageUrls.add(product.image);
+    }
+  }
+
+  return [...imageUrls];
+}
+
+function collectReplacedManagedImageUrls(
+  existingStore: StoreWithProductsRecord,
+  updatedStore: StoreWithProductsRecord,
+): string[] {
+  const imageUrls = new Set<string>();
+
+  if (existingStore.image !== updatedStore.image && isManagedImagePublicPath(existingStore.image)) {
+    imageUrls.add(existingStore.image);
+  }
+
+  const updatedProductsById = new Map(updatedStore.products.map((product) => [product.id, product]));
+
+  for (const existingProduct of existingStore.products) {
+    const updatedProduct = updatedProductsById.get(existingProduct.id);
+
+    if (!updatedProduct) {
+      if (isManagedImagePublicPath(existingProduct.image)) {
+        imageUrls.add(existingProduct.image);
+      }
+
+      continue;
+    }
+
+    if (existingProduct.image !== updatedProduct.image && isManagedImagePublicPath(existingProduct.image)) {
+      imageUrls.add(existingProduct.image);
+    }
+  }
+
+  return [...imageUrls];
 }
 
 function mergeStoreBadges(
@@ -330,12 +523,18 @@ export const storeService = {
       });
     }
 
+    const normalizedPayload = await buildCreatePayload(payload);
+
     try {
-      const store = await storeRepository.createForUser(userId, buildCreatePayload(payload));
+      const store = await storeRepository.createForUser(userId, normalizedPayload.payload);
       await invalidateStoreListCache();
       await syncNewsFeed([buildStoreCreatedEvent(store)]);
       return toStoreDetails(store);
     } catch (error) {
+      await cleanupManagedStoreImagesBestEffort(
+        normalizedPayload.createdImageUrls,
+        'store creation rollback',
+      );
       handlePrismaError(error);
     }
   },
@@ -347,15 +546,31 @@ export const storeService = {
       throwMyStoreNotFound();
     }
 
+    const normalizedPayload = await buildUpdatePayload(payload);
     const productMatches =
-      payload.products !== undefined
-        ? matchStoreProducts(existingStore.products, payload.products)
+      normalizedPayload.payload.products !== undefined
+        ? matchStoreProducts(existingStore.products, normalizedPayload.payload.products)
         : undefined;
     const productChanges = productMatches ? buildProductChanges(productMatches) : [];
-    const updatedStore = await storeRepository.updateById(
-      existingStore.id,
-      buildUpdatePayload(payload),
-      existingStore.products,
+    let updatedStore: StoreWithProductsRecord;
+
+    try {
+      updatedStore = await storeRepository.updateById(
+        existingStore.id,
+        normalizedPayload.payload,
+        existingStore.products,
+      );
+    } catch (error) {
+      await cleanupManagedStoreImagesBestEffort(
+        normalizedPayload.createdImageUrls,
+        'store update rollback',
+      );
+      throw error;
+    }
+
+    await cleanupManagedStoreImagesBestEffort(
+      collectReplacedManagedImageUrls(existingStore, updatedStore),
+      'store update replacement',
     );
     const { events: newsFeedEvents, refreshMetrics } = buildStoreUpdateActivitySync({
       existingStore,
@@ -442,6 +657,10 @@ export const storeService = {
     }
 
     await storeRepository.deleteById(existingStore.id);
+    await cleanupManagedStoreImagesBestEffort(
+      collectManagedImageUrls(existingStore),
+      'store deletion cleanup',
+    );
     await invalidateStoreListCache();
     await syncNewsFeed(
       [buildStoreDeletedEvent(existingStore)],

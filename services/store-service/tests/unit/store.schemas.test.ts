@@ -123,7 +123,7 @@ describe('store schemas', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects store image URLs because store images must be base64 strings', () => {
+  it('accepts store image URLs as well as base64 strings', () => {
     const result = createStoreBodySchema.safeParse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
@@ -135,7 +135,7 @@ describe('store schemas', () => {
       phoneNumber: '0300402505',
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('accepts a store rating payload for authenticated rating posts', () => {

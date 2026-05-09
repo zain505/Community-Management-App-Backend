@@ -1,4 +1,10 @@
-import type { NewsFeedListQuery, NewsFeedSyncRequest } from '@community/contracts';
+import type {
+  CreateNewsFeedPostRequest,
+  NewsFeedAdminListQuery,
+  NewsFeedListQuery,
+  NewsFeedSyncRequest,
+  ReviewNewsFeedPostRequest,
+} from '@community/contracts';
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { sendSuccess } from '../../lib/http';
@@ -28,6 +34,14 @@ export async function listNewsFeed(req: Request, res: Response): Promise<void> {
   sendSuccess(res, StatusCodes.OK, feed);
 }
 
+export async function createNewsFeedPost(req: Request, res: Response): Promise<void> {
+  const post = await newsFeedService.createNewsFeedPost(
+    getAuthenticatedUserId(req),
+    req.body as CreateNewsFeedPostRequest,
+  );
+  sendSuccess(res, StatusCodes.CREATED, post);
+}
+
 export async function saveNewsFeed(req: Request, res: Response): Promise<void> {
   const savedFeed = await newsFeedService.saveNewsFeed(getAuthenticatedUserId(req), getNewsFeedId(req));
   sendSuccess(res, StatusCodes.OK, savedFeed);
@@ -42,6 +56,26 @@ export async function listSavedNewsFeed(req: Request, res: Response): Promise<vo
 export async function likeNewsFeed(req: Request, res: Response): Promise<void> {
   const newsFeed = await newsFeedService.likeNewsFeed(getAuthenticatedUserId(req), getNewsFeedId(req));
   sendSuccess(res, StatusCodes.OK, newsFeed);
+}
+
+export async function listUserSubmittedNewsFeed(req: Request, res: Response): Promise<void> {
+  const query = req.query as NewsFeedAdminListQuery;
+  const posts = await newsFeedService.listUserSubmittedNewsFeed(
+    getAuthenticatedUserId(req),
+    query.page,
+    query.limit,
+    query.status,
+  );
+  sendSuccess(res, StatusCodes.OK, posts);
+}
+
+export async function reviewNewsFeedPost(req: Request, res: Response): Promise<void> {
+  const post = await newsFeedService.reviewNewsFeedPost(
+    getAuthenticatedUserId(req),
+    getNewsFeedId(req),
+    (req.body as ReviewNewsFeedPostRequest).status,
+  );
+  sendSuccess(res, StatusCodes.OK, post);
 }
 
 export async function syncNewsFeed(req: Request, res: Response): Promise<void> {

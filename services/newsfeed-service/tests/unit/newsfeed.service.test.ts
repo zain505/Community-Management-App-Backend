@@ -1,11 +1,17 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 jest.mock('../../src/modules/newsfeed/newsfeed.repository', () => ({
   newsFeedRepository: {
     createEntry: jest.fn(),
+    createUserPost: jest.fn(),
     listEntries: jest.fn(),
+    listUserSubmittedEntries: jest.fn(),
+    deleteEntriesOlderThan: jest.fn(),
     deleteExpiredSavedEntries: jest.fn(),
     saveEntry: jest.fn(),
     listSavedEntries: jest.fn(),
     likeEntry: jest.fn(),
+    updateApprovalStatus: jest.fn(),
     getMetricStateStoreId: jest.fn(),
     upsertMetricState: jest.fn(),
     findMostActiveStoreId: jest.fn(),
@@ -26,6 +32,7 @@ jest.mock('../../src/modules/auth/auth.client', () => ({
   authClient: {
     findUsersPublicByIds: jest.fn(),
     findUserPublicById: jest.fn(),
+    getManagedUserStatus: jest.fn(),
   },
 }));
 
@@ -45,6 +52,37 @@ const mockedAuthClient = jest.mocked(authClient);
 const mockedNewsFeedCache = jest.mocked(newsFeedCache);
 const mockedNewsFeedRepository = jest.mocked(newsFeedRepository);
 const mockedStoreClient = jest.mocked(storeClient);
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const pngImageBase64 = `data:image/png;base64,${Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
+]).toString('base64')}`;
+const pngImageBase64Alt = `data:image/png;base64,${Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01,
+]).toString('base64')}`;
+
+async function removeUploadsDirectory(): Promise<void> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await fs.rm(uploadsRoot, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+
+      if (!['EBUSY', 'ENOTEMPTY', 'EPERM'].includes(nodeError.code ?? '')) {
+        throw error;
+      }
+
+      if (attempt === 4) {
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    }
+  }
+}
+
 describe('newsfeed service', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -56,8 +94,12 @@ describe('newsfeed service', () => {
     mockedNewsFeedRepository.createEntry.mockResolvedValue({
       id: 'feed-1',
       type: 'STORE_CREATED',
+      source: 'SYSTEM',
+      approvalStatus: 'APPROVED',
       title: 'placeholder',
       description: 'placeholder',
+      image: null,
+      authorUserId: null,
       storeId: 1,
       storeName: 'Store',
       metadata: null,
@@ -66,12 +108,14 @@ describe('newsfeed service', () => {
       },
       createdAt: new Date('2026-03-14T08:00:00.000Z'),
     } as never);
+    mockedNewsFeedRepository.deleteEntriesOlderThan.mockResolvedValue([]);
     mockedNewsFeedRepository.deleteExpiredSavedEntries.mockResolvedValue(0);
     mockedNewsFeedRepository.upsertMetricState.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.useRealTimers();
+    await removeUploadsDirectory();
   });
 
   it('returns cached public newsfeed pages without hitting the repository', async () => {
@@ -80,6 +124,8 @@ describe('newsfeed service', () => {
         {
           id: 'feed-cached',
           type: 'STORE_CREATED',
+          source: 'SYSTEM',
+          approvalStatus: 'APPROVED',
           title: 'Cached feed',
           description: 'Returned from cache.',
           likesCount: 0,
@@ -98,6 +144,8 @@ describe('newsfeed service', () => {
         {
           id: 'feed-cached',
           type: 'STORE_CREATED',
+          source: 'SYSTEM',
+          approvalStatus: 'APPROVED',
           title: 'Cached feed',
           description: 'Returned from cache.',
           likesCount: 0,
@@ -110,6 +158,9 @@ describe('newsfeed service', () => {
     });
     expect(mockedNewsFeedRepository.listEntries).not.toHaveBeenCalled();
     expect(mockedNewsFeedCache.writeNewsFeedListCache).not.toHaveBeenCalled();
+    expect(mockedNewsFeedRepository.deleteEntriesOlderThan).toHaveBeenCalledWith(
+      new Date('2026-02-19T12:00:00.000Z'),
+    );
   });
 
   it('attaches store data for store-only feed items', async () => {
@@ -166,6 +217,8 @@ describe('newsfeed service', () => {
       {
         id: 'feed-1',
         type: 'STORE_CREATED',
+        source: 'SYSTEM',
+        approvalStatus: 'APPROVED',
         title: 'A new store opened in your neighborhood.',
         description: 'Check out Fresh Mart.',
         storeId: 7,
@@ -272,6 +325,8 @@ describe('newsfeed service', () => {
       {
         id: 'feed-2',
         type: 'PRODUCT_UPDATED',
+        source: 'SYSTEM',
+        approvalStatus: 'APPROVED',
         title: 'Fresh Mart updated a product.',
         description: "See what's new with Orange Juice.",
         storeId: 7,
@@ -388,6 +443,8 @@ describe('newsfeed service', () => {
       {
         id: 'feed-inline-images',
         type: 'PRODUCT_UPDATED',
+        source: 'SYSTEM',
+        approvalStatus: 'APPROVED',
         title: 'Fresh Mart updated a product.',
         description: 'Orange Juice image was refreshed.',
         storeId: 7,
@@ -436,6 +493,286 @@ describe('newsfeed service', () => {
         createdAt: '2026-03-14T08:00:00.000Z',
       },
     ]);
+  });
+
+  it('stores base64 user post images as managed URLs and returns the pending post with author data', async () => {
+    mockedNewsFeedRepository.createUserPost.mockResolvedValue({
+      id: 'feed-user-1',
+      type: 'USER_POST',
+      source: 'USER_POST',
+      approvalStatus: 'PENDING',
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+      image: '/uploads/newsfeed-images/post-image.png',
+      authorUserId: 'user-123',
+      storeId: null,
+      storeName: null,
+      metadata: null,
+      _count: {
+        likes: 0,
+      },
+      createdAt: new Date('2026-03-19T12:00:00.000Z'),
+    } as never);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Community User',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
+
+    const post = await newsFeedService.createNewsFeedPost('user-123', {
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+      image: pngImageBase64,
+    });
+
+    expect(mockedNewsFeedRepository.createUserPost).toHaveBeenCalledWith({
+      authorUserId: 'user-123',
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+      image: expect.stringMatching(/^\/uploads\/newsfeed-images\//),
+    });
+    expect(post).toEqual({
+      id: 'feed-user-1',
+      type: 'USER_POST',
+      source: 'USER_POST',
+      approvalStatus: 'PENDING',
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+      image: '/uploads/newsfeed-images/post-image.png',
+      authorUserId: 'user-123',
+      author: {
+        id: 'user-123',
+        name: 'Community User',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+      metadata: undefined,
+      likesCount: 0,
+      createdAt: '2026-03-19T12:00:00.000Z',
+    });
+  });
+
+  it('stores inline sync images as managed URLs before saving the event', async () => {
+    await newsFeedService.syncNewsFeed({
+      events: [
+        {
+          type: 'PRODUCT_UPDATED',
+          title: 'Fresh Mart updated a product.',
+          description: 'Orange Juice image was refreshed.',
+          metadata: {
+            current: {
+              id: 'prod-1',
+              name: 'Orange Juice',
+              price: '550',
+              image: pngImageBase64,
+            },
+            previousImage: pngImageBase64Alt,
+          },
+        },
+      ],
+    });
+
+    expect(mockedNewsFeedRepository.createEntry).toHaveBeenCalledWith({
+      type: 'PRODUCT_UPDATED',
+      title: 'Fresh Mart updated a product.',
+      description: 'Orange Juice image was refreshed.',
+      image: undefined,
+      storeId: undefined,
+      storeName: undefined,
+      metadata: {
+        current: {
+          id: 'prod-1',
+          name: 'Orange Juice',
+          price: '550',
+          image: expect.stringMatching(/^\/uploads\/newsfeed-images\//),
+        },
+        previousImage: expect.stringMatching(/^\/uploads\/newsfeed-images\//),
+      },
+    });
+  });
+
+  it('lists pending user posts for admins', async () => {
+    mockedAuthClient.getManagedUserStatus.mockResolvedValue({
+      id: 'admin-123',
+      mobileNumber: '+923001234567',
+      name: 'Community Admin',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+    mockedNewsFeedRepository.listUserSubmittedEntries.mockResolvedValue({
+      items: [
+        {
+          id: 'feed-user-1',
+          type: 'USER_POST',
+          source: 'USER_POST',
+          approvalStatus: 'PENDING',
+          title: 'Water outage notice',
+          description: 'There will be a short outage tomorrow morning.',
+          image: '/uploads/newsfeed-images/post-image.png',
+          authorUserId: 'user-123',
+          storeId: null,
+          storeName: null,
+          metadata: null,
+          _count: {
+            likes: 0,
+          },
+          createdAt: new Date('2026-03-19T12:00:00.000Z'),
+        },
+      ],
+      hasMore: false,
+    } as never);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Community User',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
+
+    const posts = await newsFeedService.listUserSubmittedNewsFeed('admin-123', 1, 10, 'PENDING');
+
+    expect(mockedNewsFeedRepository.listUserSubmittedEntries).toHaveBeenCalledWith(1, 10, 'PENDING');
+    expect(posts).toEqual({
+      items: [
+        {
+          id: 'feed-user-1',
+          type: 'USER_POST',
+          source: 'USER_POST',
+          approvalStatus: 'PENDING',
+          title: 'Water outage notice',
+          description: 'There will be a short outage tomorrow morning.',
+          image: '/uploads/newsfeed-images/post-image.png',
+          authorUserId: 'user-123',
+          author: {
+            id: 'user-123',
+            name: 'Community User',
+            mobileNumber: '03009998888',
+            profile: {
+              image: null,
+            },
+            createdAt: '2026-03-01T08:00:00.000Z',
+          },
+          metadata: undefined,
+          likesCount: 0,
+          createdAt: '2026-03-19T12:00:00.000Z',
+        },
+      ],
+      page: 1,
+      limit: 10,
+      hasMore: false,
+    });
+  });
+
+  it('allows active admins to approve user posts', async () => {
+    mockedAuthClient.getManagedUserStatus.mockResolvedValue({
+      id: 'admin-123',
+      mobileNumber: '+923001234567',
+      name: 'Community Admin',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+    mockedNewsFeedRepository.updateApprovalStatus.mockResolvedValue({
+      id: 'feed-user-1',
+      type: 'USER_POST',
+      source: 'USER_POST',
+      approvalStatus: 'APPROVED',
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+      image: '/uploads/newsfeed-images/post-image.png',
+      authorUserId: 'user-123',
+      storeId: null,
+      storeName: null,
+      metadata: null,
+      _count: {
+        likes: 0,
+      },
+      createdAt: new Date('2026-03-19T12:00:00.000Z'),
+    } as never);
+    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
+      {
+        id: 'user-123',
+        name: 'Community User',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+    ]);
+
+    const post = await newsFeedService.reviewNewsFeedPost('admin-123', 'feed-user-1', 'APPROVED');
+
+    expect(mockedNewsFeedRepository.updateApprovalStatus).toHaveBeenCalledWith(
+      'feed-user-1',
+      'APPROVED',
+    );
+    expect(mockedNewsFeedCache.invalidateNewsFeedListCache).toHaveBeenCalled();
+    expect(post).toEqual({
+      id: 'feed-user-1',
+      type: 'USER_POST',
+      source: 'USER_POST',
+      approvalStatus: 'APPROVED',
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+      image: '/uploads/newsfeed-images/post-image.png',
+      authorUserId: 'user-123',
+      author: {
+        id: 'user-123',
+        name: 'Community User',
+        mobileNumber: '03009998888',
+        profile: {
+          image: null,
+        },
+        createdAt: '2026-03-01T08:00:00.000Z',
+      },
+      metadata: undefined,
+      likesCount: 0,
+      createdAt: '2026-03-19T12:00:00.000Z',
+    });
+  });
+
+  it('rejects user-post moderation from non-admin users', async () => {
+    mockedAuthClient.getManagedUserStatus.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      isActive: true,
+      createdAt: '2026-03-15T09:00:00.000Z',
+    });
+
+    await expect(
+      newsFeedService.reviewNewsFeedPost('user-123', 'feed-user-1', 'APPROVED'),
+    ).rejects.toMatchObject({
+      code: 'NEWSFEED_ADMIN_REQUIRED',
+      statusCode: 403,
+    });
+
+    expect(mockedNewsFeedRepository.updateApprovalStatus).not.toHaveBeenCalled();
   });
 
   it('saves a feed for one month and returns the enriched saved item', async () => {
@@ -491,6 +828,8 @@ describe('newsfeed service', () => {
     expect(savedFeed).toEqual({
       id: 'feed-3',
       type: 'STORE_CREATED',
+      source: 'SYSTEM',
+      approvalStatus: 'APPROVED',
       title: 'Fresh Mart opened nearby',
       description: 'Fresh Mart is now open in your area.',
       storeId: 7,
@@ -600,6 +939,8 @@ describe('newsfeed service', () => {
         {
           id: 'feed-4',
           type: 'PRODUCT_UPDATED',
+          source: 'SYSTEM',
+          approvalStatus: 'APPROVED',
           title: 'Fresh Mart updated a product.',
           description: 'Orange Juice price was updated.',
           storeId: 7,

@@ -1,4 +1,7 @@
 import type {
+  CreateNewsFeedPostRequest,
+  ManagedUserStatus,
+  NewsFeedApprovalStatus,
   NewsFeedItem,
   NewsFeedLikeResponse,
   NewsFeedListResponse,
@@ -16,7 +19,14 @@ import type {
 } from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
 import { type Prisma } from '../../generated/prisma';
+import { logger } from '../../config/logger';
 import { AppError } from '../../shared/app-error';
+import {
+  deleteManagedImages,
+  isBase64ImageInput,
+  persistBase64Image,
+  resolveNewsFeedImagePublicPath,
+} from '../../shared/image-storage';
 import {
   invalidateNewsFeedListCache,
   readNewsFeedListCache,
@@ -25,6 +35,7 @@ import {
 import { authClient } from '../auth/auth.client';
 import {
   newsFeedRepository,
+  type DeletedNewsFeedItemRecord,
   type NewsFeedItemRecord,
   type SavedNewsFeedRecord,
 } from './newsfeed.repository';
@@ -32,6 +43,17 @@ import { storeClient } from '../store/store.client';
 
 const DEFAULT_NEWSFEED_LIMIT = 20;
 const MAX_NEWSFEED_LIMIT = 50;
+
+interface NormalizedMetadataResult {
+  createdImageUrls: string[];
+  value: unknown;
+}
+
+interface NormalizedNewsFeedImagePayload<TPayload> {
+  createdImageUrls: string[];
+  payload: TPayload;
+}
+
 function parseRatingValue(rating: string): number {
   const match = rating.match(/(\d+(?:\.\d+)?)/);
 
@@ -47,16 +69,20 @@ function sanitizeImageValue(value: string): string {
   return value;
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function sanitizeMetadataValue(value: unknown, key?: string): unknown {
   if (typeof value === 'string') {
     return key?.toLowerCase().includes('image') ? sanitizeImageValue(value) : value;
   }
 
   if (Array.isArray(value)) {
-    return value.map((entry) => sanitizeMetadataValue(entry));
+    return value.map((entry) => sanitizeMetadataValue(entry, key));
   }
 
-  if (!value || typeof value !== 'object') {
+  if (!isObject(value)) {
     return value;
   }
 
@@ -80,8 +106,12 @@ function toNewsFeedItem(item: NewsFeedItemRecord): NewsFeedItem {
   return {
     id: item.id,
     type: item.type,
+    source: item.source ?? 'SYSTEM',
+    approvalStatus: item.approvalStatus ?? 'APPROVED',
     title: item.title,
     description: item.description,
+    image: item.image ? sanitizeImageValue(item.image) : undefined,
+    authorUserId: item.authorUserId ?? undefined,
     storeId: item.storeId ?? undefined,
     storeName: item.storeName ?? undefined,
     metadata: toMetadata(item.metadata),
@@ -131,10 +161,33 @@ function addCalendarMonth(date: Date): Date {
   return result;
 }
 
+function subtractCalendarMonth(date: Date): Date {
+  const result = new Date(date);
+  const originalDay = result.getUTCDate();
+
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() - 1);
+
+  const lastDayOfTargetMonth = new Date(
+    Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+
+  result.setUTCDate(Math.min(originalDay, lastDayOfTargetMonth));
+
+  return result;
+}
+
 function throwNewsFeedNotFound(): never {
   throw new AppError('Newsfeed item not found', {
     statusCode: StatusCodes.NOT_FOUND,
     code: 'NEWSFEED_NOT_FOUND',
+  });
+}
+
+function throwNewsFeedAdminRequired(action: string): never {
+  throw new AppError(`Only active admin users can ${action}`, {
+    statusCode: StatusCodes.FORBIDDEN,
+    code: 'NEWSFEED_ADMIN_REQUIRED',
   });
 }
 
@@ -153,10 +206,6 @@ function toStoreSummary(store: StoreSummaryWithOwner): StoreSummary {
     closingTime: store.closingTime,
     phoneNumber: store.phoneNumber,
   };
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function toProductSnapshot(value: unknown): NewsFeedProductSnapshot | undefined {
@@ -214,13 +263,209 @@ function buildStoreSummaryMap(stores: StoreSummaryWithOwner[]): Map<number, Stor
   return new Map(stores.map((store) => [store.id, store]));
 }
 
-function buildStoreOwnerMap(owners: UserPublic[]): Map<string, UserPublic> {
-  return new Map(owners.map((owner) => [owner.id, owner]));
+function buildUserMap(users: UserPublic[]): Map<string, UserPublic> {
+  return new Map(users.map((user) => [user.id, user]));
+}
+
+function canManageNewsFeed(user: ManagedUserStatus): boolean {
+  return user.isActive && (user.usertype === 0 || user.usertype === 1);
+}
+
+async function ensureActiveNewsFeedManager(requesterId: string, action: string): Promise<void> {
+  const requester = await authClient.getManagedUserStatus(requesterId);
+
+  if (!requester || !canManageNewsFeed(requester)) {
+    throwNewsFeedAdminRequired(action);
+  }
+}
+
+async function cleanupManagedNewsFeedImagesBestEffort(
+  imageUrls: string[],
+  action: string,
+): Promise<void> {
+  if (imageUrls.length === 0) {
+    return;
+  }
+
+  try {
+    await deleteManagedImages(imageUrls);
+  } catch (error) {
+    logger.error({ action, error, imageUrls }, 'Failed to clean up managed newsfeed images');
+  }
+}
+
+async function normalizeMetadataImages(value: unknown, key?: string): Promise<NormalizedMetadataResult> {
+  if (typeof value === 'string') {
+    if (!key?.toLowerCase().includes('image') || !isBase64ImageInput(value)) {
+      return {
+        createdImageUrls: [],
+        value,
+      };
+    }
+
+    const image = await persistBase64Image(value);
+
+    return {
+      createdImageUrls: [image],
+      value: image,
+    };
+  }
+
+  if (Array.isArray(value)) {
+    const createdImageUrls: string[] = [];
+    const normalizedEntries = [];
+
+    try {
+      for (const entry of value) {
+        const normalizedEntry = await normalizeMetadataImages(entry, key);
+        createdImageUrls.push(...normalizedEntry.createdImageUrls);
+        normalizedEntries.push(normalizedEntry.value);
+      }
+    } catch (error) {
+      await cleanupManagedNewsFeedImagesBestEffort(
+        createdImageUrls,
+        'metadata image normalization rollback',
+      );
+      throw error;
+    }
+
+    return {
+      createdImageUrls,
+      value: normalizedEntries,
+    };
+  }
+
+  if (!isObject(value)) {
+    return {
+      createdImageUrls: [],
+      value,
+    };
+  }
+
+  const createdImageUrls: string[] = [];
+  const normalizedEntries: [string, unknown][] = [];
+
+  try {
+    for (const [nestedKey, nestedValue] of Object.entries(value)) {
+      const normalizedEntry = await normalizeMetadataImages(nestedValue, nestedKey);
+      createdImageUrls.push(...normalizedEntry.createdImageUrls);
+      normalizedEntries.push([nestedKey, normalizedEntry.value]);
+    }
+  } catch (error) {
+    await cleanupManagedNewsFeedImagesBestEffort(
+      createdImageUrls,
+      'metadata image normalization rollback',
+    );
+    throw error;
+  }
+
+  return {
+    createdImageUrls,
+    value: Object.fromEntries(normalizedEntries),
+  };
+}
+
+async function normalizeSyncEventImages(
+  event: NewsFeedSyncEvent,
+): Promise<NormalizedNewsFeedImagePayload<NewsFeedSyncEvent>> {
+  const createdImageUrls: string[] = [];
+
+  try {
+    const image =
+      event.image && isBase64ImageInput(event.image)
+        ? await persistBase64Image(event.image)
+        : event.image;
+
+    if (image && image !== event.image) {
+      createdImageUrls.push(image);
+    }
+
+    const metadata = event.metadata
+      ? await normalizeMetadataImages(event.metadata)
+      : {
+          createdImageUrls: [],
+          value: undefined,
+        };
+
+    createdImageUrls.push(...metadata.createdImageUrls);
+
+    return {
+      createdImageUrls,
+      payload: {
+        ...event,
+        image,
+        metadata: metadata.value as Record<string, unknown> | undefined,
+      },
+    };
+  } catch (error) {
+    await cleanupManagedNewsFeedImagesBestEffort(
+      createdImageUrls,
+      'sync event image normalization rollback',
+    );
+    throw error;
+  }
+}
+
+async function normalizeUserPostPayload(
+  payload: CreateNewsFeedPostRequest,
+): Promise<NormalizedNewsFeedImagePayload<CreateNewsFeedPostRequest>> {
+  if (!payload.image || !isBase64ImageInput(payload.image)) {
+    return {
+      createdImageUrls: [],
+      payload,
+    };
+  }
+
+  const image = await persistBase64Image(payload.image);
+
+  return {
+    createdImageUrls: [image],
+    payload: {
+      ...payload,
+      image,
+    },
+  };
+}
+
+function collectManagedImageUrlsFromValue(value: unknown, key?: string): string[] {
+  if (typeof value === 'string') {
+    return key?.toLowerCase().includes('image') && resolveNewsFeedImagePublicPath(value) ? [value] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => collectManagedImageUrlsFromValue(entry, key));
+  }
+
+  if (!isObject(value)) {
+    return [];
+  }
+
+  return Object.entries(value).flatMap(([nestedKey, nestedValue]) =>
+    collectManagedImageUrlsFromValue(nestedValue, nestedKey),
+  );
+}
+
+function collectManagedImageUrlsFromDeletedEntry(entry: DeletedNewsFeedItemRecord): string[] {
+  const imageUrls = new Set<string>();
+
+  if (entry.image && resolveNewsFeedImagePublicPath(entry.image)) {
+    imageUrls.add(entry.image);
+  }
+
+  const metadata = toMetadata(entry.metadata);
+
+  if (metadata) {
+    for (const imageUrl of collectManagedImageUrlsFromValue(metadata)) {
+      imageUrls.add(imageUrl);
+    }
+  }
+
+  return [...imageUrls];
 }
 
 interface NewsFeedEnrichmentData {
   storeSummariesById: Map<number, StoreSummaryWithOwner>;
-  storeOwnersById: Map<string, UserPublic>;
+  usersById: Map<string, UserPublic>;
 }
 
 async function buildNewsFeedEnrichmentData(
@@ -236,21 +481,28 @@ async function buildNewsFeedEnrichmentData(
   const stores =
     storeIds.length > 0 ? await storeClient.findStoreSummariesByIds(storeIds).catch(() => []) : [];
   const storeSummariesById = buildStoreSummaryMap(stores);
-  const ownerUserIds = [
-    ...new Set(
-      stores
-        .map((store) => store.ownerUserId)
-        .filter((ownerUserId) => ownerUserId.trim().length > 0),
-    ),
-  ];
-  const owners =
-    ownerUserIds.length > 0
-      ? await authClient.findUsersPublicByIds(ownerUserIds).catch(() => [])
+  const userIds = new Set<string>();
+
+  for (const store of stores) {
+    if (store.ownerUserId.trim().length > 0) {
+      userIds.add(store.ownerUserId);
+    }
+  }
+
+  for (const item of items) {
+    if (item.authorUserId && item.authorUserId.trim().length > 0) {
+      userIds.add(item.authorUserId);
+    }
+  }
+
+  const users =
+    userIds.size > 0
+      ? await authClient.findUsersPublicByIds([...userIds]).catch(() => [])
       : [];
 
   return {
     storeSummariesById,
-    storeOwnersById: buildStoreOwnerMap(owners),
+    usersById: buildUserMap(users),
   };
 }
 
@@ -265,11 +517,13 @@ function enrichNewsFeedItem(
       : null;
   const attachedStore = attachedStoreSnapshot ? toStoreSummary(attachedStoreSnapshot) : undefined;
   const attachedStoreOwner = attachedStoreSnapshot?.ownerUserId
-    ? enrichmentData.storeOwnersById.get(attachedStoreSnapshot.ownerUserId)
+    ? enrichmentData.usersById.get(attachedStoreSnapshot.ownerUserId)
     : undefined;
+  const author = item.authorUserId ? enrichmentData.usersById.get(item.authorUserId) : undefined;
 
   return {
     ...baseItem,
+    author: author ? sanitizeUserPublic(author) : undefined,
     store: attachedStore,
     storeOwner: attachedStoreOwner ? sanitizeUserPublic(attachedStoreOwner) : undefined,
     product: toAttachedProduct(item),
@@ -296,10 +550,20 @@ async function toSavedNewsFeedItem(
 }
 
 async function createEntry(payload: NewsFeedSyncEvent): Promise<void> {
-  await newsFeedRepository.createEntry({
-    ...payload,
-    metadata: payload.metadata as Prisma.InputJsonValue | undefined,
-  });
+  const normalizedPayload = await normalizeSyncEventImages(payload);
+
+  try {
+    await newsFeedRepository.createEntry({
+      ...normalizedPayload.payload,
+      metadata: normalizedPayload.payload.metadata as Prisma.InputJsonValue | undefined,
+    });
+  } catch (error) {
+    await cleanupManagedNewsFeedImagesBestEffort(
+      normalizedPayload.createdImageUrls,
+      'system newsfeed create rollback',
+    );
+    throw error;
+  }
 }
 
 interface MetricRefreshContext {
@@ -379,8 +643,23 @@ async function refreshMetric(metric: NewsFeedMetric, context: MetricRefreshConte
   }
 }
 
+async function cleanupExpiredNewsFeedEntries(now = new Date()): Promise<void> {
+  const deletedEntries = await newsFeedRepository.deleteEntriesOlderThan(subtractCalendarMonth(now));
+
+  if (deletedEntries.length === 0) {
+    return;
+  }
+
+  const imageUrls = deletedEntries.flatMap(collectManagedImageUrlsFromDeletedEntry);
+
+  await cleanupManagedNewsFeedImagesBestEffort(imageUrls, 'expired newsfeed cleanup');
+  await invalidateNewsFeedListCache();
+}
+
 export const newsFeedService = {
   async listNewsFeed(page = 1, limit = DEFAULT_NEWSFEED_LIMIT): Promise<NewsFeedListResponse> {
+    await cleanupExpiredNewsFeedEntries();
+
     const pagination = normalizePagination(page, limit);
     const cachedFeed = await readNewsFeedListCache(pagination.page, pagination.limit);
 
@@ -404,10 +683,82 @@ export const newsFeedService = {
     return payload;
   },
 
+  async createNewsFeedPost(
+    userId: string,
+    payload: CreateNewsFeedPostRequest,
+  ): Promise<NewsFeedItem> {
+    await cleanupExpiredNewsFeedEntries();
+
+    const normalizedPayload = await normalizeUserPostPayload(payload);
+
+    try {
+      const createdPost = await newsFeedRepository.createUserPost({
+        authorUserId: userId,
+        title: normalizedPayload.payload.title,
+        description: normalizedPayload.payload.description,
+        image: normalizedPayload.payload.image,
+      });
+      const enrichmentData = await buildNewsFeedEnrichmentData([createdPost]);
+
+      return enrichNewsFeedItem(createdPost, enrichmentData);
+    } catch (error) {
+      await cleanupManagedNewsFeedImagesBestEffort(
+        normalizedPayload.createdImageUrls,
+        'user newsfeed create rollback',
+      );
+      throw error;
+    }
+  },
+
+  async listUserSubmittedNewsFeed(
+    requesterId: string,
+    page = 1,
+    limit = DEFAULT_NEWSFEED_LIMIT,
+    approvalStatus?: NewsFeedApprovalStatus,
+  ): Promise<NewsFeedListResponse> {
+    await cleanupExpiredNewsFeedEntries();
+    await ensureActiveNewsFeedManager(requesterId, 'review user-submitted newsfeed posts');
+
+    const pagination = normalizePagination(page, limit);
+    const { items, hasMore } = await newsFeedRepository.listUserSubmittedEntries(
+      pagination.page,
+      pagination.limit,
+      approvalStatus,
+    );
+
+    return {
+      items: await enrichNewsFeedItems(items),
+      page: pagination.page,
+      limit: pagination.limit,
+      hasMore,
+    };
+  },
+
+  async reviewNewsFeedPost(
+    requesterId: string,
+    newsFeedId: string,
+    approvalStatus: Exclude<NewsFeedApprovalStatus, 'PENDING'>,
+  ): Promise<NewsFeedItem> {
+    await cleanupExpiredNewsFeedEntries();
+    await ensureActiveNewsFeedManager(requesterId, 'approve or disapprove user-submitted newsfeed posts');
+
+    const updatedPost = await newsFeedRepository.updateApprovalStatus(newsFeedId, approvalStatus);
+
+    if (!updatedPost) {
+      throwNewsFeedNotFound();
+    }
+
+    await invalidateNewsFeedListCache();
+
+    const enrichmentData = await buildNewsFeedEnrichmentData([updatedPost]);
+    return enrichNewsFeedItem(updatedPost, enrichmentData);
+  },
+
   async saveNewsFeed(userId: string, newsFeedId: string): Promise<SavedNewsFeedItem> {
     const now = new Date();
     const expiresAt = addCalendarMonth(now);
 
+    await cleanupExpiredNewsFeedEntries(now);
     await newsFeedRepository.deleteExpiredSavedEntries(now);
 
     const savedEntry = await newsFeedRepository.saveEntry(newsFeedId, userId, now, expiresAt);
@@ -429,6 +780,7 @@ export const newsFeedService = {
     const pagination = normalizePagination(page, limit);
     const now = new Date();
 
+    await cleanupExpiredNewsFeedEntries(now);
     await newsFeedRepository.deleteExpiredSavedEntries(now);
 
     const items = await newsFeedRepository.listSavedEntries(
@@ -449,6 +801,8 @@ export const newsFeedService = {
   },
 
   async likeNewsFeed(userId: string, newsFeedId: string): Promise<NewsFeedLikeResponse> {
+    await cleanupExpiredNewsFeedEntries();
+
     const likedEntry = await newsFeedRepository.likeEntry(newsFeedId, userId);
 
     if (!likedEntry) {
@@ -460,6 +814,8 @@ export const newsFeedService = {
   },
 
   async syncNewsFeed(payload: NewsFeedSyncRequest): Promise<void> {
+    await cleanupExpiredNewsFeedEntries();
+
     const events = payload.events ?? [];
     const metricRefreshContext = buildMetricRefreshContext(events);
 

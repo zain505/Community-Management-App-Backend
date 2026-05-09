@@ -58,12 +58,30 @@ export namespace $Enums {
   EVENT_MANAGEMENT_CREATED: 'EVENT_MANAGEMENT_CREATED',
   EVENT_MANAGEMENT_UPDATED: 'EVENT_MANAGEMENT_UPDATED',
   EVENT_MANAGEMENT_DELETED: 'EVENT_MANAGEMENT_DELETED',
+  USER_POST: 'USER_POST',
   POPULAR_STORE_CHANGED: 'POPULAR_STORE_CHANGED',
   MOST_ACTIVE_STORE_CHANGED: 'MOST_ACTIVE_STORE_CHANGED',
   MOST_SEARCHED_STORE_CHANGED: 'MOST_SEARCHED_STORE_CHANGED'
 };
 
 export type NewsFeedEventType = (typeof NewsFeedEventType)[keyof typeof NewsFeedEventType]
+
+
+export const NewsFeedSource: {
+  SYSTEM: 'SYSTEM',
+  USER_POST: 'USER_POST'
+};
+
+export type NewsFeedSource = (typeof NewsFeedSource)[keyof typeof NewsFeedSource]
+
+
+export const NewsFeedApprovalStatus: {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  DISAPPROVED: 'DISAPPROVED'
+};
+
+export type NewsFeedApprovalStatus = (typeof NewsFeedApprovalStatus)[keyof typeof NewsFeedApprovalStatus]
 
 
 export const NewsFeedMetric: {
@@ -79,6 +97,14 @@ export type NewsFeedMetric = (typeof NewsFeedMetric)[keyof typeof NewsFeedMetric
 export type NewsFeedEventType = $Enums.NewsFeedEventType
 
 export const NewsFeedEventType: typeof $Enums.NewsFeedEventType
+
+export type NewsFeedSource = $Enums.NewsFeedSource
+
+export const NewsFeedSource: typeof $Enums.NewsFeedSource
+
+export type NewsFeedApprovalStatus = $Enums.NewsFeedApprovalStatus
+
+export const NewsFeedApprovalStatus: typeof $Enums.NewsFeedApprovalStatus
 
 export type NewsFeedMetric = $Enums.NewsFeedMetric
 
@@ -1214,8 +1240,12 @@ export namespace Prisma {
   export type NewsFeedItemMinAggregateOutputType = {
     id: string | null
     type: $Enums.NewsFeedEventType | null
+    source: $Enums.NewsFeedSource | null
+    approvalStatus: $Enums.NewsFeedApprovalStatus | null
     title: string | null
     description: string | null
+    image: string | null
+    authorUserId: string | null
     storeId: number | null
     storeName: string | null
     createdAt: Date | null
@@ -1224,8 +1254,12 @@ export namespace Prisma {
   export type NewsFeedItemMaxAggregateOutputType = {
     id: string | null
     type: $Enums.NewsFeedEventType | null
+    source: $Enums.NewsFeedSource | null
+    approvalStatus: $Enums.NewsFeedApprovalStatus | null
     title: string | null
     description: string | null
+    image: string | null
+    authorUserId: string | null
     storeId: number | null
     storeName: string | null
     createdAt: Date | null
@@ -1234,8 +1268,12 @@ export namespace Prisma {
   export type NewsFeedItemCountAggregateOutputType = {
     id: number
     type: number
+    source: number
+    approvalStatus: number
     title: number
     description: number
+    image: number
+    authorUserId: number
     storeId: number
     storeName: number
     metadata: number
@@ -1255,8 +1293,12 @@ export namespace Prisma {
   export type NewsFeedItemMinAggregateInputType = {
     id?: true
     type?: true
+    source?: true
+    approvalStatus?: true
     title?: true
     description?: true
+    image?: true
+    authorUserId?: true
     storeId?: true
     storeName?: true
     createdAt?: true
@@ -1265,8 +1307,12 @@ export namespace Prisma {
   export type NewsFeedItemMaxAggregateInputType = {
     id?: true
     type?: true
+    source?: true
+    approvalStatus?: true
     title?: true
     description?: true
+    image?: true
+    authorUserId?: true
     storeId?: true
     storeName?: true
     createdAt?: true
@@ -1275,8 +1321,12 @@ export namespace Prisma {
   export type NewsFeedItemCountAggregateInputType = {
     id?: true
     type?: true
+    source?: true
+    approvalStatus?: true
     title?: true
     description?: true
+    image?: true
+    authorUserId?: true
     storeId?: true
     storeName?: true
     metadata?: true
@@ -1373,8 +1423,12 @@ export namespace Prisma {
   export type NewsFeedItemGroupByOutputType = {
     id: string
     type: $Enums.NewsFeedEventType
+    source: $Enums.NewsFeedSource
+    approvalStatus: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image: string | null
+    authorUserId: string | null
     storeId: number | null
     storeName: string | null
     metadata: JsonValue | null
@@ -1403,8 +1457,12 @@ export namespace Prisma {
   export type NewsFeedItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     type?: boolean
+    source?: boolean
+    approvalStatus?: boolean
     title?: boolean
     description?: boolean
+    image?: boolean
+    authorUserId?: boolean
     storeId?: boolean
     storeName?: boolean
     metadata?: boolean
@@ -1419,15 +1477,19 @@ export namespace Prisma {
   export type NewsFeedItemSelectScalar = {
     id?: boolean
     type?: boolean
+    source?: boolean
+    approvalStatus?: boolean
     title?: boolean
     description?: boolean
+    image?: boolean
+    authorUserId?: boolean
     storeId?: boolean
     storeName?: boolean
     metadata?: boolean
     createdAt?: boolean
   }
 
-  export type NewsFeedItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "title" | "description" | "storeId" | "storeName" | "metadata" | "createdAt", ExtArgs["result"]["newsFeedItem"]>
+  export type NewsFeedItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "source" | "approvalStatus" | "title" | "description" | "image" | "authorUserId" | "storeId" | "storeName" | "metadata" | "createdAt", ExtArgs["result"]["newsFeedItem"]>
   export type NewsFeedItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     likes?: boolean | NewsFeedItem$likesArgs<ExtArgs>
     saves?: boolean | NewsFeedItem$savesArgs<ExtArgs>
@@ -1443,8 +1505,12 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       type: $Enums.NewsFeedEventType
+      source: $Enums.NewsFeedSource
+      approvalStatus: $Enums.NewsFeedApprovalStatus
       title: string
       description: string
+      image: string | null
+      authorUserId: string | null
       storeId: number | null
       storeName: string | null
       metadata: Prisma.JsonValue | null
@@ -1822,8 +1888,12 @@ export namespace Prisma {
   interface NewsFeedItemFieldRefs {
     readonly id: FieldRef<"NewsFeedItem", 'String'>
     readonly type: FieldRef<"NewsFeedItem", 'NewsFeedEventType'>
+    readonly source: FieldRef<"NewsFeedItem", 'NewsFeedSource'>
+    readonly approvalStatus: FieldRef<"NewsFeedItem", 'NewsFeedApprovalStatus'>
     readonly title: FieldRef<"NewsFeedItem", 'String'>
     readonly description: FieldRef<"NewsFeedItem", 'String'>
+    readonly image: FieldRef<"NewsFeedItem", 'String'>
+    readonly authorUserId: FieldRef<"NewsFeedItem", 'String'>
     readonly storeId: FieldRef<"NewsFeedItem", 'Int'>
     readonly storeName: FieldRef<"NewsFeedItem", 'String'>
     readonly metadata: FieldRef<"NewsFeedItem", 'Json'>
@@ -4995,8 +5065,12 @@ export namespace Prisma {
   export const NewsFeedItemScalarFieldEnum: {
     id: 'id',
     type: 'type',
+    source: 'source',
+    approvalStatus: 'approvalStatus',
     title: 'title',
     description: 'description',
+    image: 'image',
+    authorUserId: 'authorUserId',
     storeId: 'storeId',
     storeName: 'storeName',
     metadata: 'metadata',
@@ -5081,6 +5155,8 @@ export namespace Prisma {
     id: 'id',
     title: 'title',
     description: 'description',
+    image: 'image',
+    authorUserId: 'authorUserId',
     storeName: 'storeName'
   };
 
@@ -5121,6 +5197,20 @@ export namespace Prisma {
    * Reference to a field of type 'NewsFeedEventType'
    */
   export type EnumNewsFeedEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NewsFeedEventType'>
+    
+
+
+  /**
+   * Reference to a field of type 'NewsFeedSource'
+   */
+  export type EnumNewsFeedSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NewsFeedSource'>
+    
+
+
+  /**
+   * Reference to a field of type 'NewsFeedApprovalStatus'
+   */
+  export type EnumNewsFeedApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NewsFeedApprovalStatus'>
     
 
 
@@ -5175,8 +5265,12 @@ export namespace Prisma {
     NOT?: NewsFeedItemWhereInput | NewsFeedItemWhereInput[]
     id?: StringFilter<"NewsFeedItem"> | string
     type?: EnumNewsFeedEventTypeFilter<"NewsFeedItem"> | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFilter<"NewsFeedItem"> | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFilter<"NewsFeedItem"> | $Enums.NewsFeedApprovalStatus
     title?: StringFilter<"NewsFeedItem"> | string
     description?: StringFilter<"NewsFeedItem"> | string
+    image?: StringNullableFilter<"NewsFeedItem"> | string | null
+    authorUserId?: StringNullableFilter<"NewsFeedItem"> | string | null
     storeId?: IntNullableFilter<"NewsFeedItem"> | number | null
     storeName?: StringNullableFilter<"NewsFeedItem"> | string | null
     metadata?: JsonNullableFilter<"NewsFeedItem">
@@ -5188,8 +5282,12 @@ export namespace Prisma {
   export type NewsFeedItemOrderByWithRelationInput = {
     id?: SortOrder
     type?: SortOrder
+    source?: SortOrder
+    approvalStatus?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    image?: SortOrderInput | SortOrder
+    authorUserId?: SortOrderInput | SortOrder
     storeId?: SortOrderInput | SortOrder
     storeName?: SortOrderInput | SortOrder
     metadata?: SortOrderInput | SortOrder
@@ -5205,8 +5303,12 @@ export namespace Prisma {
     OR?: NewsFeedItemWhereInput[]
     NOT?: NewsFeedItemWhereInput | NewsFeedItemWhereInput[]
     type?: EnumNewsFeedEventTypeFilter<"NewsFeedItem"> | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFilter<"NewsFeedItem"> | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFilter<"NewsFeedItem"> | $Enums.NewsFeedApprovalStatus
     title?: StringFilter<"NewsFeedItem"> | string
     description?: StringFilter<"NewsFeedItem"> | string
+    image?: StringNullableFilter<"NewsFeedItem"> | string | null
+    authorUserId?: StringNullableFilter<"NewsFeedItem"> | string | null
     storeId?: IntNullableFilter<"NewsFeedItem"> | number | null
     storeName?: StringNullableFilter<"NewsFeedItem"> | string | null
     metadata?: JsonNullableFilter<"NewsFeedItem">
@@ -5218,8 +5320,12 @@ export namespace Prisma {
   export type NewsFeedItemOrderByWithAggregationInput = {
     id?: SortOrder
     type?: SortOrder
+    source?: SortOrder
+    approvalStatus?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    image?: SortOrderInput | SortOrder
+    authorUserId?: SortOrderInput | SortOrder
     storeId?: SortOrderInput | SortOrder
     storeName?: SortOrderInput | SortOrder
     metadata?: SortOrderInput | SortOrder
@@ -5237,8 +5343,12 @@ export namespace Prisma {
     NOT?: NewsFeedItemScalarWhereWithAggregatesInput | NewsFeedItemScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"NewsFeedItem"> | string
     type?: EnumNewsFeedEventTypeWithAggregatesFilter<"NewsFeedItem"> | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceWithAggregatesFilter<"NewsFeedItem"> | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusWithAggregatesFilter<"NewsFeedItem"> | $Enums.NewsFeedApprovalStatus
     title?: StringWithAggregatesFilter<"NewsFeedItem"> | string
     description?: StringWithAggregatesFilter<"NewsFeedItem"> | string
+    image?: StringNullableWithAggregatesFilter<"NewsFeedItem"> | string | null
+    authorUserId?: StringNullableWithAggregatesFilter<"NewsFeedItem"> | string | null
     storeId?: IntNullableWithAggregatesFilter<"NewsFeedItem"> | number | null
     storeName?: StringNullableWithAggregatesFilter<"NewsFeedItem"> | string | null
     metadata?: JsonNullableWithAggregatesFilter<"NewsFeedItem">
@@ -5401,8 +5511,12 @@ export namespace Prisma {
   export type NewsFeedItemCreateInput = {
     id?: string
     type: $Enums.NewsFeedEventType
+    source?: $Enums.NewsFeedSource
+    approvalStatus?: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image?: string | null
+    authorUserId?: string | null
     storeId?: number | null
     storeName?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -5414,8 +5528,12 @@ export namespace Prisma {
   export type NewsFeedItemUncheckedCreateInput = {
     id?: string
     type: $Enums.NewsFeedEventType
+    source?: $Enums.NewsFeedSource
+    approvalStatus?: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image?: string | null
+    authorUserId?: string | null
     storeId?: number | null
     storeName?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -5427,8 +5545,12 @@ export namespace Prisma {
   export type NewsFeedItemUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -5440,8 +5562,12 @@ export namespace Prisma {
   export type NewsFeedItemUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -5453,8 +5579,12 @@ export namespace Prisma {
   export type NewsFeedItemCreateManyInput = {
     id?: string
     type: $Enums.NewsFeedEventType
+    source?: $Enums.NewsFeedSource
+    approvalStatus?: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image?: string | null
+    authorUserId?: string | null
     storeId?: number | null
     storeName?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -5464,8 +5594,12 @@ export namespace Prisma {
   export type NewsFeedItemUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -5475,8 +5609,12 @@ export namespace Prisma {
   export type NewsFeedItemUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -5650,15 +5788,18 @@ export namespace Prisma {
     not?: NestedEnumNewsFeedEventTypeFilter<$PrismaModel> | $Enums.NewsFeedEventType
   }
 
-  export type IntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  export type EnumNewsFeedSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedSource | EnumNewsFeedSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedSource[]
+    notIn?: $Enums.NewsFeedSource[]
+    not?: NestedEnumNewsFeedSourceFilter<$PrismaModel> | $Enums.NewsFeedSource
+  }
+
+  export type EnumNewsFeedApprovalStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedApprovalStatus | EnumNewsFeedApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedApprovalStatus[]
+    notIn?: $Enums.NewsFeedApprovalStatus[]
+    not?: NestedEnumNewsFeedApprovalStatusFilter<$PrismaModel> | $Enums.NewsFeedApprovalStatus
   }
 
   export type StringNullableFilter<$PrismaModel = never> = {
@@ -5674,6 +5815,17 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     search?: string
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
   export type JsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -5744,8 +5896,12 @@ export namespace Prisma {
   export type NewsFeedItemCountOrderByAggregateInput = {
     id?: SortOrder
     type?: SortOrder
+    source?: SortOrder
+    approvalStatus?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    image?: SortOrder
+    authorUserId?: SortOrder
     storeId?: SortOrder
     storeName?: SortOrder
     metadata?: SortOrder
@@ -5759,8 +5915,12 @@ export namespace Prisma {
   export type NewsFeedItemMaxOrderByAggregateInput = {
     id?: SortOrder
     type?: SortOrder
+    source?: SortOrder
+    approvalStatus?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    image?: SortOrder
+    authorUserId?: SortOrder
     storeId?: SortOrder
     storeName?: SortOrder
     createdAt?: SortOrder
@@ -5769,8 +5929,12 @@ export namespace Prisma {
   export type NewsFeedItemMinOrderByAggregateInput = {
     id?: SortOrder
     type?: SortOrder
+    source?: SortOrder
+    approvalStatus?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    image?: SortOrder
+    authorUserId?: SortOrder
     storeId?: SortOrder
     storeName?: SortOrder
     createdAt?: SortOrder
@@ -5808,20 +5972,24 @@ export namespace Prisma {
     _max?: NestedEnumNewsFeedEventTypeFilter<$PrismaModel>
   }
 
-  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedIntNullableFilter<$PrismaModel>
-    _max?: NestedIntNullableFilter<$PrismaModel>
+  export type EnumNewsFeedSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedSource | EnumNewsFeedSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedSource[]
+    notIn?: $Enums.NewsFeedSource[]
+    not?: NestedEnumNewsFeedSourceWithAggregatesFilter<$PrismaModel> | $Enums.NewsFeedSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNewsFeedSourceFilter<$PrismaModel>
+    _max?: NestedEnumNewsFeedSourceFilter<$PrismaModel>
+  }
+
+  export type EnumNewsFeedApprovalStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedApprovalStatus | EnumNewsFeedApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedApprovalStatus[]
+    notIn?: $Enums.NewsFeedApprovalStatus[]
+    not?: NestedEnumNewsFeedApprovalStatusWithAggregatesFilter<$PrismaModel> | $Enums.NewsFeedApprovalStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNewsFeedApprovalStatusFilter<$PrismaModel>
+    _max?: NestedEnumNewsFeedApprovalStatusFilter<$PrismaModel>
   }
 
   export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -5840,6 +6008,22 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
   export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -6033,16 +6217,24 @@ export namespace Prisma {
     set?: $Enums.NewsFeedEventType
   }
 
+  export type EnumNewsFeedSourceFieldUpdateOperationsInput = {
+    set?: $Enums.NewsFeedSource
+  }
+
+  export type EnumNewsFeedApprovalStatusFieldUpdateOperationsInput = {
+    set?: $Enums.NewsFeedApprovalStatus
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
   export type NullableIntFieldUpdateOperationsInput = {
     set?: number | null
     increment?: number
     decrement?: number
     multiply?: number
     divide?: number
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -6159,15 +6351,18 @@ export namespace Prisma {
     not?: NestedEnumNewsFeedEventTypeFilter<$PrismaModel> | $Enums.NewsFeedEventType
   }
 
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  export type NestedEnumNewsFeedSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedSource | EnumNewsFeedSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedSource[]
+    notIn?: $Enums.NewsFeedSource[]
+    not?: NestedEnumNewsFeedSourceFilter<$PrismaModel> | $Enums.NewsFeedSource
+  }
+
+  export type NestedEnumNewsFeedApprovalStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedApprovalStatus | EnumNewsFeedApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedApprovalStatus[]
+    notIn?: $Enums.NewsFeedApprovalStatus[]
+    not?: NestedEnumNewsFeedApprovalStatusFilter<$PrismaModel> | $Enums.NewsFeedApprovalStatus
   }
 
   export type NestedStringNullableFilter<$PrismaModel = never> = {
@@ -6183,6 +6378,17 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     search?: string
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -6235,6 +6441,44 @@ export namespace Prisma {
     _max?: NestedEnumNewsFeedEventTypeFilter<$PrismaModel>
   }
 
+  export type NestedEnumNewsFeedSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedSource | EnumNewsFeedSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedSource[]
+    notIn?: $Enums.NewsFeedSource[]
+    not?: NestedEnumNewsFeedSourceWithAggregatesFilter<$PrismaModel> | $Enums.NewsFeedSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNewsFeedSourceFilter<$PrismaModel>
+    _max?: NestedEnumNewsFeedSourceFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNewsFeedApprovalStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NewsFeedApprovalStatus | EnumNewsFeedApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NewsFeedApprovalStatus[]
+    notIn?: $Enums.NewsFeedApprovalStatus[]
+    not?: NestedEnumNewsFeedApprovalStatusWithAggregatesFilter<$PrismaModel> | $Enums.NewsFeedApprovalStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNewsFeedApprovalStatusFilter<$PrismaModel>
+    _max?: NestedEnumNewsFeedApprovalStatusFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
     in?: number[] | null
@@ -6260,24 +6504,6 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | null
-    notIn?: string[] | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    search?: string
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
   export type NestedJsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -6436,8 +6662,12 @@ export namespace Prisma {
   export type NewsFeedItemCreateWithoutLikesInput = {
     id?: string
     type: $Enums.NewsFeedEventType
+    source?: $Enums.NewsFeedSource
+    approvalStatus?: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image?: string | null
+    authorUserId?: string | null
     storeId?: number | null
     storeName?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -6448,8 +6678,12 @@ export namespace Prisma {
   export type NewsFeedItemUncheckedCreateWithoutLikesInput = {
     id?: string
     type: $Enums.NewsFeedEventType
+    source?: $Enums.NewsFeedSource
+    approvalStatus?: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image?: string | null
+    authorUserId?: string | null
     storeId?: number | null
     storeName?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -6476,8 +6710,12 @@ export namespace Prisma {
   export type NewsFeedItemUpdateWithoutLikesInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -6488,8 +6726,12 @@ export namespace Prisma {
   export type NewsFeedItemUncheckedUpdateWithoutLikesInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -6500,8 +6742,12 @@ export namespace Prisma {
   export type NewsFeedItemCreateWithoutSavesInput = {
     id?: string
     type: $Enums.NewsFeedEventType
+    source?: $Enums.NewsFeedSource
+    approvalStatus?: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image?: string | null
+    authorUserId?: string | null
     storeId?: number | null
     storeName?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -6512,8 +6758,12 @@ export namespace Prisma {
   export type NewsFeedItemUncheckedCreateWithoutSavesInput = {
     id?: string
     type: $Enums.NewsFeedEventType
+    source?: $Enums.NewsFeedSource
+    approvalStatus?: $Enums.NewsFeedApprovalStatus
     title: string
     description: string
+    image?: string | null
+    authorUserId?: string | null
     storeId?: number | null
     storeName?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -6540,8 +6790,12 @@ export namespace Prisma {
   export type NewsFeedItemUpdateWithoutSavesInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
@@ -6552,8 +6806,12 @@ export namespace Prisma {
   export type NewsFeedItemUncheckedUpdateWithoutSavesInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumNewsFeedEventTypeFieldUpdateOperationsInput | $Enums.NewsFeedEventType
+    source?: EnumNewsFeedSourceFieldUpdateOperationsInput | $Enums.NewsFeedSource
+    approvalStatus?: EnumNewsFeedApprovalStatusFieldUpdateOperationsInput | $Enums.NewsFeedApprovalStatus
     title?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    authorUserId?: NullableStringFieldUpdateOperationsInput | string | null
     storeId?: NullableIntFieldUpdateOperationsInput | number | null
     storeName?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue

@@ -1,4 +1,10 @@
-import { type NewsFeedEventType, type NewsFeedMetric, type Prisma } from '../../generated/prisma';
+import {
+  type NewsFeedApprovalStatus,
+  type NewsFeedEventType,
+  type NewsFeedMetric,
+  type NewsFeedSource,
+  type Prisma,
+} from '../../generated/prisma';
 import { prisma } from '../../lib/prisma';
 
 const ACTIVITY_EVENT_TYPES: NewsFeedEventType[] = [
@@ -19,8 +25,12 @@ const ACTIVITY_EVENT_TYPES: NewsFeedEventType[] = [
 const newsFeedListSelect = {
   id: true,
   type: true,
+  source: true,
+  approvalStatus: true,
   title: true,
   description: true,
+  image: true,
+  authorUserId: true,
   storeId: true,
   storeName: true,
   metadata: true,
@@ -45,8 +55,18 @@ const savedNewsFeedSelect = {
   },
 } satisfies Prisma.NewsFeedSaveSelect;
 
+const deletedNewsFeedItemSelect = {
+  id: true,
+  image: true,
+  metadata: true,
+} satisfies Prisma.NewsFeedItemSelect;
+
 export type SavedNewsFeedRecord = Prisma.NewsFeedSaveGetPayload<{
   select: typeof savedNewsFeedSelect;
+}>;
+
+export type DeletedNewsFeedItemRecord = Prisma.NewsFeedItemGetPayload<{
+  select: typeof deletedNewsFeedItemSelect;
 }>;
 
 export interface NewsFeedLikeSummaryRecord {
@@ -63,9 +83,93 @@ interface CreateNewsFeedRecordInput {
   type: NewsFeedEventType;
   title: string;
   description: string;
+  image?: string;
   storeId?: number;
   storeName?: string;
   metadata?: Prisma.InputJsonValue;
+}
+
+interface CreateUserNewsFeedPostInput {
+  authorUserId: string;
+  title: string;
+  description: string;
+  image?: string;
+}
+
+interface ListEntryFilters {
+  approvalStatus?: NewsFeedApprovalStatus;
+  source?: NewsFeedSource;
+}
+
+function buildPublicNewsFeedWhere(): Prisma.NewsFeedItemWhereInput {
+  return {
+    approvalStatus: 'APPROVED',
+  };
+}
+
+function buildListEntryWhere(filters: ListEntryFilters = {}): Prisma.NewsFeedItemWhereInput {
+  const where: Prisma.NewsFeedItemWhereInput = {};
+
+  if (filters.source !== undefined) {
+    where.source = filters.source;
+  }
+
+  if (filters.approvalStatus !== undefined) {
+    where.approvalStatus = filters.approvalStatus;
+  }
+
+  return where;
+}
+
+async function listEntriesWithWhere(
+  where: Prisma.NewsFeedItemWhereInput,
+  page: number,
+  limit: number,
+): Promise<NewsFeedListRecords> {
+  const entryIds = await prisma.newsFeedItem.findMany({
+    where,
+    orderBy: [
+      {
+        createdAt: 'desc',
+      },
+      {
+        id: 'desc',
+      },
+    ],
+    skip: (page - 1) * limit,
+    take: limit + 1,
+    select: {
+      id: true,
+    },
+  });
+
+  const hasMore = entryIds.length > limit;
+  const orderedIds = entryIds.slice(0, limit).map((entry) => entry.id);
+
+  if (orderedIds.length === 0) {
+    return {
+      items: [],
+      hasMore,
+    };
+  }
+
+  const items = await prisma.newsFeedItem.findMany({
+    where: {
+      ...where,
+      id: {
+        in: orderedIds,
+      },
+    },
+    select: newsFeedListSelect,
+  });
+  const itemById = new Map(items.map((item) => [item.id, item]));
+
+  return {
+    items: orderedIds
+      .map((id) => itemById.get(id))
+      .filter((item): item is NewsFeedItemRecord => item !== undefined),
+    hasMore,
+  };
 }
 
 export const newsFeedRepository = {
@@ -73,8 +177,11 @@ export const newsFeedRepository = {
     return prisma.newsFeedItem.create({
       data: {
         type: payload.type,
+        source: 'SYSTEM',
+        approvalStatus: 'APPROVED',
         title: payload.title,
         description: payload.description,
+        image: payload.image,
         storeId: payload.storeId,
         storeName: payload.storeName,
         metadata: payload.metadata,
@@ -83,49 +190,65 @@ export const newsFeedRepository = {
     });
   },
 
-  async listEntries(page: number, limit: number): Promise<NewsFeedListRecords> {
-    const entryIds = await prisma.newsFeedItem.findMany({
-      orderBy: [
-        {
-          createdAt: 'desc',
-        },
-        {
-          id: 'desc',
-        },
-      ],
-      skip: (page - 1) * limit,
-      take: limit + 1,
-      select: {
-        id: true,
-      },
-    });
-
-    const hasMore = entryIds.length > limit;
-    const orderedIds = entryIds.slice(0, limit).map((entry) => entry.id);
-
-    if (orderedIds.length === 0) {
-      return {
-        items: [],
-        hasMore,
-      };
-    }
-
-    const items = await prisma.newsFeedItem.findMany({
-      where: {
-        id: {
-          in: orderedIds,
-        },
+  createUserPost(payload: CreateUserNewsFeedPostInput): Promise<NewsFeedItemRecord> {
+    return prisma.newsFeedItem.create({
+      data: {
+        type: 'USER_POST',
+        source: 'USER_POST',
+        approvalStatus: 'PENDING',
+        title: payload.title,
+        description: payload.description,
+        image: payload.image,
+        authorUserId: payload.authorUserId,
       },
       select: newsFeedListSelect,
     });
-    const itemById = new Map(items.map((item) => [item.id, item]));
+  },
 
-    return {
-      items: orderedIds
-        .map((id) => itemById.get(id))
-        .filter((item): item is NewsFeedItemRecord => item !== undefined),
-      hasMore,
-    };
+  listEntries(page: number, limit: number): Promise<NewsFeedListRecords> {
+    return listEntriesWithWhere(buildPublicNewsFeedWhere(), page, limit);
+  },
+
+  listUserSubmittedEntries(
+    page: number,
+    limit: number,
+    approvalStatus?: NewsFeedApprovalStatus,
+  ): Promise<NewsFeedListRecords> {
+    return listEntriesWithWhere(
+      buildListEntryWhere({
+        source: 'USER_POST',
+        approvalStatus,
+      }),
+      page,
+      limit,
+    );
+  },
+
+  async deleteEntriesOlderThan(cutoff: Date): Promise<DeletedNewsFeedItemRecord[]> {
+    return prisma.$transaction(async (transaction) => {
+      const items = await transaction.newsFeedItem.findMany({
+        where: {
+          createdAt: {
+            lt: cutoff,
+          },
+        },
+        select: deletedNewsFeedItemSelect,
+      });
+
+      if (items.length === 0) {
+        return [];
+      }
+
+      await transaction.newsFeedItem.deleteMany({
+        where: {
+          id: {
+            in: items.map((item) => item.id),
+          },
+        },
+      });
+
+      return items;
+    });
   },
 
   deleteExpiredSavedEntries(now: Date): Promise<number> {
@@ -146,10 +269,11 @@ export const newsFeedRepository = {
     savedAt: Date,
     expiresAt: Date,
   ): Promise<SavedNewsFeedRecord | null> {
-    return prisma.$transaction(async (tx) => {
-      const item = await tx.newsFeedItem.findUnique({
+    return prisma.$transaction(async (transaction) => {
+      const item = await transaction.newsFeedItem.findFirst({
         where: {
           id: newsFeedItemId,
+          ...buildPublicNewsFeedWhere(),
         },
         select: {
           id: true,
@@ -160,7 +284,7 @@ export const newsFeedRepository = {
         return null;
       }
 
-      return tx.newsFeedSave.upsert({
+      return transaction.newsFeedSave.upsert({
         where: {
           newsFeedItemId_userId: {
             newsFeedItemId,
@@ -193,6 +317,7 @@ export const newsFeedRepository = {
         expiresAt: {
           gt: now,
         },
+        newsFeedItem: buildPublicNewsFeedWhere(),
       },
       orderBy: {
         savedAt: 'desc',
@@ -204,10 +329,11 @@ export const newsFeedRepository = {
   },
 
   async likeEntry(newsFeedItemId: string, userId: string): Promise<NewsFeedLikeSummaryRecord | null> {
-    return prisma.$transaction(async (tx) => {
-      const item = await tx.newsFeedItem.findUnique({
+    return prisma.$transaction(async (transaction) => {
+      const item = await transaction.newsFeedItem.findFirst({
         where: {
           id: newsFeedItemId,
+          ...buildPublicNewsFeedWhere(),
         },
         select: {
           id: true,
@@ -218,7 +344,7 @@ export const newsFeedRepository = {
         return null;
       }
 
-      await tx.newsFeedLike.upsert({
+      await transaction.newsFeedLike.upsert({
         where: {
           newsFeedItemId_userId: {
             newsFeedItemId,
@@ -236,7 +362,7 @@ export const newsFeedRepository = {
         update: {},
       });
 
-      const likesCount = await tx.newsFeedLike.count({
+      const likesCount = await transaction.newsFeedLike.count({
         where: {
           newsFeedItemId,
         },
@@ -246,6 +372,37 @@ export const newsFeedRepository = {
         id: item.id,
         likesCount,
       };
+    });
+  },
+
+  async updateApprovalStatus(
+    newsFeedItemId: string,
+    approvalStatus: Exclude<NewsFeedApprovalStatus, 'PENDING'>,
+  ): Promise<NewsFeedItemRecord | null> {
+    return prisma.$transaction(async (transaction) => {
+      const item = await transaction.newsFeedItem.findFirst({
+        where: {
+          id: newsFeedItemId,
+          source: 'USER_POST',
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!item) {
+        return null;
+      }
+
+      return transaction.newsFeedItem.update({
+        where: {
+          id: newsFeedItemId,
+        },
+        data: {
+          approvalStatus,
+        },
+        select: newsFeedListSelect,
+      });
     });
   },
 
@@ -286,6 +443,7 @@ export const newsFeedRepository = {
         storeId: {
           not: null,
         },
+        approvalStatus: 'APPROVED',
         type: {
           in: ACTIVITY_EVENT_TYPES,
         },

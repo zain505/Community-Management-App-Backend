@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 jest.mock('../../src/modules/product/product.repository', () => ({
   productRepository: {
     listByStoreId: jest.fn(),
@@ -35,6 +37,38 @@ const mockedProductRepository = jest.mocked(productRepository);
 const mockedStoreRepository = jest.mocked(storeRepository);
 const mockedNewsFeedClient = jest.mocked(newsFeedClient);
 const mockedInvalidateStoreListCache = jest.mocked(invalidateStoreListCache);
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const productImageBase64 = `data:image/png;base64,${Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
+]).toString('base64')}`;
+const productImageUrl = '/uploads/product-images/product-image.png';
+const updatedProductImageBase64 = `data:image/png;base64,${Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01,
+]).toString('base64')}`;
+const updatedProductImageUrl = '/uploads/product-images/product-image-updated.png';
+
+async function removeUploadsDirectory(): Promise<void> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await fs.rm(uploadsRoot, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+
+      if (!['EBUSY', 'ENOTEMPTY', 'EPERM'].includes(nodeError.code ?? '')) {
+        throw error;
+      }
+
+      if (attempt === 4) {
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    }
+  }
+}
 
 function buildStoreRecord(overrides: Record<string, unknown> = {}) {
   return {
@@ -65,6 +99,10 @@ describe('product service', () => {
     mockedInvalidateStoreListCache.mockResolvedValue(undefined);
   });
 
+  afterEach(async () => {
+    await removeUploadsDirectory();
+  });
+
   it('lists products for a store after confirming the store exists', async () => {
     mockedStoreRepository.findStoreBasicById.mockResolvedValue(buildStoreRecord());
     mockedProductRepository.listByStoreId.mockResolvedValue([buildProductRecord()]);
@@ -92,7 +130,7 @@ describe('product service', () => {
         id: 'prod-2',
         name: 'Chocolate Cake',
         price: '900',
-        image: 'https://example.com/chocolate-cake.png',
+        image: productImageUrl,
         tag: 'Dessert',
         description: 'Rich chocolate sponge cake.',
       }),
@@ -102,7 +140,7 @@ describe('product service', () => {
     await productService.createMyProduct('user-123', {
       name: 'Chocolate Cake',
       price: '900',
-      image: 'https://example.com/chocolate-cake.png',
+      image: productImageBase64,
       tag: 'Dessert',
       description: 'Rich chocolate sponge cake.',
     });
@@ -110,7 +148,7 @@ describe('product service', () => {
     expect(mockedProductRepository.createForStore).toHaveBeenCalledWith(18, {
       name: 'Chocolate Cake',
       price: '900',
-      image: 'https://example.com/chocolate-cake.png',
+      image: expect.stringMatching(/^\/uploads\/product-images\//),
       tag: 'Dessert',
       description: 'Rich chocolate sponge cake.',
     });
@@ -127,7 +165,7 @@ describe('product service', () => {
               id: 'prod-2',
               name: 'Chocolate Cake',
               price: '900',
-              image: 'https://example.com/chocolate-cake.png',
+              image: productImageUrl,
               tag: 'Dessert',
               description: 'Rich chocolate sponge cake.',
             },
@@ -137,6 +175,58 @@ describe('product service', () => {
       refreshMetrics: ['MOST_ACTIVE_STORE'],
     });
     expect(mockedInvalidateStoreListCache).toHaveBeenCalled();
+  });
+
+  it('stores updated product images as managed URLs before publishing events', async () => {
+    mockedStoreRepository.findStoreBasicByUserId.mockResolvedValue(buildStoreRecord());
+    mockedProductRepository.findByIdForStore.mockResolvedValue(buildProductRecord());
+    mockedProductRepository.updateById.mockResolvedValue(
+      buildProductRecord({
+        image: updatedProductImageUrl,
+      }),
+    );
+    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+
+    await productService.updateMyProduct('user-123', 'prod-1', {
+      image: updatedProductImageBase64,
+    });
+
+    expect(mockedProductRepository.updateById).toHaveBeenCalledWith(
+      'prod-1',
+      expect.objectContaining({
+        image: expect.stringMatching(/^\/uploads\/product-images\//),
+      }),
+    );
+    expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
+      events: [
+        {
+          type: 'PRODUCT_UPDATED',
+          storeId: 18,
+          storeName: 'Fresh Mart2',
+          title: "Fresh Mart2 updated a product.",
+          description: "See what's new with Orange Juice.",
+          metadata: {
+            previous: {
+              id: 'prod-1',
+              name: 'Orange Juice',
+              price: '500',
+              image: 'https://example.com/orange-juice.png',
+              tag: 'Fresh',
+              description: 'Freshly squeezed orange juice.',
+            },
+            current: {
+              id: 'prod-1',
+              name: 'Orange Juice',
+              price: '500',
+              image: updatedProductImageUrl,
+              tag: 'Fresh',
+              description: 'Freshly squeezed orange juice.',
+            },
+          },
+        },
+      ],
+      refreshMetrics: ['MOST_ACTIVE_STORE'],
+    });
   });
 
   it('publishes a product-updated event when updating a product', async () => {

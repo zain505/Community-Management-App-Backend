@@ -1,7 +1,10 @@
 import {
+  createNewsFeedPostBodySchema,
   listNewsFeedQuerySchema,
+  listUserSubmittedNewsFeedQuerySchema,
   newsFeedIdParamSchema,
   newsFeedSyncBodySchema,
+  reviewNewsFeedPostBodySchema,
 } from '../../src/modules/newsfeed/newsfeed.schemas';
 
 describe('newsfeed schemas', () => {
@@ -35,6 +38,7 @@ describe('newsfeed schemas', () => {
           type: 'EVENT_MANAGEMENT_CREATED',
           title: 'New community event: Water supply meeting',
           description: 'Community Admin scheduled a community event at Main Hall.',
+          image: 'data:image/png;base64,aGVsbG8=',
         },
       ],
       refreshMetrics: ['POPULAR_STORE'],
@@ -42,5 +46,32 @@ describe('newsfeed schemas', () => {
 
     expect(payload.events).toHaveLength(1);
     expect(payload.refreshMetrics).toEqual(['POPULAR_STORE']);
+  });
+
+  it('accepts a user newsfeed post body with an image', () => {
+    const payload = createNewsFeedPostBodySchema.parse({
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+      image: 'data:image/png;base64,aGVsbG8=',
+    });
+
+    expect(payload.title).toBe('Water outage notice');
+    expect(payload.image).toBe('data:image/png;base64,aGVsbG8=');
+  });
+
+  it('defaults admin submission listing to pending posts', () => {
+    const query = listUserSubmittedNewsFeedQuerySchema.parse({});
+
+    expect(query.page).toBe(1);
+    expect(query.limit).toBe(20);
+    expect(query.status).toBe('PENDING');
+  });
+
+  it('rejects pending as a moderation action target status', () => {
+    const result = reviewNewsFeedPostBodySchema.safeParse({
+      status: 'PENDING',
+    });
+
+    expect(result.success).toBe(false);
   });
 });

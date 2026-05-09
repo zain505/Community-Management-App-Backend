@@ -68,4 +68,33 @@ describe('routes', () => {
     expect(response.body.success).toBe(false);
     expect(response.body.code).toBe('UNAUTHORIZED');
   });
+
+  it('requires auth to create a user newsfeed post', async () => {
+    const response = await request(app).post('/v1/newsfeed').send({
+      title: 'Water outage notice',
+      description: 'There will be a short outage tomorrow morning.',
+    });
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+  });
+
+  it('requires auth to list submitted user newsfeed posts', async () => {
+    const response = await request(app).get('/v1/newsfeed/submissions');
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+  });
+
+  it('requires auth to review submitted user newsfeed posts', async () => {
+    const response = await request(app).patch('/v1/newsfeed/feed-user-1/approval').send({
+      status: 'APPROVED',
+    });
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+  });
 });

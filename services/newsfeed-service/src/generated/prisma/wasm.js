@@ -96,8 +96,12 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.NewsFeedItemScalarFieldEnum = {
   id: 'id',
   type: 'type',
+  source: 'source',
+  approvalStatus: 'approvalStatus',
   title: 'title',
   description: 'description',
+  image: 'image',
+  authorUserId: 'authorUserId',
   storeId: 'storeId',
   storeName: 'storeName',
   metadata: 'metadata',
@@ -155,6 +159,8 @@ exports.Prisma.NewsFeedItemOrderByRelevanceFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  image: 'image',
+  authorUserId: 'authorUserId',
   storeName: 'storeName'
 };
 
@@ -189,9 +195,21 @@ exports.NewsFeedEventType = exports.$Enums.NewsFeedEventType = {
   EVENT_MANAGEMENT_CREATED: 'EVENT_MANAGEMENT_CREATED',
   EVENT_MANAGEMENT_UPDATED: 'EVENT_MANAGEMENT_UPDATED',
   EVENT_MANAGEMENT_DELETED: 'EVENT_MANAGEMENT_DELETED',
+  USER_POST: 'USER_POST',
   POPULAR_STORE_CHANGED: 'POPULAR_STORE_CHANGED',
   MOST_ACTIVE_STORE_CHANGED: 'MOST_ACTIVE_STORE_CHANGED',
   MOST_SEARCHED_STORE_CHANGED: 'MOST_SEARCHED_STORE_CHANGED'
+};
+
+exports.NewsFeedSource = exports.$Enums.NewsFeedSource = {
+  SYSTEM: 'SYSTEM',
+  USER_POST: 'USER_POST'
+};
+
+exports.NewsFeedApprovalStatus = exports.$Enums.NewsFeedApprovalStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  DISAPPROVED: 'DISAPPROVED'
 };
 
 exports.NewsFeedMetric = exports.$Enums.NewsFeedMetric = {
@@ -254,13 +272,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum NewsFeedEventType {\n  STORE_CREATED\n  STORE_NAME_UPDATED\n  STORE_LOCATION_UPDATED\n  STORE_RATING_UPDATED\n  STORE_IMAGE_UPDATED\n  STORE_DELIVERY_UPDATED\n  STORE_MIN_ORDER_UPDATED\n  STORE_CONTACT_UPDATED\n  STORE_PROFILE_UPDATED\n  STORE_DELETED\n  PRODUCT_ADDED\n  PRODUCT_UPDATED\n  PRODUCT_DELETED\n  ANNOUNCEMENT_CREATED\n  ANNOUNCEMENT_UPDATED\n  ANNOUNCEMENT_DELETED\n  EVENT_MANAGEMENT_CREATED\n  EVENT_MANAGEMENT_UPDATED\n  EVENT_MANAGEMENT_DELETED\n  POPULAR_STORE_CHANGED\n  MOST_ACTIVE_STORE_CHANGED\n  MOST_SEARCHED_STORE_CHANGED\n}\n\nenum NewsFeedMetric {\n  POPULAR_STORE\n  MOST_ACTIVE_STORE\n  MOST_SEARCHED_STORE\n}\n\nmodel NewsFeedItem {\n  id          String            @id @default(cuid())\n  type        NewsFeedEventType\n  title       String\n  description String            @db.Text\n  storeId     Int?\n  storeName   String?\n  metadata    Json?\n  createdAt   DateTime          @default(now())\n  likes       NewsFeedLike[]\n  saves       NewsFeedSave[]\n\n  @@index([storeId])\n  @@index([createdAt])\n  @@index([createdAt, id])\n  @@index([type])\n}\n\nmodel NewsFeedLike {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  createdAt      DateTime     @default(now())\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId])\n  @@index([createdAt])\n}\n\nmodel NewsFeedMetricState {\n  metric    NewsFeedMetric @id\n  storeId   Int?\n  updatedAt DateTime       @updatedAt\n\n  @@index([storeId])\n}\n\nmodel NewsFeedSave {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  savedAt        DateTime     @default(now())\n  expiresAt      DateTime\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId, expiresAt])\n  @@index([expiresAt])\n  @@index([savedAt])\n}\n",
-  "inlineSchemaHash": "4f2b2aeb6ee554e4d1a3f47c1b2085addd0bec0582facf0f5465921bb8225b10",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum NewsFeedEventType {\n  STORE_CREATED\n  STORE_NAME_UPDATED\n  STORE_LOCATION_UPDATED\n  STORE_RATING_UPDATED\n  STORE_IMAGE_UPDATED\n  STORE_DELIVERY_UPDATED\n  STORE_MIN_ORDER_UPDATED\n  STORE_CONTACT_UPDATED\n  STORE_PROFILE_UPDATED\n  STORE_DELETED\n  PRODUCT_ADDED\n  PRODUCT_UPDATED\n  PRODUCT_DELETED\n  ANNOUNCEMENT_CREATED\n  ANNOUNCEMENT_UPDATED\n  ANNOUNCEMENT_DELETED\n  EVENT_MANAGEMENT_CREATED\n  EVENT_MANAGEMENT_UPDATED\n  EVENT_MANAGEMENT_DELETED\n  USER_POST\n  POPULAR_STORE_CHANGED\n  MOST_ACTIVE_STORE_CHANGED\n  MOST_SEARCHED_STORE_CHANGED\n}\n\nenum NewsFeedSource {\n  SYSTEM\n  USER_POST\n}\n\nenum NewsFeedApprovalStatus {\n  PENDING\n  APPROVED\n  DISAPPROVED\n}\n\nenum NewsFeedMetric {\n  POPULAR_STORE\n  MOST_ACTIVE_STORE\n  MOST_SEARCHED_STORE\n}\n\nmodel NewsFeedItem {\n  id             String                 @id @default(cuid())\n  type           NewsFeedEventType\n  source         NewsFeedSource         @default(SYSTEM)\n  approvalStatus NewsFeedApprovalStatus @default(APPROVED)\n  title          String\n  description    String                 @db.Text\n  image          String?                @db.LongText\n  authorUserId   String?\n  storeId        Int?\n  storeName      String?\n  metadata       Json?\n  createdAt      DateTime               @default(now())\n  likes          NewsFeedLike[]\n  saves          NewsFeedSave[]\n\n  @@index([storeId])\n  @@index([authorUserId])\n  @@index([createdAt])\n  @@index([createdAt, id])\n  @@index([type])\n  @@index([approvalStatus])\n  @@index([source, approvalStatus, createdAt, id])\n}\n\nmodel NewsFeedLike {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  createdAt      DateTime     @default(now())\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId])\n  @@index([createdAt])\n}\n\nmodel NewsFeedMetricState {\n  metric    NewsFeedMetric @id\n  storeId   Int?\n  updatedAt DateTime       @updatedAt\n\n  @@index([storeId])\n}\n\nmodel NewsFeedSave {\n  id             String       @id @default(cuid())\n  newsFeedItemId String\n  userId         String\n  savedAt        DateTime     @default(now())\n  expiresAt      DateTime\n  newsFeedItem   NewsFeedItem @relation(fields: [newsFeedItemId], references: [id], onDelete: Cascade)\n\n  @@unique([newsFeedItemId, userId])\n  @@index([userId, expiresAt])\n  @@index([expiresAt])\n  @@index([savedAt])\n}\n",
+  "inlineSchemaHash": "7f804466ce03d94474050c01cbdf94cfb63cfbd2934bb2ce0123745a1e5d25e3",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"NewsFeedItem\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"NewsFeedEventType\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"storeName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"metadata\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"NewsFeedLike\",\"relationName\":\"NewsFeedItemToNewsFeedLike\"},{\"name\":\"saves\",\"kind\":\"object\",\"type\":\"NewsFeedSave\",\"relationName\":\"NewsFeedItemToNewsFeedSave\"}],\"dbName\":null},\"NewsFeedLike\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"newsFeedItemId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"newsFeedItem\",\"kind\":\"object\",\"type\":\"NewsFeedItem\",\"relationName\":\"NewsFeedItemToNewsFeedLike\"}],\"dbName\":null},\"NewsFeedMetricState\":{\"fields\":[{\"name\":\"metric\",\"kind\":\"enum\",\"type\":\"NewsFeedMetric\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"NewsFeedSave\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"newsFeedItemId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"savedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"newsFeedItem\",\"kind\":\"object\",\"type\":\"NewsFeedItem\",\"relationName\":\"NewsFeedItemToNewsFeedSave\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"NewsFeedItem\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"NewsFeedEventType\"},{\"name\":\"source\",\"kind\":\"enum\",\"type\":\"NewsFeedSource\"},{\"name\":\"approvalStatus\",\"kind\":\"enum\",\"type\":\"NewsFeedApprovalStatus\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"storeName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"metadata\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"likes\",\"kind\":\"object\",\"type\":\"NewsFeedLike\",\"relationName\":\"NewsFeedItemToNewsFeedLike\"},{\"name\":\"saves\",\"kind\":\"object\",\"type\":\"NewsFeedSave\",\"relationName\":\"NewsFeedItemToNewsFeedSave\"}],\"dbName\":null},\"NewsFeedLike\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"newsFeedItemId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"newsFeedItem\",\"kind\":\"object\",\"type\":\"NewsFeedItem\",\"relationName\":\"NewsFeedItemToNewsFeedLike\"}],\"dbName\":null},\"NewsFeedMetricState\":{\"fields\":[{\"name\":\"metric\",\"kind\":\"enum\",\"type\":\"NewsFeedMetric\"},{\"name\":\"storeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"NewsFeedSave\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"newsFeedItemId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"savedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"newsFeedItem\",\"kind\":\"object\",\"type\":\"NewsFeedItem\",\"relationName\":\"NewsFeedItemToNewsFeedSave\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

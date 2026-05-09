@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 jest.mock('../../src/modules/store/store.repository', () => ({
   storeRepository: {
     createForUser: jest.fn(),
@@ -42,9 +44,39 @@ const mockedAuthClient = jest.mocked(authClient);
 const mockedStoreRepository = jest.mocked(storeRepository);
 const mockedNewsFeedClient = jest.mocked(newsFeedClient);
 const mockedStoreCache = jest.mocked(storeCache);
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
 
-const storeImageBase64 = 'data:image/png;base64,aGVsbG8=';
-const updatedStoreImageBase64 = 'data:image/png;base64,d29ybGQ=';
+const storeImageBase64 = `data:image/png;base64,${Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
+]).toString('base64')}`;
+const updatedStoreImageBase64 = `data:image/png;base64,${Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01,
+]).toString('base64')}`;
+const storeImageUrl = '/uploads/store-images/store-image.png';
+const updatedStoreImageUrl = '/uploads/store-images/store-image-updated.png';
+
+async function removeUploadsDirectory(): Promise<void> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await fs.rm(uploadsRoot, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+
+      if (!['EBUSY', 'ENOTEMPTY', 'EPERM'].includes(nodeError.code ?? '')) {
+        throw error;
+      }
+
+      if (attempt === 4) {
+        return;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    }
+  }
+}
 
 function buildStoreRecord(overrides: Record<string, unknown> = {}) {
   return {
@@ -54,7 +86,7 @@ function buildStoreRecord(overrides: Record<string, unknown> = {}) {
     active: true,
     location: 'Main Road',
     rating: '4.2',
-    image: storeImageBase64,
+    image: storeImageUrl,
     badges: [],
     delivery: '30 mins',
     minOrderRs: '500',
@@ -142,7 +174,7 @@ const storeFieldChangeCases = [
       image: updatedStoreImageBase64,
     },
     updatedStoreOverrides: {
-      image: updatedStoreImageBase64,
+      image: updatedStoreImageUrl,
     },
     expectedEvent: {
       type: 'STORE_IMAGE_UPDATED',
@@ -151,8 +183,8 @@ const storeFieldChangeCases = [
       title: 'Fresh Mart2 updated their store photo.',
       description: 'See their latest look.',
       metadata: {
-        previousImage: storeImageBase64,
-        nextImage: updatedStoreImageBase64,
+        previousImage: storeImageUrl,
+        nextImage: updatedStoreImageUrl,
       },
     },
     expectedRefreshMetrics: ['MOST_ACTIVE_STORE'],
@@ -166,6 +198,10 @@ describe('store service', () => {
     mockedStoreCache.readStoreListCache.mockResolvedValue(null);
     mockedStoreCache.shouldSyncMostSearchedMetric.mockResolvedValue(true);
     mockedStoreCache.writeStoreListCache.mockResolvedValue(false);
+  });
+
+  afterEach(async () => {
+    await removeUploadsDirectory();
   });
 
   it('includes phoneNumber and reviews in store list responses', async () => {
@@ -215,7 +251,7 @@ describe('store service', () => {
         active: true,
         location: 'Main Road',
         rating: '4.2',
-        image: storeImageBase64,
+        image: storeImageUrl,
         badges: [],
         delivery: '30 mins',
         minOrderRs: '500',
@@ -301,7 +337,7 @@ describe('store service', () => {
       active: true,
       location: 'Main Road',
       rating: '0',
-      image: storeImageBase64,
+      image: storeImageUrl,
       badges: [],
       delivery: '30 mins',
       minOrderRs: '500',
@@ -340,7 +376,7 @@ describe('store service', () => {
     expect(mockedStoreRepository.createForUser).toHaveBeenCalledWith('user-123', {
       name: 'Fresh Mart2',
       location: 'Main Road',
-      image: storeImageBase64,
+      image: expect.stringMatching(/^\/uploads\/store-images\//),
       badges: [],
       delivery: '30 mins',
       minOrderRs: '500',
@@ -518,7 +554,7 @@ describe('store service', () => {
     const existingStore = buildStoreRecord();
     const updatedStore = buildStoreRecord({
       location: 'Mall Road',
-      image: updatedStoreImageBase64,
+      image: updatedStoreImageUrl,
       delivery: '45 mins',
       minOrderRs: '700',
       phoneNumber: '03112223344',
@@ -536,6 +572,13 @@ describe('store service', () => {
       phoneNumber: '03112223344',
     });
 
+    expect(mockedStoreRepository.updateById).toHaveBeenCalledWith(
+      18,
+      expect.objectContaining({
+        image: expect.stringMatching(/^\/uploads\/store-images\//),
+      }),
+      [],
+    );
     expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
       events: [
         {
@@ -556,8 +599,8 @@ describe('store service', () => {
           title: 'Fresh Mart2 updated their store photo.',
           description: 'See their latest look.',
           metadata: {
-            previousImage: storeImageBase64,
-            nextImage: updatedStoreImageBase64,
+            previousImage: storeImageUrl,
+            nextImage: updatedStoreImageUrl,
           },
         },
         {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { base64ImageSchema, productImageSchema } from '../../shared/image-schema';
+import { productImageSchema } from '../../shared/image-schema';
 
 const phoneNumberSchema = z
   .string()
@@ -52,7 +52,7 @@ const storeProductSchema = z.object({
 const storePayloadFields = {
   name: z.string().trim().min(2).max(120),
   location: z.string().trim().min(2).max(120),
-  image: base64ImageSchema,
+  image: productImageSchema,
   delivery: z.string().trim().min(1).max(80),
   minOrderRs: z.string().trim().min(1).max(40),
   openingTime: storeTimeSchema,

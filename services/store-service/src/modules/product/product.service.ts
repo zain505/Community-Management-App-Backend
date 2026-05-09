@@ -7,7 +7,14 @@ import type {
 } from '@community/contracts';
 import { Prisma } from '../../generated/prisma';
 import { StatusCodes } from 'http-status-codes';
+import { logger } from '../../config/logger';
 import { AppError } from '../../shared/app-error';
+import {
+  deleteManagedImages,
+  isBase64ImageInput,
+  isManagedImagePublicPath,
+  persistBase64Image,
+} from '../../shared/image-storage';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
 import { invalidateStoreListCache } from '../store/store.cache';
 import {
@@ -29,15 +36,40 @@ function toProduct(product: ProductRecord): Product {
   };
 }
 
-function buildCreatePayload(payload: CreateProductRequest) {
+async function cleanupManagedProductImagesBestEffort(
+  imageUrls: string[],
+  action: string,
+): Promise<void> {
+  if (imageUrls.length === 0) {
+    return;
+  }
+
+  try {
+    await deleteManagedImages(imageUrls);
+  } catch (error) {
+    logger.error({ error, action, imageUrls }, 'Failed to clean up managed product images');
+  }
+}
+
+async function buildCreatePayload(payload: CreateProductRequest): Promise<CreateProductRequest> {
+  if (!isBase64ImageInput(payload.image)) {
+    return payload;
+  }
+
   return {
     ...payload,
+    image: await persistBase64Image(payload.image, 'product'),
   };
 }
 
-function buildUpdatePayload(payload: UpdateProductRequest) {
+async function buildUpdatePayload(payload: UpdateProductRequest): Promise<UpdateProductRequest> {
+  if (payload.image === undefined || !isBase64ImageInput(payload.image)) {
+    return payload;
+  }
+
   return {
     ...payload,
+    image: await persistBase64Image(payload.image, 'product'),
   };
 }
 
@@ -124,9 +156,12 @@ export const productService = {
 
   async createMyProduct(userId: string, payload: CreateProductRequest): Promise<Product> {
     const store = await getStoreForUser(userId);
+    const normalizedPayload = await buildCreatePayload(payload);
+    const createdImageUrls =
+      normalizedPayload.image === payload.image ? [] : [normalizedPayload.image];
 
     try {
-      const product = await productRepository.createForStore(store.id, buildCreatePayload(payload));
+      const product = await productRepository.createForStore(store.id, normalizedPayload);
       await invalidateStoreListCache();
       await syncNewsFeed(
         [
@@ -139,6 +174,10 @@ export const productService = {
       );
       return toProduct(product);
     } catch (error) {
+      await cleanupManagedProductImagesBestEffort(
+        createdImageUrls,
+        'product creation rollback',
+      );
       handlePrismaError(error);
     }
   },
@@ -155,11 +194,29 @@ export const productService = {
       throwProductNotFound();
     }
 
-    const updatedProduct = await productRepository.updateById(
-      productId,
-      buildUpdatePayload(payload),
-    );
+    const normalizedPayload = await buildUpdatePayload(payload);
+    const createdImageUrls =
+      normalizedPayload.image !== undefined && normalizedPayload.image !== payload.image
+        ? [normalizedPayload.image]
+        : [];
+    let updatedProduct: ProductRecord;
 
+    try {
+      updatedProduct = await productRepository.updateById(productId, normalizedPayload);
+    } catch (error) {
+      await cleanupManagedProductImagesBestEffort(
+        createdImageUrls,
+        'product update rollback',
+      );
+      throw error;
+    }
+
+    await cleanupManagedProductImagesBestEffort(
+      existingProduct.image !== updatedProduct.image && isManagedImagePublicPath(existingProduct.image)
+        ? [existingProduct.image]
+        : [],
+      'product update replacement',
+    );
     await invalidateStoreListCache();
     await syncNewsFeed(
       [
@@ -183,7 +240,11 @@ export const productService = {
       throwProductNotFound();
     }
 
-    await productRepository.deleteById(productId);
+    const deletedProduct = await productRepository.deleteById(productId);
+    await cleanupManagedProductImagesBestEffort(
+      isManagedImagePublicPath(deletedProduct.image) ? [deletedProduct.image] : [],
+      'product deletion cleanup',
+    );
     await invalidateStoreListCache();
     await syncNewsFeed(
       [

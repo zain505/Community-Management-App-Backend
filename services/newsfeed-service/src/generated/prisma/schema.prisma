@@ -28,9 +28,21 @@ enum NewsFeedEventType {
   EVENT_MANAGEMENT_CREATED
   EVENT_MANAGEMENT_UPDATED
   EVENT_MANAGEMENT_DELETED
+  USER_POST
   POPULAR_STORE_CHANGED
   MOST_ACTIVE_STORE_CHANGED
   MOST_SEARCHED_STORE_CHANGED
+}
+
+enum NewsFeedSource {
+  SYSTEM
+  USER_POST
+}
+
+enum NewsFeedApprovalStatus {
+  PENDING
+  APPROVED
+  DISAPPROVED
 }
 
 enum NewsFeedMetric {
@@ -40,21 +52,28 @@ enum NewsFeedMetric {
 }
 
 model NewsFeedItem {
-  id          String            @id @default(cuid())
-  type        NewsFeedEventType
-  title       String
-  description String            @db.Text
-  storeId     Int?
-  storeName   String?
-  metadata    Json?
-  createdAt   DateTime          @default(now())
-  likes       NewsFeedLike[]
-  saves       NewsFeedSave[]
+  id             String                 @id @default(cuid())
+  type           NewsFeedEventType
+  source         NewsFeedSource         @default(SYSTEM)
+  approvalStatus NewsFeedApprovalStatus @default(APPROVED)
+  title          String
+  description    String                 @db.Text
+  image          String?                @db.LongText
+  authorUserId   String?
+  storeId        Int?
+  storeName      String?
+  metadata       Json?
+  createdAt      DateTime               @default(now())
+  likes          NewsFeedLike[]
+  saves          NewsFeedSave[]
 
   @@index([storeId])
+  @@index([authorUserId])
   @@index([createdAt])
   @@index([createdAt, id])
   @@index([type])
+  @@index([approvalStatus])
+  @@index([source, approvalStatus, createdAt, id])
 }
 
 model NewsFeedLike {
