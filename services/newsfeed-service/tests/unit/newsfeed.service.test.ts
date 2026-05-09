@@ -88,6 +88,7 @@ describe('newsfeed service', () => {
       ],
       page: 1,
       limit: 10,
+      hasMore: false,
     });
 
     const feed = await newsFeedService.listNewsFeed(1, 10);
@@ -105,27 +106,31 @@ describe('newsfeed service', () => {
       ],
       page: 1,
       limit: 10,
+      hasMore: false,
     });
     expect(mockedNewsFeedRepository.listEntries).not.toHaveBeenCalled();
     expect(mockedNewsFeedCache.writeNewsFeedListCache).not.toHaveBeenCalled();
   });
 
   it('attaches store data for store-only feed items', async () => {
-    mockedNewsFeedRepository.listEntries.mockResolvedValue([
-      {
-        id: 'feed-1',
-        type: 'STORE_CREATED',
-        title: 'A new store opened in your neighborhood.',
-        description: 'Check out Fresh Mart.',
-        storeId: 7,
-        storeName: 'Fresh Mart',
-        metadata: null,
-        _count: {
-          likes: 0,
+    mockedNewsFeedRepository.listEntries.mockResolvedValue({
+      items: [
+        {
+          id: 'feed-1',
+          type: 'STORE_CREATED',
+          title: 'A new store opened in your neighborhood.',
+          description: 'Check out Fresh Mart.',
+          storeId: 7,
+          storeName: 'Fresh Mart',
+          metadata: null,
+          _count: {
+            likes: 0,
+          },
+          createdAt: new Date('2026-03-14T08:00:00.000Z'),
         },
-        createdAt: new Date('2026-03-14T08:00:00.000Z'),
-      },
-    ] as never);
+      ],
+      hasMore: false,
+    } as never);
     mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
       {
         id: 7,
@@ -206,29 +211,32 @@ describe('newsfeed service', () => {
   });
 
   it('attaches both store and product data for product feed items', async () => {
-    mockedNewsFeedRepository.listEntries.mockResolvedValue([
-      {
-        id: 'feed-2',
-        type: 'PRODUCT_UPDATED',
-        title: 'Fresh Mart updated a product.',
-        description: "See what's new with Orange Juice.",
-        storeId: 7,
-        storeName: 'Fresh Mart',
-        metadata: {
-          current: {
-            id: 'prod-1',
-            name: 'Orange Juice',
-            price: '550',
-            image: 'https://example.com/orange-juice.png',
-            tag: 'Fresh',
+    mockedNewsFeedRepository.listEntries.mockResolvedValue({
+      items: [
+        {
+          id: 'feed-2',
+          type: 'PRODUCT_UPDATED',
+          title: 'Fresh Mart updated a product.',
+          description: "See what's new with Orange Juice.",
+          storeId: 7,
+          storeName: 'Fresh Mart',
+          metadata: {
+            current: {
+              id: 'prod-1',
+              name: 'Orange Juice',
+              price: '550',
+              image: 'https://example.com/orange-juice.png',
+              tag: 'Fresh',
+            },
           },
+          _count: {
+            likes: 1,
+          },
+          createdAt: new Date('2026-03-14T08:00:00.000Z'),
         },
-        _count: {
-          likes: 1,
-        },
-        createdAt: new Date('2026-03-14T08:00:00.000Z'),
-      },
-    ] as never);
+      ],
+      hasMore: false,
+    } as never);
     mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
       {
         id: 7,
@@ -318,30 +326,33 @@ describe('newsfeed service', () => {
   it('preserves inline image payloads in the newsfeed response', async () => {
     const inlineImage = `data:image/png;base64,${'A'.repeat(2048)}`;
 
-    mockedNewsFeedRepository.listEntries.mockResolvedValue([
-      {
-        id: 'feed-inline-images',
-        type: 'PRODUCT_UPDATED',
-        title: 'Fresh Mart updated a product.',
-        description: 'Orange Juice image was refreshed.',
-        storeId: 7,
-        storeName: 'Fresh Mart',
-        metadata: {
-          current: {
-            id: 'prod-1',
-            name: 'Orange Juice',
-            price: '550',
-            image: inlineImage,
-            tag: 'Fresh',
+    mockedNewsFeedRepository.listEntries.mockResolvedValue({
+      items: [
+        {
+          id: 'feed-inline-images',
+          type: 'PRODUCT_UPDATED',
+          title: 'Fresh Mart updated a product.',
+          description: 'Orange Juice image was refreshed.',
+          storeId: 7,
+          storeName: 'Fresh Mart',
+          metadata: {
+            current: {
+              id: 'prod-1',
+              name: 'Orange Juice',
+              price: '550',
+              image: inlineImage,
+              tag: 'Fresh',
+            },
+            previousImage: inlineImage,
           },
-          previousImage: inlineImage,
+          _count: {
+            likes: 1,
+          },
+          createdAt: new Date('2026-03-14T08:00:00.000Z'),
         },
-        _count: {
-          likes: 1,
-        },
-        createdAt: new Date('2026-03-14T08:00:00.000Z'),
-      },
-    ] as never);
+      ],
+      hasMore: false,
+    } as never);
     mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
       {
         id: 7,

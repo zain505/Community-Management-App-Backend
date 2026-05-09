@@ -388,11 +388,15 @@ export const newsFeedService = {
       return cachedFeed;
     }
 
-    const items = await newsFeedRepository.listEntries(pagination.page, pagination.limit);
+    const { items, hasMore } = await newsFeedRepository.listEntries(
+      pagination.page,
+      pagination.limit,
+    );
     const payload = {
       items: await enrichNewsFeedItems(items),
       page: pagination.page,
       limit: pagination.limit,
+      hasMore,
     } satisfies NewsFeedListResponse;
 
     await writeNewsFeedListCache(pagination.page, pagination.limit, payload);

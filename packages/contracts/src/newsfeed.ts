@@ -74,6 +74,7 @@ export interface NewsFeedListResponse {
   items: NewsFeedItem[];
   page: number;
   limit: number;
+  hasMore: boolean;
 }
 
 export interface SavedNewsFeedListResponse {

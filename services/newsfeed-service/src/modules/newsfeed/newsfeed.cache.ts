@@ -6,7 +6,7 @@ const NEWSFEED_LIST_CACHE_VERSION_KEY = 'newsfeed:list:version';
 
 async function buildNewsFeedListCacheKey(page: number, limit: number): Promise<string> {
   const version = await getCacheVersion(NEWSFEED_LIST_CACHE_VERSION_KEY);
-  return `newsfeed:list:v1:${version}:page=${page}:limit=${limit}`;
+  return `newsfeed:list:v2:${version}:page=${page}:limit=${limit}`;
 }
 
 export async function readNewsFeedListCache(

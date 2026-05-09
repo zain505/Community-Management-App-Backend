@@ -54,6 +54,11 @@ export interface NewsFeedLikeSummaryRecord {
   likesCount: number;
 }
 
+export interface NewsFeedListRecords {
+  items: NewsFeedItemRecord[];
+  hasMore: boolean;
+}
+
 interface CreateNewsFeedRecordInput {
   type: NewsFeedEventType;
   title: string;
@@ -78,7 +83,7 @@ export const newsFeedRepository = {
     });
   },
 
-  async listEntries(page: number, limit: number): Promise<NewsFeedItemRecord[]> {
+  async listEntries(page: number, limit: number): Promise<NewsFeedListRecords> {
     const entryIds = await prisma.newsFeedItem.findMany({
       orderBy: [
         {
@@ -89,17 +94,22 @@ export const newsFeedRepository = {
         },
       ],
       skip: (page - 1) * limit,
-      take: limit,
+      take: limit + 1,
       select: {
         id: true,
       },
     });
 
-    if (entryIds.length === 0) {
-      return [];
+    const hasMore = entryIds.length > limit;
+    const orderedIds = entryIds.slice(0, limit).map((entry) => entry.id);
+
+    if (orderedIds.length === 0) {
+      return {
+        items: [],
+        hasMore,
+      };
     }
 
-    const orderedIds = entryIds.map((entry) => entry.id);
     const items = await prisma.newsFeedItem.findMany({
       where: {
         id: {
@@ -110,9 +120,12 @@ export const newsFeedRepository = {
     });
     const itemById = new Map(items.map((item) => [item.id, item]));
 
-    return orderedIds
-      .map((id) => itemById.get(id))
-      .filter((item): item is NewsFeedItemRecord => item !== undefined);
+    return {
+      items: orderedIds
+        .map((id) => itemById.get(id))
+        .filter((item): item is NewsFeedItemRecord => item !== undefined),
+      hasMore,
+    };
   },
 
   deleteExpiredSavedEntries(now: Date): Promise<number> {
