@@ -105,6 +105,11 @@ export interface SavedNewsFeedListResponse {
   limit: number;
 }
 
+export interface NewsFeedDeleteResponse {
+  id: string;
+  message: string;
+}
+
 export interface NewsFeedListQuery {
   page?: number;
   limit?: number;

@@ -52,8 +52,10 @@ const storeImageBase64 = `data:image/png;base64,${Buffer.from([
 const updatedStoreImageBase64 = `data:image/png;base64,${Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01,
 ]).toString('base64')}`;
+const publicBaseUrl = process.env.PUBLIC_BASE_URL ?? 'https://public.example.test';
 const storeImageUrl = '/uploads/store-images/store-image.png';
 const updatedStoreImageUrl = '/uploads/store-images/store-image-updated.png';
+const absoluteStoreImageUrl = `${publicBaseUrl}${storeImageUrl}`;
 
 async function removeUploadsDirectory(): Promise<void> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -222,6 +224,7 @@ describe('store service', () => {
         id: 18,
         name: 'Fresh Mart2',
         active: true,
+        image: absoluteStoreImageUrl,
         openingTime: '09:00',
         closingTime: '22:00',
         phoneNumber: '03001234567',
@@ -268,6 +271,7 @@ describe('store service', () => {
       expect.objectContaining({
         id: 18,
         name: 'Fresh Mart2',
+        image: absoluteStoreImageUrl,
       }),
     ]);
     expect(mockedStoreRepository.listStores).not.toHaveBeenCalled();
@@ -348,7 +352,7 @@ describe('store service', () => {
     } as never);
     mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
 
-    await storeService.createMyStore('user-123', {
+    const store = await storeService.createMyStore('user-123', {
       name: 'Fresh Mart2',
       location: 'Main Road',
       image: storeImageBase64,
@@ -372,6 +376,7 @@ describe('store service', () => {
       ],
       refreshMetrics: undefined,
     });
+    expect(store.image).toBe(absoluteStoreImageUrl);
     expect(mockedStoreCache.invalidateStoreListCache).toHaveBeenCalled();
     expect(mockedStoreRepository.createForUser).toHaveBeenCalledWith('user-123', {
       name: 'Fresh Mart2',
@@ -410,6 +415,7 @@ describe('store service', () => {
     const store = await storeService.updateStoreActivation('admin-123', 18, false);
 
     expect(store.active).toBe(false);
+    expect(store.image).toBe(absoluteStoreImageUrl);
     expect(mockedStoreRepository.updateActiveStatusById).toHaveBeenCalledWith(18, false);
     expect(mockedNewsFeedClient.syncBestEffort).not.toHaveBeenCalled();
   });

@@ -1,8 +1,10 @@
 jest.mock('../../src/modules/newsfeed/newsfeed.service', () => ({
   newsFeedService: {
     createNewsFeedPost: jest.fn(),
+    listMyNewsFeedPosts: jest.fn(),
     listUserSubmittedNewsFeed: jest.fn(),
     reviewNewsFeedPost: jest.fn(),
+    deleteMyNewsFeedPost: jest.fn(),
     listNewsFeed: jest.fn(),
     listSavedNewsFeed: jest.fn(),
     saveNewsFeed: jest.fn(),
@@ -62,6 +64,36 @@ describe('user newsfeed routes', () => {
     });
   });
 
+  it('lists the logged-in user posts across approval states', async () => {
+    mockedNewsFeedService.listMyNewsFeedPosts.mockResolvedValue({
+      items: [
+        {
+          id: 'feed-user-1',
+          type: 'USER_POST',
+          source: 'USER_POST',
+          approvalStatus: 'DISAPPROVED',
+          title: 'Water outage notice',
+          description: 'There will be a short outage tomorrow morning.',
+          authorUserId: 'user-123',
+          likesCount: 0,
+          createdAt: '2026-03-19T12:00:00.000Z',
+        },
+      ],
+      page: 1,
+      limit: 20,
+      hasMore: false,
+    } as never);
+
+    const response = await request(app)
+      .get('/v1/newsfeed/mine')
+      .set('Authorization', `Bearer ${getAccessToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.items).toHaveLength(1);
+    expect(mockedNewsFeedService.listMyNewsFeedPosts).toHaveBeenCalledWith('user-123', 1, 20);
+  });
+
   it('lists pending user-submitted posts for admins', async () => {
     mockedNewsFeedService.listUserSubmittedNewsFeed.mockResolvedValue({
       items: [],
@@ -112,6 +144,28 @@ describe('user newsfeed routes', () => {
       'admin-123',
       'feed-user-1',
       'APPROVED',
+    );
+  });
+
+  it('deletes a user-owned newsfeed post', async () => {
+    mockedNewsFeedService.deleteMyNewsFeedPost.mockResolvedValue({
+      id: 'feed-user-1',
+      message: 'Newsfeed post deleted',
+    } as never);
+
+    const response = await request(app)
+      .delete('/v1/newsfeed/feed-user-1')
+      .set('Authorization', `Bearer ${getAccessToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toEqual({
+      id: 'feed-user-1',
+      message: 'Newsfeed post deleted',
+    });
+    expect(mockedNewsFeedService.deleteMyNewsFeedPost).toHaveBeenCalledWith(
+      'user-123',
+      'feed-user-1',
     );
   });
 });

@@ -15,6 +15,7 @@ const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:5173',
 ].join(',');
+const DEFAULT_PUBLIC_BASE_URL = 'https://hzhtechco.site';
 const DEFAULT_AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:4100';
 const DEFAULT_STORE_SERVICE_BASE_URL = 'http://127.0.0.1:4200';
 const DEFAULT_REDIS_URL = 'redis://127.0.0.1:6379';
@@ -46,6 +47,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   CORS_ORIGINS: z.string().default(DEFAULT_CORS_ORIGINS),
+  PUBLIC_BASE_URL: z.string().url().default(DEFAULT_PUBLIC_BASE_URL),
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),

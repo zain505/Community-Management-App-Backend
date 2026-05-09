@@ -98,6 +98,7 @@ interface CreateUserNewsFeedPostInput {
 
 interface ListEntryFilters {
   approvalStatus?: NewsFeedApprovalStatus;
+  authorUserId?: string;
   source?: NewsFeedSource;
 }
 
@@ -112,6 +113,10 @@ function buildListEntryWhere(filters: ListEntryFilters = {}): Prisma.NewsFeedIte
 
   if (filters.source !== undefined) {
     where.source = filters.source;
+  }
+
+  if (filters.authorUserId !== undefined) {
+    where.authorUserId = filters.authorUserId;
   }
 
   if (filters.approvalStatus !== undefined) {
@@ -224,6 +229,17 @@ export const newsFeedRepository = {
     );
   },
 
+  listUserPostsByAuthor(authorUserId: string, page: number, limit: number): Promise<NewsFeedListRecords> {
+    return listEntriesWithWhere(
+      buildListEntryWhere({
+        source: 'USER_POST',
+        authorUserId,
+      }),
+      page,
+      limit,
+    );
+  },
+
   async deleteEntriesOlderThan(cutoff: Date): Promise<DeletedNewsFeedItemRecord[]> {
     return prisma.$transaction(async (transaction) => {
       const items = await transaction.newsFeedItem.findMany({
@@ -248,6 +264,34 @@ export const newsFeedRepository = {
       });
 
       return items;
+    });
+  },
+
+  async deleteUserPostByAuthor(
+    newsFeedItemId: string,
+    authorUserId: string,
+  ): Promise<DeletedNewsFeedItemRecord | null> {
+    return prisma.$transaction(async (transaction) => {
+      const item = await transaction.newsFeedItem.findFirst({
+        where: {
+          id: newsFeedItemId,
+          source: 'USER_POST',
+          authorUserId,
+        },
+        select: deletedNewsFeedItemSelect,
+      });
+
+      if (!item) {
+        return null;
+      }
+
+      await transaction.newsFeedItem.delete({
+        where: {
+          id: item.id,
+        },
+      });
+
+      return item;
     });
   },
 

@@ -1,6 +1,7 @@
 import type {
   CreateNewsFeedPostRequest,
   NewsFeedAdminListQuery,
+  NewsFeedDeleteResponse,
   NewsFeedListQuery,
   NewsFeedSyncRequest,
   ReviewNewsFeedPostRequest,
@@ -42,6 +43,16 @@ export async function createNewsFeedPost(req: Request, res: Response): Promise<v
   sendSuccess(res, StatusCodes.CREATED, post);
 }
 
+export async function listMyNewsFeedPosts(req: Request, res: Response): Promise<void> {
+  const query = req.query as NewsFeedListQuery;
+  const posts = await newsFeedService.listMyNewsFeedPosts(
+    getAuthenticatedUserId(req),
+    query.page,
+    query.limit,
+  );
+  sendSuccess(res, StatusCodes.OK, posts);
+}
+
 export async function saveNewsFeed(req: Request, res: Response): Promise<void> {
   const savedFeed = await newsFeedService.saveNewsFeed(getAuthenticatedUserId(req), getNewsFeedId(req));
   sendSuccess(res, StatusCodes.OK, savedFeed);
@@ -76,6 +87,14 @@ export async function reviewNewsFeedPost(req: Request, res: Response): Promise<v
     (req.body as ReviewNewsFeedPostRequest).status,
   );
   sendSuccess(res, StatusCodes.OK, post);
+}
+
+export async function deleteMyNewsFeedPost(req: Request, res: Response): Promise<void> {
+  const result = await newsFeedService.deleteMyNewsFeedPost(
+    getAuthenticatedUserId(req),
+    getNewsFeedId(req),
+  );
+  sendSuccess(res, StatusCodes.OK, result satisfies NewsFeedDeleteResponse);
 }
 
 export async function syncNewsFeed(req: Request, res: Response): Promise<void> {

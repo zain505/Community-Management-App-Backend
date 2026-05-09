@@ -2,6 +2,7 @@ import type {
   CreateNewsFeedPostRequest,
   ManagedUserStatus,
   NewsFeedApprovalStatus,
+  NewsFeedDeleteResponse,
   NewsFeedItem,
   NewsFeedLikeResponse,
   NewsFeedListResponse,
@@ -27,6 +28,7 @@ import {
   persistBase64Image,
   resolveNewsFeedImagePublicPath,
 } from '../../shared/image-storage';
+import { toPublicAssetUrl } from '../../shared/public-asset-url';
 import {
   invalidateNewsFeedListCache,
   readNewsFeedListCache,
@@ -66,7 +68,7 @@ function parseRatingValue(rating: string): number {
 }
 
 function sanitizeImageValue(value: string): string {
-  return value;
+  return toPublicAssetUrl(value);
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -238,6 +240,39 @@ function sanitizeUserPublic(user: UserPublic): UserPublic {
       ...user.profile,
       image: typeof profileImage === 'string' ? sanitizeImageValue(profileImage) : profileImage,
     },
+  };
+}
+
+function sanitizeStoreSummaryValue(store: StoreSummary): StoreSummary {
+  return {
+    ...store,
+    image: sanitizeImageValue(store.image),
+  };
+}
+
+function sanitizeProductSnapshotValue(product: NewsFeedProductSnapshot): NewsFeedProductSnapshot {
+  return {
+    ...product,
+    image: sanitizeImageValue(product.image),
+  };
+}
+
+function sanitizeNewsFeedItemValue(item: NewsFeedItem): NewsFeedItem {
+  return {
+    ...item,
+    image: item.image ? sanitizeImageValue(item.image) : undefined,
+    author: item.author ? sanitizeUserPublic(item.author) : undefined,
+    store: item.store ? sanitizeStoreSummaryValue(item.store) : undefined,
+    storeOwner: item.storeOwner ? sanitizeUserPublic(item.storeOwner) : undefined,
+    product: item.product ? sanitizeProductSnapshotValue(item.product) : undefined,
+    metadata: item.metadata ? (sanitizeMetadataValue(item.metadata) as Record<string, unknown>) : undefined,
+  };
+}
+
+function sanitizeNewsFeedListResponse(feed: NewsFeedListResponse): NewsFeedListResponse {
+  return {
+    ...feed,
+    items: feed.items.map(sanitizeNewsFeedItemValue),
   };
 }
 
@@ -664,7 +699,7 @@ export const newsFeedService = {
     const cachedFeed = await readNewsFeedListCache(pagination.page, pagination.limit);
 
     if (cachedFeed) {
-      return cachedFeed;
+      return sanitizeNewsFeedListResponse(cachedFeed);
     }
 
     const { items, hasMore } = await newsFeedRepository.listEntries(
@@ -710,6 +745,28 @@ export const newsFeedService = {
     }
   },
 
+  async listMyNewsFeedPosts(
+    userId: string,
+    page = 1,
+    limit = DEFAULT_NEWSFEED_LIMIT,
+  ): Promise<NewsFeedListResponse> {
+    await cleanupExpiredNewsFeedEntries();
+
+    const pagination = normalizePagination(page, limit);
+    const { items, hasMore } = await newsFeedRepository.listUserPostsByAuthor(
+      userId,
+      pagination.page,
+      pagination.limit,
+    );
+
+    return {
+      items: await enrichNewsFeedItems(items),
+      page: pagination.page,
+      limit: pagination.limit,
+      hasMore,
+    };
+  },
+
   async listUserSubmittedNewsFeed(
     requesterId: string,
     page = 1,
@@ -752,6 +809,27 @@ export const newsFeedService = {
 
     const enrichmentData = await buildNewsFeedEnrichmentData([updatedPost]);
     return enrichNewsFeedItem(updatedPost, enrichmentData);
+  },
+
+  async deleteMyNewsFeedPost(userId: string, newsFeedId: string): Promise<NewsFeedDeleteResponse> {
+    await cleanupExpiredNewsFeedEntries();
+
+    const deletedPost = await newsFeedRepository.deleteUserPostByAuthor(newsFeedId, userId);
+
+    if (!deletedPost) {
+      throwNewsFeedNotFound();
+    }
+
+    await cleanupManagedNewsFeedImagesBestEffort(
+      collectManagedImageUrlsFromDeletedEntry(deletedPost),
+      'user newsfeed delete',
+    );
+    await invalidateNewsFeedListCache();
+
+    return {
+      id: deletedPost.id,
+      message: 'Newsfeed post deleted',
+    };
   },
 
   async saveNewsFeed(userId: string, newsFeedId: string): Promise<SavedNewsFeedItem> {

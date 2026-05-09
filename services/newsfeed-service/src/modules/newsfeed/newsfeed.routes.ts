@@ -4,7 +4,9 @@ import { asyncHandler } from '../../shared/async-handler';
 import { validate } from '../../middleware/validate';
 import {
   createNewsFeedPost,
+  deleteMyNewsFeedPost,
   likeNewsFeed,
+  listMyNewsFeedPosts,
   listNewsFeed,
   listSavedNewsFeed,
   listUserSubmittedNewsFeed,
@@ -31,6 +33,7 @@ newsFeedRouter.post(
   validate({ body: createNewsFeedPostBodySchema }),
   asyncHandler(createNewsFeedPost),
 );
+newsFeedRouter.get('/mine', requireAuth, validate({ query: listNewsFeedQuerySchema }), asyncHandler(listMyNewsFeedPosts));
 newsFeedRouter.get(
   '/submissions',
   requireAuth,
@@ -46,6 +49,7 @@ newsFeedRouter.patch(
   validate({ params: newsFeedIdParamSchema, body: reviewNewsFeedPostBodySchema }),
   asyncHandler(reviewNewsFeedPost),
 );
+newsFeedRouter.delete('/:id', requireAuth, validate({ params: newsFeedIdParamSchema }), asyncHandler(deleteMyNewsFeedPost));
 internalNewsFeedRouter.post('/sync', validate({ body: newsFeedSyncBodySchema }), asyncHandler(syncNewsFeed));
 
 export { internalNewsFeedRouter, newsFeedRouter };

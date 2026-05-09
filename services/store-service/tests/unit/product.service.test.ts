@@ -41,11 +41,14 @@ const uploadsRoot = path.resolve(__dirname, '../../uploads');
 const productImageBase64 = `data:image/png;base64,${Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
 ]).toString('base64')}`;
+const publicBaseUrl = process.env.PUBLIC_BASE_URL ?? 'https://public.example.test';
 const productImageUrl = '/uploads/product-images/product-image.png';
 const updatedProductImageBase64 = `data:image/png;base64,${Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01,
 ]).toString('base64')}`;
 const updatedProductImageUrl = '/uploads/product-images/product-image-updated.png';
+const absoluteProductImageUrl = `${publicBaseUrl}${productImageUrl}`;
+const absoluteUpdatedProductImageUrl = `${publicBaseUrl}${updatedProductImageUrl}`;
 
 async function removeUploadsDirectory(): Promise<void> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -137,7 +140,7 @@ describe('product service', () => {
     );
     mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
 
-    await productService.createMyProduct('user-123', {
+    const product = await productService.createMyProduct('user-123', {
       name: 'Chocolate Cake',
       price: '900',
       image: productImageBase64,
@@ -174,6 +177,7 @@ describe('product service', () => {
       ],
       refreshMetrics: ['MOST_ACTIVE_STORE'],
     });
+    expect(product.image).toBe(absoluteProductImageUrl);
     expect(mockedInvalidateStoreListCache).toHaveBeenCalled();
   });
 
@@ -187,7 +191,7 @@ describe('product service', () => {
     );
     mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
 
-    await productService.updateMyProduct('user-123', 'prod-1', {
+    const product = await productService.updateMyProduct('user-123', 'prod-1', {
       image: updatedProductImageBase64,
     });
 
@@ -227,6 +231,7 @@ describe('product service', () => {
       ],
       refreshMetrics: ['MOST_ACTIVE_STORE'],
     });
+    expect(product.image).toBe(absoluteUpdatedProductImageUrl);
   });
 
   it('publishes a product-updated event when updating a product', async () => {

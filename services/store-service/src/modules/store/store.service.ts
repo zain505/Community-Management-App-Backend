@@ -25,6 +25,7 @@ import {
   isManagedImagePublicPath,
   persistBase64Image,
 } from '../../shared/image-storage';
+import { toPublicAssetUrl } from '../../shared/public-asset-url';
 import {
   invalidateStoreListCache,
   readStoreListCache,
@@ -52,7 +53,7 @@ function toStoreProduct(product: StoreWithProductsRecord['products'][number]): S
     id: product.id,
     name: product.name,
     price: product.price,
-    image: product.image,
+    image: toPublicAssetUrl(product.image),
     tag: product.tag ?? undefined,
     description: product.description ?? undefined,
   };
@@ -88,7 +89,7 @@ function toStoreSummary(store: {
     active: store.active,
     location: store.location,
     rating: store.rating,
-    image: store.image,
+    image: toPublicAssetUrl(store.image),
     badges: parseStoreBadges(store.badges),
     delivery: store.delivery,
     minOrderRs: store.minOrderRs,
@@ -96,6 +97,13 @@ function toStoreSummary(store: {
     closingTime: store.closingTime,
     phoneNumber: store.phoneNumber,
     reviews: store.ratings?.map(toStoreReview),
+  };
+}
+
+function sanitizeStoreSummary(store: StoreSummary): StoreSummary {
+  return {
+    ...store,
+    image: toPublicAssetUrl(store.image),
   };
 }
 
@@ -460,7 +468,7 @@ export const storeService = {
       const cachedStores = await readStoreListCache(search, page);
 
       if (cachedStores) {
-        return cachedStores;
+        return cachedStores.map(sanitizeStoreSummary);
       }
     }
 

@@ -15,6 +15,7 @@ import {
   isManagedImagePublicPath,
   persistBase64Image,
 } from '../../shared/image-storage';
+import { toPublicAssetUrl } from '../../shared/public-asset-url';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
 import { invalidateStoreListCache } from '../store/store.cache';
 import {
@@ -30,7 +31,7 @@ function toProduct(product: ProductRecord): Product {
     id: product.id,
     name: product.name,
     price: product.price,
-    image: product.image,
+    image: toPublicAssetUrl(product.image),
     tag: product.tag ?? undefined,
     description: product.description ?? undefined,
   };

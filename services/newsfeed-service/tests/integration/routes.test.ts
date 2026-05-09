@@ -80,6 +80,14 @@ describe('routes', () => {
     expect(response.body.code).toBe('UNAUTHORIZED');
   });
 
+  it('requires auth to list the logged-in user newsfeed posts', async () => {
+    const response = await request(app).get('/v1/newsfeed/mine');
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+  });
+
   it('requires auth to list submitted user newsfeed posts', async () => {
     const response = await request(app).get('/v1/newsfeed/submissions');
 
@@ -92,6 +100,14 @@ describe('routes', () => {
     const response = await request(app).patch('/v1/newsfeed/feed-user-1/approval').send({
       status: 'APPROVED',
     });
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+  });
+
+  it('requires auth to delete a user newsfeed post', async () => {
+    const response = await request(app).delete('/v1/newsfeed/feed-user-1');
 
     expect(response.status).toBe(401);
     expect(response.body.success).toBe(false);
