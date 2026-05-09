@@ -28,19 +28,19 @@ describe('auth schemas', () => {
 
   it('accepts the seeded super admin login password', () => {
     const value = loginBodySchema.parse({
-      mobileNumber: '03074029959',
-      password: 'root',
+      mobileNumber: '+923074029959',
+      password: 'root123',
       usertype: 0,
     });
 
-    expect(value.password).toBe('root');
+    expect(value.password).toBe('root123');
     expect(value.usertype).toBe(0);
   });
 
   it('accepts a valid local mobile phone number', () => {
     const value = loginBodySchema.parse({
       mobileNumber: '03074029959',
-      password: 'root',
+      password: 'root123',
       usertype: 0,
     });
 

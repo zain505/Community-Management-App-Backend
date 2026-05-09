@@ -4,21 +4,27 @@ import { hashPassword, verifyPassword } from '../src/lib/password';
 
 const prisma = new PrismaClient();
 const defaultSuperAdmin = {
-  mobileNumber: '03074029959',
+  mobileNumber: '+923074029959',
   name: 'Super Admin',
   usertype: 0,
   isActive: true,
-  password: 'root',
+  password: 'root123',
 } as const;
-const legacyDefaultMobileNumbers = ['+923000000000'] as const;
-const legacyDefaultPassword = 'AdminPass123!';
+const legacyDefaultMobileNumbers = ['03074029959', '+923000000000'] as const;
+const legacyDefaultPasswords = ['root', 'AdminPass123!'] as const;
 
 async function shouldResetDefaultPassword(passwordHash: string): Promise<boolean> {
   if (await verifyPassword(defaultSuperAdmin.password, passwordHash)) {
     return false;
   }
 
-  return verifyPassword(legacyDefaultPassword, passwordHash);
+  for (const password of legacyDefaultPasswords) {
+    if (await verifyPassword(password, passwordHash)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function main(): Promise<void> {
