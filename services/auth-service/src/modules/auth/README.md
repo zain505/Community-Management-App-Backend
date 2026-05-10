@@ -6,6 +6,7 @@
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `POST /auth/logout`
+- `PATCH /auth/users/:id/name`
 - `PATCH /auth/users/:id/image`
 
 ## Request body rules
@@ -35,6 +36,12 @@
 - JSON body with an `image` field containing a base64-encoded image string
 - Allowed file types: `image/jpeg`, `image/png`
 - Maximum file size: `5 MB`
+
+### Update user name
+
+- Requires bearer access token
+- Users can only update their own name
+- JSON body with a `name` field from 2 to 80 trimmed characters
 
 ## Behavior summary
 

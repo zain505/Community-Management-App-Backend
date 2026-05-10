@@ -14,6 +14,7 @@ import {
   register,
   updateUserActivation,
   updateUserImage,
+  updateUserName,
 } from './auth.controller';
 import {
   loginBodySchema,
@@ -22,6 +23,7 @@ import {
   registerBodySchema,
   updateUserActivationBodySchema,
   updateUserImageBodySchema,
+  updateUserNameBodySchema,
   userIdParamSchema,
   userIdsQuerySchema,
 } from './auth.schemas';
@@ -45,6 +47,12 @@ authRouter.patch(
   requireAuth,
   validate({ params: userIdParamSchema, body: updateUserActivationBodySchema }),
   asyncHandler(updateUserActivation),
+);
+authRouter.patch(
+  '/users/:id/name',
+  requireAuth,
+  validate({ params: userIdParamSchema, body: updateUserNameBodySchema }),
+  asyncHandler(updateUserName),
 );
 authRouter.patch(
   '/users/:id/image',

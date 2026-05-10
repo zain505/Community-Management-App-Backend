@@ -65,7 +65,7 @@ describe('product routes', () => {
       id: 'prod-1',
       name: 'Orange Juice',
       price: '500',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: '/uploads/product-images/product-image.png',
       tag: 'Fresh',
       description: 'Freshly squeezed orange juice.',
     });
@@ -83,6 +83,7 @@ describe('product routes', () => {
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
+    expect(response.body.data.image).toBe('/uploads/product-images/product-image.png');
     expect(mockedProductService.createMyProduct).toHaveBeenCalledWith('user_123', {
       name: 'Orange Juice',
       price: '500',

@@ -57,6 +57,7 @@ describe('user newsfeed routes', () => {
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.data.id).toBe('feed-user-1');
+    expect(response.body.data.image).toBe('/uploads/newsfeed-images/post-image.png');
     expect(mockedNewsFeedService.createNewsFeedPost).toHaveBeenCalledWith('user-123', {
       title: 'Water outage notice',
       description: 'There will be a short outage tomorrow morning.',

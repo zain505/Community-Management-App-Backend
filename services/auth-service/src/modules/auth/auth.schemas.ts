@@ -7,12 +7,13 @@ const mobileNumberSchema = z
     /^(?:\+?[1-9]\d{7,14}|03\d{9})$/,
     'Mobile phone number must be in international format or local format like 03074029959',
   );
+const nameSchema = z.string().trim().min(2).max(80);
 const reservedAdminNamePattern = /\b(?:super\s+admin|admin)\b/i;
 const userTypeSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const isActiveSchema = z.union([z.boolean(), z.literal(0), z.literal(1)]).transform((value) => value === true || value === 1);
 
 export const registerBodySchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: nameSchema,
   mobileNumber: mobileNumberSchema,
   password: z.string().min(8).max(128),
   usertype: userTypeSchema.default(2),
@@ -48,6 +49,10 @@ export const updateUserImageBodySchema = z.object({
 
 export const updateUserActivationBodySchema = z.object({
   isActive: isActiveSchema,
+});
+
+export const updateUserNameBodySchema = z.object({
+  name: nameSchema,
 });
 
 export const userIdParamSchema = z.object({

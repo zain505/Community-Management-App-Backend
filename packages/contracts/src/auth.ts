@@ -11,6 +11,10 @@ export interface UpdateUserActivationRequest {
   isActive: boolean;
 }
 
+export interface UpdateUserNameRequest {
+  name: string;
+}
+
 export interface LoginRequest {
   mobileNumber: string;
   password: string;

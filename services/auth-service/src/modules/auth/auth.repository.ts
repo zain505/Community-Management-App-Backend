@@ -50,6 +50,13 @@ export const authRepository = {
     });
   },
 
+  updateUserName(id: string, name: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { name },
+    });
+  },
+
   updateUserActiveStatus(id: string, isActive: boolean): Promise<User> {
     return prisma.user.update({
       where: { id },

@@ -5,6 +5,7 @@ jest.mock('../../src/modules/auth/auth.repository', () => ({
     findAllUsers: jest.fn(),
     createUser: jest.fn(),
     updateUserActiveStatus: jest.fn(),
+    updateUserName: jest.fn(),
     updateUserProfile: jest.fn(),
     createRefreshToken: jest.fn(),
     findRefreshTokenByHash: jest.fn(),
@@ -243,6 +244,89 @@ describe('auth service', () => {
       id: 'user-456',
       isActive: false,
     });
+  });
+
+  it('allows a logged-in user to update their own name', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Old Name',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+    mockedAuthRepository.updateUserName.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'New Name',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    const result = await authService.updateUserName({
+      requesterId: 'user-123',
+      userId: 'user-123',
+      name: ' New Name ',
+    });
+
+    expect(mockedAuthRepository.updateUserName).toHaveBeenCalledWith('user-123', 'New Name');
+    expect(result).toMatchObject({
+      id: 'user-123',
+      name: 'New Name',
+    });
+  });
+
+  it('rejects user name updates for another user account', async () => {
+    await expect(
+      authService.updateUserName({
+        requesterId: 'user-123',
+        userId: 'user-456',
+        name: 'New Name',
+      }),
+    ).rejects.toMatchObject({
+      code: 'USER_NAME_FORBIDDEN',
+      statusCode: 403,
+    });
+
+    expect(mockedAuthRepository.findUserById).not.toHaveBeenCalled();
+    expect(mockedAuthRepository.updateUserName).not.toHaveBeenCalled();
+  });
+
+  it('rejects reserved admin words in normal user name updates', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    await expect(
+      authService.updateUserName({
+        requesterId: 'user-123',
+        userId: 'user-123',
+        name: 'Super Admin',
+      }),
+    ).rejects.toMatchObject({
+      code: 'INVALID_USER_NAME',
+      statusCode: 400,
+    });
+
+    expect(mockedAuthRepository.updateUserName).not.toHaveBeenCalled();
   });
 
   it('allows active super admins to list all users', async () => {

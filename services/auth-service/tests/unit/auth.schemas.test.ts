@@ -3,6 +3,7 @@ import {
   registerBodySchema,
   updateUserActivationBodySchema,
   updateUserImageBodySchema,
+  updateUserNameBodySchema,
 } from '../../src/modules/auth/auth.schemas';
 
 describe('auth schemas', () => {
@@ -131,6 +132,22 @@ describe('auth schemas', () => {
   it('rejects invalid activation payloads', () => {
     const result = updateUserActivationBodySchema.safeParse({
       isActive: 'inactive',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts valid user name updates', () => {
+    const result = updateUserNameBodySchema.parse({
+      name: '  Test User  ',
+    });
+
+    expect(result.name).toBe('Test User');
+  });
+
+  it('rejects empty user name updates', () => {
+    const result = updateUserNameBodySchema.safeParse({
+      name: '   ',
     });
 
     expect(result.success).toBe(false);

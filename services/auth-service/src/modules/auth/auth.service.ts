@@ -40,6 +40,7 @@ const defaultUserProfile: UserProfile = {
   image: null,
 };
 const invalidCredentialsMessage = 'Invalid mobile number, password, or user type';
+const reservedAdminNamePattern = /\b(?:super\s+admin|admin)\b/i;
 
 function toUserProfile(profile: Prisma.JsonValue | null | undefined): UserProfile {
   if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
@@ -57,6 +58,10 @@ function toStoredUserProfile(profile: UserProfile): Prisma.InputJsonValue {
   return {
     image: profile.image,
   };
+}
+
+function normalizeNameForPolicyCheck(name: string): string {
+  return name.trim().replace(/\s+/g, ' ');
 }
 
 async function resolveUserImageForResponse(image: string | null): Promise<string | null> {
@@ -202,6 +207,15 @@ async function ensureActiveSuperAdmin(requesterId: string, action: string): Prom
     throw new AppError(`Only active super admins can ${action}`, {
       statusCode: StatusCodes.FORBIDDEN,
       code: 'SUPER_ADMIN_REQUIRED',
+    });
+  }
+}
+
+function assertNameAllowedForUser(name: string, usertype: number): void {
+  if (usertype === 2 && reservedAdminNamePattern.test(normalizeNameForPolicyCheck(name))) {
+    throw new AppError('Normal users cannot use reserved admin words in their name', {
+      statusCode: StatusCodes.BAD_REQUEST,
+      code: 'INVALID_USER_NAME',
     });
   }
 }
@@ -442,6 +456,34 @@ export const authService = {
     }
 
     return toUserStatus(updatedUser);
+  },
+
+  async updateUserName(params: {
+    requesterId: string;
+    userId: string;
+    name: string;
+  }): Promise<UserPublic> {
+    if (params.requesterId !== params.userId) {
+      throw new AppError('You can only update your own name', {
+        statusCode: StatusCodes.FORBIDDEN,
+        code: 'USER_NAME_FORBIDDEN',
+      });
+    }
+
+    const user = await authRepository.findUserById(params.userId);
+
+    if (!user) {
+      throw new AppError('User not found', {
+        statusCode: StatusCodes.NOT_FOUND,
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    assertNameAllowedForUser(params.name, user.usertype);
+
+    const updatedUser = await authRepository.updateUserName(user.id, params.name.trim());
+
+    return await toUserPublic(updatedUser);
   },
 
   async updateUserImage(params: {
