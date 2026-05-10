@@ -17,6 +17,30 @@ interface ProxyRouteConfig {
 
 const proxyRoutes: ProxyRouteConfig[] = [
   {
+    prefix: '/uploads/store-images',
+    targetBaseUrl: env.STORE_SERVICE_URL,
+    unavailableCode: 'STORE_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'Store service is unavailable',
+  },
+  {
+    prefix: '/uploads/product-images',
+    targetBaseUrl: env.STORE_SERVICE_URL,
+    unavailableCode: 'STORE_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'Store service is unavailable',
+  },
+  {
+    prefix: '/uploads/newsfeed-images',
+    targetBaseUrl: env.NEWSFEED_SERVICE_URL,
+    unavailableCode: 'NEWSFEED_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'Newsfeed service is unavailable',
+  },
+  {
+    prefix: '/uploads/user-images',
+    targetBaseUrl: env.AUTH_SERVICE_URL,
+    unavailableCode: 'AUTH_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'Auth service is unavailable',
+  },
+  {
     prefix: '/v1/stores/newsfeed',
     targetBaseUrl: env.NEWSFEED_SERVICE_URL,
     unavailableCode: 'NEWSFEED_SERVICE_UNAVAILABLE',

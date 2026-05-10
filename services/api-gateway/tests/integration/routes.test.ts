@@ -67,6 +67,46 @@ describe('routes', () => {
     expect(response.body.code).toBe('STORE_SERVICE_UNAVAILABLE');
   });
 
+  it('proxies store image uploads to store-service', async () => {
+    const imageBytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]);
+    const mockStoreService: Server = http.createServer((req, res) => {
+      if (req.url === '/uploads/store-images/store-image.jpg') {
+        res.statusCode = 200;
+        res.setHeader('content-type', 'image/jpeg');
+        res.end(imageBytes);
+        return;
+      }
+
+      res.statusCode = 404;
+      res.end();
+    });
+
+    await new Promise<void>((resolve) => {
+      mockStoreService.listen(59999, '127.0.0.1', () => {
+        resolve();
+      });
+    });
+
+    try {
+      const response = await request(app).get('/uploads/store-images/store-image.jpg');
+
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toContain('image/jpeg');
+      expect(response.body).toEqual(imageBytes);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        mockStoreService.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
+
   it('reports app-service unavailability for announcements', async () => {
     const response = await request(app).post('/v1/announcements').send({});
 
