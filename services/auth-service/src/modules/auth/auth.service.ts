@@ -310,7 +310,7 @@ export const authService = {
       usertype: payload.usertype,
       profile: toStoredUserProfile(defaultUserProfile),
       passwordHash: await hashPassword(payload.password),
-      isActive: payload.usertype !== 1,
+      isActive: false,
     });
 
     if (!user.isActive) {

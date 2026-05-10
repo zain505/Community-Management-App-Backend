@@ -126,6 +126,47 @@ describe('auth service', () => {
     expect(mockedAuthRepository.createRefreshToken).not.toHaveBeenCalled();
   });
 
+  it('creates normal user signups as inactive until a super admin activates them', async () => {
+    mockedAuthRepository.findUserByMobileNumber.mockResolvedValue(null);
+    mockedHashPassword.mockResolvedValue('hashed-password');
+    mockedAuthRepository.createUser.mockResolvedValue({
+      id: 'user-456',
+      mobileNumber: '+923009876543',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: false,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    const result = await authService.register({
+      name: 'Community User',
+      mobileNumber: '+923009876543',
+      password: 'StrongPass123',
+      usertype: 2,
+    });
+
+    expect(mockedAuthRepository.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        usertype: 2,
+        isActive: false,
+      }),
+    );
+    expect(result).toMatchObject({
+      requiresActivation: true,
+      user: {
+        id: 'user-456',
+        usertype: 2,
+        isActive: false,
+      },
+    });
+    expect(result.tokens).toBeUndefined();
+    expect(mockedAuthRepository.createRefreshToken).not.toHaveBeenCalled();
+  });
+
   it('returns the managed user image as a base64 data URL on login', async () => {
     const imageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
     const imageFileName = 'user-123-avatar.png';
