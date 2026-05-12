@@ -1,4 +1,6 @@
 import {
+  adminResetUserPasswordBodySchema,
+  changePasswordBodySchema,
   loginBodySchema,
   registerBodySchema,
   updateUserActivationBodySchema,
@@ -143,6 +145,34 @@ describe('auth schemas', () => {
     });
 
     expect(result.name).toBe('Test User');
+  });
+
+  it('accepts a valid change password payload', () => {
+    const result = changePasswordBodySchema.parse({
+      currentPassword: 'root123',
+      newPassword: 'StrongPass123',
+    });
+
+    expect(result.currentPassword).toBe('root123');
+    expect(result.newPassword).toBe('StrongPass123');
+  });
+
+  it('rejects using the same current and new password', () => {
+    const result = changePasswordBodySchema.safeParse({
+      currentPassword: 'StrongPass123',
+      newPassword: 'StrongPass123',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts a valid admin password reset payload', () => {
+    const result = adminResetUserPasswordBodySchema.parse({
+      mobileNumber: '+923001234567',
+      newPassword: 'StrongPass123',
+    });
+
+    expect(result.mobileNumber).toBe('+923001234567');
   });
 
   it('rejects empty user name updates', () => {

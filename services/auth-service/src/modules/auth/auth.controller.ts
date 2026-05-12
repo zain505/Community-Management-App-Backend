@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import type {
+  AdminResetUserPasswordRequest,
+  ChangePasswordRequest,
   LoginRequest,
   LogoutRequest,
   RegisterRequest,
@@ -36,6 +38,24 @@ export async function logout(req: Request, res: Response): Promise<void> {
   });
 }
 
+export async function changePassword(req: Request, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new AppError('Access token is required', {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      code: 'UNAUTHORIZED',
+    });
+  }
+
+  const payload = req.body as ChangePasswordRequest;
+  const result = await authService.changePassword({
+    requesterId: req.user.id,
+    currentPassword: payload.currentPassword,
+    newPassword: payload.newPassword,
+  });
+
+  sendSuccess(res, StatusCodes.OK, result);
+}
+
 export async function getUserStatus(req: Request, res: Response): Promise<void> {
   const user = await authService.getUserStatus((req.params as { id: string }).id);
   sendSuccess(res, StatusCodes.OK, user);
@@ -62,6 +82,24 @@ export async function listAllUsers(req: Request, res: Response): Promise<void> {
 
   const users = await authService.listAllUsers(req.user.id);
   sendSuccess(res, StatusCodes.OK, users);
+}
+
+export async function resetUserPasswordByMobileNumber(req: Request, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new AppError('Access token is required', {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      code: 'UNAUTHORIZED',
+    });
+  }
+
+  const payload = req.body as AdminResetUserPasswordRequest;
+  const result = await authService.resetUserPasswordByMobileNumber({
+    requesterId: req.user.id,
+    mobileNumber: payload.mobileNumber,
+    newPassword: payload.newPassword,
+  });
+
+  sendSuccess(res, StatusCodes.OK, result);
 }
 
 export async function updateUserActivation(req: Request, res: Response): Promise<void> {

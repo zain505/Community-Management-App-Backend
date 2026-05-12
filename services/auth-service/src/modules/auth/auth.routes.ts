@@ -4,6 +4,7 @@ import { asyncHandler } from '../../shared/async-handler';
 import { loginRateLimiter } from '../../middleware/rate-limit';
 import { validate } from '../../middleware/validate';
 import {
+  changePassword,
   getManagedUserStatus,
   getUserStatus,
   listAllUsers,
@@ -12,11 +13,14 @@ import {
   logout,
   refresh,
   register,
+  resetUserPasswordByMobileNumber,
   updateUserActivation,
   updateUserImage,
   updateUserName,
 } from './auth.controller';
 import {
+  adminResetUserPasswordBodySchema,
+  changePasswordBodySchema,
   loginBodySchema,
   logoutBodySchema,
   refreshBodySchema,
@@ -41,7 +45,20 @@ authRouter.post(
 );
 authRouter.post('/refresh', validate({ body: refreshBodySchema }), asyncHandler(refresh));
 authRouter.post('/logout', validate({ body: logoutBodySchema }), asyncHandler(logout));
+authRouter.patch(
+  '/users/me/password',
+  requireAuth,
+  loginRateLimiter,
+  validate({ body: changePasswordBodySchema }),
+  asyncHandler(changePassword),
+);
 authRouter.get('/users', requireAuth, asyncHandler(listAllUsers));
+authRouter.post(
+  '/admin/users/password/reset',
+  requireAuth,
+  validate({ body: adminResetUserPasswordBodySchema }),
+  asyncHandler(resetUserPasswordByMobileNumber),
+);
 authRouter.patch(
   '/users/:id/status',
   requireAuth,

@@ -5,6 +5,7 @@ jest.mock('../../src/modules/auth/auth.repository', () => ({
     findAllUsers: jest.fn(),
     createUser: jest.fn(),
     updateUserActiveStatus: jest.fn(),
+    updateUserPasswordHashAndRevokeTokens: jest.fn(),
     updateUserName: jest.fn(),
     updateUserProfile: jest.fn(),
     createRefreshToken: jest.fn(),
@@ -233,6 +234,81 @@ describe('auth service', () => {
     });
   });
 
+  it('allows a logged-in user to change their password', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+    mockedVerifyPassword.mockResolvedValue(true);
+    mockedHashPassword.mockResolvedValue('new-hashed-password');
+    mockedAuthRepository.updateUserPasswordHashAndRevokeTokens.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'new-hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    const result = await authService.changePassword({
+      requesterId: 'user-123',
+      currentPassword: 'OldPass123',
+      newPassword: 'NewPass123',
+    });
+
+    expect(mockedVerifyPassword).toHaveBeenCalledWith('OldPass123', 'hashed-password');
+    expect(mockedHashPassword).toHaveBeenCalledWith('NewPass123');
+    expect(mockedAuthRepository.updateUserPasswordHashAndRevokeTokens).toHaveBeenCalledWith({
+      userId: 'user-123',
+      passwordHash: 'new-hashed-password',
+    });
+    expect(result).toEqual({
+      message: 'Password changed successfully',
+    });
+  });
+
+  it('rejects password changes when the current password is incorrect', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValue({
+      id: 'user-123',
+      mobileNumber: '+923001234567',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+    mockedVerifyPassword.mockResolvedValue(false);
+
+    await expect(
+      authService.changePassword({
+        requesterId: 'user-123',
+        currentPassword: 'WrongPass123',
+        newPassword: 'NewPass123',
+      }),
+    ).rejects.toMatchObject({
+      code: 'INVALID_CURRENT_PASSWORD',
+      statusCode: 400,
+    });
+
+    expect(mockedHashPassword).not.toHaveBeenCalled();
+    expect(mockedAuthRepository.updateUserPasswordHashAndRevokeTokens).not.toHaveBeenCalled();
+  });
+
   it('allows active super admins to deactivate user accounts', async () => {
     mockedAuthRepository.findUserById
       .mockResolvedValueOnce({
@@ -285,6 +361,93 @@ describe('auth service', () => {
       id: 'user-456',
       isActive: false,
     });
+  });
+
+  it('allows active super admins to reset a user password by mobile number', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValueOnce({
+      id: 'super-123',
+      mobileNumber: '+923000000001',
+      name: 'Super Admin',
+      usertype: 0,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+    mockedAuthRepository.findUserByMobileNumber.mockResolvedValue({
+      id: 'user-456',
+      mobileNumber: '+923009876543',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'existing-hash',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+    mockedVerifyPassword.mockResolvedValue(false);
+    mockedHashPassword.mockResolvedValue('reset-hash');
+    mockedAuthRepository.updateUserPasswordHashAndRevokeTokens.mockResolvedValue({
+      id: 'user-456',
+      mobileNumber: '+923009876543',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'reset-hash',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    const result = await authService.resetUserPasswordByMobileNumber({
+      requesterId: 'super-123',
+      mobileNumber: '+923009876543',
+      newPassword: 'ResetPass123',
+    });
+
+    expect(mockedVerifyPassword).toHaveBeenCalledWith('ResetPass123', 'existing-hash');
+    expect(mockedHashPassword).toHaveBeenCalledWith('ResetPass123');
+    expect(mockedAuthRepository.updateUserPasswordHashAndRevokeTokens).toHaveBeenCalledWith({
+      userId: 'user-456',
+      passwordHash: 'reset-hash',
+    });
+    expect(result).toEqual({
+      message: 'Password reset successfully',
+      mobileNumber: '+923009876543',
+    });
+  });
+
+  it('rejects password resets from non-super-admin users', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValue({
+      id: 'admin-123',
+      mobileNumber: '+923001234567',
+      name: 'Community Admin',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    await expect(
+      authService.resetUserPasswordByMobileNumber({
+        requesterId: 'admin-123',
+        mobileNumber: '+923009876543',
+        newPassword: 'ResetPass123',
+      }),
+    ).rejects.toMatchObject({
+      code: 'SUPER_ADMIN_REQUIRED',
+      statusCode: 403,
+    });
+
+    expect(mockedAuthRepository.findUserByMobileNumber).not.toHaveBeenCalled();
+    expect(mockedAuthRepository.updateUserPasswordHashAndRevokeTokens).not.toHaveBeenCalled();
   });
 
   it('allows a logged-in user to update their own name', async () => {

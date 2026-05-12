@@ -15,6 +15,16 @@ export interface UpdateUserNameRequest {
   name: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface AdminResetUserPasswordRequest {
+  mobileNumber: string;
+  newPassword: string;
+}
+
 export interface LoginRequest {
   mobileNumber: string;
   password: string;
@@ -69,4 +79,13 @@ export interface RegisterResponse {
   user: ManagedUserStatus;
   tokens?: AuthTokens;
   requiresActivation: boolean;
+}
+
+export interface PasswordChangeResponse {
+  message: string;
+}
+
+export interface AdminResetUserPasswordResponse {
+  message: string;
+  mobileNumber: string;
 }

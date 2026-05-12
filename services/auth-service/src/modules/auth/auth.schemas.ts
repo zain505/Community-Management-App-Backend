@@ -8,6 +8,8 @@ const mobileNumberSchema = z
     'Mobile phone number must be in international format or local format like 03074029959',
   );
 const nameSchema = z.string().trim().min(2).max(80);
+const passwordSchema = z.string().min(8).max(128);
+const currentPasswordSchema = z.string().min(4).max(128);
 const reservedAdminNamePattern = /\b(?:super\s+admin|admin)\b/i;
 const userTypeSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 const isActiveSchema = z.union([z.boolean(), z.literal(0), z.literal(1)]).transform((value) => value === true || value === 1);
@@ -15,7 +17,7 @@ const isActiveSchema = z.union([z.boolean(), z.literal(0), z.literal(1)]).transf
 export const registerBodySchema = z.object({
   name: nameSchema,
   mobileNumber: mobileNumberSchema,
-  password: z.string().min(8).max(128),
+  password: passwordSchema,
   usertype: userTypeSchema.default(2),
 }).superRefine((value, ctx) => {
   const normalizedName = value.name.trim().replace(/\s+/g, ' ');
@@ -31,7 +33,7 @@ export const registerBodySchema = z.object({
 
 export const loginBodySchema = z.object({
   mobileNumber: mobileNumberSchema,
-  password: z.string().min(4).max(128),
+  password: currentPasswordSchema,
   usertype: userTypeSchema.default(2),
 });
 
@@ -53,6 +55,26 @@ export const updateUserActivationBodySchema = z.object({
 
 export const updateUserNameBodySchema = z.object({
   name: nameSchema,
+});
+
+export const changePasswordBodySchema = z
+  .object({
+    currentPassword: currentPasswordSchema,
+    newPassword: passwordSchema,
+  })
+  .superRefine((value, ctx) => {
+    if (value.currentPassword === value.newPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['newPassword'],
+        message: 'New password must be different from current password',
+      });
+    }
+  });
+
+export const adminResetUserPasswordBodySchema = z.object({
+  mobileNumber: mobileNumberSchema,
+  newPassword: passwordSchema,
 });
 
 export const userIdParamSchema = z.object({

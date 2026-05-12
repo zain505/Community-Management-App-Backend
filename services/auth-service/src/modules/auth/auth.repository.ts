@@ -64,6 +64,28 @@ export const authRepository = {
     });
   },
 
+  async updateUserPasswordHashAndRevokeTokens(options: {
+    userId: string;
+    passwordHash: string;
+  }): Promise<User> {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updatedUser = await tx.user.update({
+        where: { id: options.userId },
+        data: { passwordHash: options.passwordHash },
+      });
+
+      await tx.refreshToken.updateMany({
+        where: {
+          userId: options.userId,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
+
+      return updatedUser;
+    });
+  },
+
   createRefreshToken(data: Prisma.RefreshTokenUncheckedCreateInput): Promise<RefreshToken> {
     return prisma.refreshToken.create({ data });
   },

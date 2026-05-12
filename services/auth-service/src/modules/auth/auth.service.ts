@@ -3,10 +3,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Prisma } from '../../generated/prisma';
 import type {
+  AdminResetUserPasswordResponse,
   AuthResponse,
   AuthTokens,
   LoginRequest,
   ManagedUserStatus,
+  PasswordChangeResponse,
   RegisterRequest,
   RegisterResponse,
   UserProfile,
@@ -431,6 +433,82 @@ export const authService = {
     }
 
     await authRepository.revokeRefreshToken(existingRefreshToken.id);
+  },
+
+  async changePassword(params: {
+    requesterId: string;
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<PasswordChangeResponse> {
+    const user = await authRepository.findUserById(params.requesterId);
+
+    if (!user) {
+      throw new AppError('User not found', {
+        statusCode: StatusCodes.NOT_FOUND,
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    if (params.currentPassword === params.newPassword) {
+      throw new AppError('New password must be different from current password', {
+        statusCode: StatusCodes.BAD_REQUEST,
+        code: 'NEW_PASSWORD_MUST_DIFFER',
+      });
+    }
+
+    const passwordMatches = await verifyPassword(params.currentPassword, user.passwordHash);
+
+    if (!passwordMatches) {
+      throw new AppError('Current password is incorrect', {
+        statusCode: StatusCodes.BAD_REQUEST,
+        code: 'INVALID_CURRENT_PASSWORD',
+      });
+    }
+
+    await authRepository.updateUserPasswordHashAndRevokeTokens({
+      userId: user.id,
+      passwordHash: await hashPassword(params.newPassword),
+    });
+
+    return {
+      message: 'Password changed successfully',
+    };
+  },
+
+  async resetUserPasswordByMobileNumber(params: {
+    requesterId: string;
+    mobileNumber: string;
+    newPassword: string;
+  }): Promise<AdminResetUserPasswordResponse> {
+    await ensureActiveSuperAdmin(params.requesterId, 'reset user passwords');
+
+    const user = await authRepository.findUserByMobileNumber(params.mobileNumber);
+
+    if (!user) {
+      throw new AppError('User not found', {
+        statusCode: StatusCodes.NOT_FOUND,
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    const passwordMatches = await verifyPassword(params.newPassword, user.passwordHash);
+
+    if (passwordMatches) {
+      throw new AppError('New password must be different from current password', {
+        statusCode: StatusCodes.BAD_REQUEST,
+        code: 'NEW_PASSWORD_MUST_DIFFER',
+      });
+    }
+
+    const updatedUser = await authRepository.updateUserPasswordHashAndRevokeTokens({
+      userId: user.id,
+      passwordHash: await hashPassword(params.newPassword),
+    });
+
+    return {
+      message: 'Password reset successfully',
+      mobileNumber: updatedUser.mobileNumber,
+    };
   },
 
   async updateUserActivation(params: {
