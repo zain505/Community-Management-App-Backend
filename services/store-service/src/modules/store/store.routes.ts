@@ -5,11 +5,14 @@ import { validate } from '../../middleware/validate';
 import {
   createMyStore,
   deleteMyStore,
+  favoriteStore,
   getMyStore,
   getMyStoreProducts,
+  listFavoriteStores,
   listStores,
   listStoresForAdmin,
   rateStore,
+  unfavoriteStore,
   updateStoreActivation,
   updateMyStore,
 } from './store.controller';
@@ -26,6 +29,12 @@ import {
 const storeRouter = Router();
 
 storeRouter.get('/', validate({ query: listStoresQuerySchema }), asyncHandler(listStores));
+storeRouter.get(
+  '/favorites',
+  requireAuth,
+  validate({ query: listStoresQuerySchema }),
+  asyncHandler(listFavoriteStores),
+);
 storeRouter.get(
   '/admin',
   requireAuth,
@@ -51,6 +60,18 @@ storeRouter.patch(
   requireAuth,
   validate({ params: storeIdParamSchema, body: updateStoreActivationBodySchema }),
   asyncHandler(updateStoreActivation),
+);
+storeRouter.post(
+  '/:storeId/favorite',
+  requireAuth,
+  validate({ params: storeIdParamSchema }),
+  asyncHandler(favoriteStore),
+);
+storeRouter.delete(
+  '/:storeId/favorite',
+  requireAuth,
+  validate({ params: storeIdParamSchema }),
+  asyncHandler(unfavoriteStore),
 );
 storeRouter.post(
   '/:storeId/ratings',

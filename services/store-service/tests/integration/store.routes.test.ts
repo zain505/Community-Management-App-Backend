@@ -1,9 +1,12 @@
 jest.mock('../../src/modules/store/store.service', () => ({
   storeService: {
     createMyStore: jest.fn(),
+    favoriteStore: jest.fn(),
+    listFavoriteStores: jest.fn(),
     listStores: jest.fn(),
     listStoresForAdmin: jest.fn(),
     rateStore: jest.fn(),
+    unfavoriteStore: jest.fn(),
     updateStoreActivation: jest.fn(),
   },
 }));
@@ -171,6 +174,88 @@ describe('store routes', () => {
       closingTime: '22:00',
       phoneNumber: '03001234567',
     });
+  });
+
+  it('requires authentication before a user can list favorite stores', async () => {
+    const response = await request(app).get('/v1/stores/favorites');
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+  });
+
+  it('lists favorite stores for an authenticated user', async () => {
+    mockedStoreService.listFavoriteStores.mockResolvedValue([
+      {
+        id: 18,
+        name: 'Fresh Mart',
+        active: true,
+        location: 'Main Road',
+        rating: '4.5',
+        image: 'data:image/png;base64,aGVsbG8=',
+        badges: ['Best Seller'],
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
+        isFavorite: true,
+        reviews: [],
+      },
+    ]);
+
+    const response = await request(app)
+      .get('/v1/stores/favorites?search=%20fresh%20&page=2')
+      .set('Authorization', `Bearer ${getAccessToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data[0].isFavorite).toBe(true);
+    expect(mockedStoreService.listFavoriteStores).toHaveBeenCalledWith('user_123', 'fresh', 2);
+  });
+
+  it('marks a store as favorite for an authenticated user', async () => {
+    mockedStoreService.favoriteStore.mockResolvedValue({
+      id: 18,
+      name: 'Fresh Mart',
+      active: true,
+      location: 'Main Road',
+      rating: '4.5',
+      image: 'data:image/png;base64,aGVsbG8=',
+      badges: ['Best Seller'],
+      delivery: '30 mins',
+      minOrderRs: '500',
+      openingTime: '09:00',
+      closingTime: '22:00',
+      phoneNumber: '03001234567',
+      isFavorite: true,
+      reviews: [],
+    });
+
+    const response = await request(app)
+      .post('/v1/stores/18/favorite')
+      .set('Authorization', `Bearer ${getAccessToken()}`)
+      .send({});
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.isFavorite).toBe(true);
+    expect(mockedStoreService.favoriteStore).toHaveBeenCalledWith('user_123', 18);
+  });
+
+  it('removes a store from favorites for an authenticated user', async () => {
+    mockedStoreService.unfavoriteStore.mockResolvedValue(undefined);
+
+    const response = await request(app)
+      .delete('/v1/stores/18/favorite')
+      .set('Authorization', `Bearer ${getAccessToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toEqual({
+      message: 'Store removed from favorites',
+    });
+    expect(mockedStoreService.unfavoriteStore).toHaveBeenCalledWith('user_123', 18);
   });
 
   it('requires authentication before a user can rate a store', async () => {

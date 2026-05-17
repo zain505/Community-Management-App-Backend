@@ -28,6 +28,11 @@ export type StoreProduct = $Result.DefaultSelection<Prisma.$StoreProductPayload>
  * 
  */
 export type StoreRating = $Result.DefaultSelection<Prisma.$StoreRatingPayload>
+/**
+ * Model StoreFavorite
+ * 
+ */
+export type StoreFavorite = $Result.DefaultSelection<Prisma.$StoreFavoritePayload>
 
 /**
  * Enums
@@ -219,6 +224,16 @@ export class PrismaClient<
     * ```
     */
   get storeRating(): Prisma.StoreRatingDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.storeFavorite`: Exposes CRUD operations for the **StoreFavorite** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more StoreFavorites
+    * const storeFavorites = await prisma.storeFavorite.findMany()
+    * ```
+    */
+  get storeFavorite(): Prisma.StoreFavoriteDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -662,7 +677,8 @@ export namespace Prisma {
   export const ModelName: {
     Store: 'Store',
     StoreProduct: 'StoreProduct',
-    StoreRating: 'StoreRating'
+    StoreRating: 'StoreRating',
+    StoreFavorite: 'StoreFavorite'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -681,7 +697,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "store" | "storeProduct" | "storeRating"
+      modelProps: "store" | "storeProduct" | "storeRating" | "storeFavorite"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -883,6 +899,72 @@ export namespace Prisma {
           }
         }
       }
+      StoreFavorite: {
+        payload: Prisma.$StoreFavoritePayload<ExtArgs>
+        fields: Prisma.StoreFavoriteFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StoreFavoriteFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StoreFavoriteFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload>
+          }
+          findFirst: {
+            args: Prisma.StoreFavoriteFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StoreFavoriteFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload>
+          }
+          findMany: {
+            args: Prisma.StoreFavoriteFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload>[]
+          }
+          create: {
+            args: Prisma.StoreFavoriteCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload>
+          }
+          createMany: {
+            args: Prisma.StoreFavoriteCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.StoreFavoriteDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload>
+          }
+          update: {
+            args: Prisma.StoreFavoriteUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload>
+          }
+          deleteMany: {
+            args: Prisma.StoreFavoriteDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StoreFavoriteUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.StoreFavoriteUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StoreFavoritePayload>
+          }
+          aggregate: {
+            args: Prisma.StoreFavoriteAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStoreFavorite>
+          }
+          groupBy: {
+            args: Prisma.StoreFavoriteGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StoreFavoriteGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StoreFavoriteCountArgs<ExtArgs>
+            result: $Utils.Optional<StoreFavoriteCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -982,6 +1064,7 @@ export namespace Prisma {
     store?: StoreOmit
     storeProduct?: StoreProductOmit
     storeRating?: StoreRatingOmit
+    storeFavorite?: StoreFavoriteOmit
   }
 
   /* Types for Logging */
@@ -1064,11 +1147,13 @@ export namespace Prisma {
   export type StoreCountOutputType = {
     products: number
     ratings: number
+    favorites: number
   }
 
   export type StoreCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     products?: boolean | StoreCountOutputTypeCountProductsArgs
     ratings?: boolean | StoreCountOutputTypeCountRatingsArgs
+    favorites?: boolean | StoreCountOutputTypeCountFavoritesArgs
   }
 
   // Custom InputTypes
@@ -1094,6 +1179,13 @@ export namespace Prisma {
    */
   export type StoreCountOutputTypeCountRatingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: StoreRatingWhereInput
+  }
+
+  /**
+   * StoreCountOutputType without action
+   */
+  export type StoreCountOutputTypeCountFavoritesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StoreFavoriteWhereInput
   }
 
 
@@ -1389,6 +1481,7 @@ export namespace Prisma {
     updatedAt?: boolean
     products?: boolean | Store$productsArgs<ExtArgs>
     ratings?: boolean | Store$ratingsArgs<ExtArgs>
+    favorites?: boolean | Store$favoritesArgs<ExtArgs>
     _count?: boolean | StoreCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["store"]>
 
@@ -1417,6 +1510,7 @@ export namespace Prisma {
   export type StoreInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     products?: boolean | Store$productsArgs<ExtArgs>
     ratings?: boolean | Store$ratingsArgs<ExtArgs>
+    favorites?: boolean | Store$favoritesArgs<ExtArgs>
     _count?: boolean | StoreCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -1425,6 +1519,7 @@ export namespace Prisma {
     objects: {
       products: Prisma.$StoreProductPayload<ExtArgs>[]
       ratings: Prisma.$StoreRatingPayload<ExtArgs>[]
+      favorites: Prisma.$StoreFavoritePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -1785,6 +1880,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     products<T extends Store$productsArgs<ExtArgs> = {}>(args?: Subset<T, Store$productsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StoreProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ratings<T extends Store$ratingsArgs<ExtArgs> = {}>(args?: Subset<T, Store$ratingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StoreRatingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    favorites<T extends Store$favoritesArgs<ExtArgs> = {}>(args?: Subset<T, Store$favoritesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2218,6 +2314,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: StoreRatingScalarFieldEnum | StoreRatingScalarFieldEnum[]
+  }
+
+  /**
+   * Store.favorites
+   */
+  export type Store$favoritesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    where?: StoreFavoriteWhereInput
+    orderBy?: StoreFavoriteOrderByWithRelationInput | StoreFavoriteOrderByWithRelationInput[]
+    cursor?: StoreFavoriteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: StoreFavoriteScalarFieldEnum | StoreFavoriteScalarFieldEnum[]
   }
 
   /**
@@ -4240,6 +4360,958 @@ export namespace Prisma {
 
 
   /**
+   * Model StoreFavorite
+   */
+
+  export type AggregateStoreFavorite = {
+    _count: StoreFavoriteCountAggregateOutputType | null
+    _avg: StoreFavoriteAvgAggregateOutputType | null
+    _sum: StoreFavoriteSumAggregateOutputType | null
+    _min: StoreFavoriteMinAggregateOutputType | null
+    _max: StoreFavoriteMaxAggregateOutputType | null
+  }
+
+  export type StoreFavoriteAvgAggregateOutputType = {
+    storeId: number | null
+  }
+
+  export type StoreFavoriteSumAggregateOutputType = {
+    storeId: number | null
+  }
+
+  export type StoreFavoriteMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    createdAt: Date | null
+    storeId: number | null
+  }
+
+  export type StoreFavoriteMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    createdAt: Date | null
+    storeId: number | null
+  }
+
+  export type StoreFavoriteCountAggregateOutputType = {
+    id: number
+    userId: number
+    createdAt: number
+    storeId: number
+    _all: number
+  }
+
+
+  export type StoreFavoriteAvgAggregateInputType = {
+    storeId?: true
+  }
+
+  export type StoreFavoriteSumAggregateInputType = {
+    storeId?: true
+  }
+
+  export type StoreFavoriteMinAggregateInputType = {
+    id?: true
+    userId?: true
+    createdAt?: true
+    storeId?: true
+  }
+
+  export type StoreFavoriteMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    createdAt?: true
+    storeId?: true
+  }
+
+  export type StoreFavoriteCountAggregateInputType = {
+    id?: true
+    userId?: true
+    createdAt?: true
+    storeId?: true
+    _all?: true
+  }
+
+  export type StoreFavoriteAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StoreFavorite to aggregate.
+     */
+    where?: StoreFavoriteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StoreFavorites to fetch.
+     */
+    orderBy?: StoreFavoriteOrderByWithRelationInput | StoreFavoriteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StoreFavoriteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StoreFavorites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StoreFavorites.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned StoreFavorites
+    **/
+    _count?: true | StoreFavoriteCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: StoreFavoriteAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: StoreFavoriteSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StoreFavoriteMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StoreFavoriteMaxAggregateInputType
+  }
+
+  export type GetStoreFavoriteAggregateType<T extends StoreFavoriteAggregateArgs> = {
+        [P in keyof T & keyof AggregateStoreFavorite]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStoreFavorite[P]>
+      : GetScalarType<T[P], AggregateStoreFavorite[P]>
+  }
+
+
+
+
+  export type StoreFavoriteGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StoreFavoriteWhereInput
+    orderBy?: StoreFavoriteOrderByWithAggregationInput | StoreFavoriteOrderByWithAggregationInput[]
+    by: StoreFavoriteScalarFieldEnum[] | StoreFavoriteScalarFieldEnum
+    having?: StoreFavoriteScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StoreFavoriteCountAggregateInputType | true
+    _avg?: StoreFavoriteAvgAggregateInputType
+    _sum?: StoreFavoriteSumAggregateInputType
+    _min?: StoreFavoriteMinAggregateInputType
+    _max?: StoreFavoriteMaxAggregateInputType
+  }
+
+  export type StoreFavoriteGroupByOutputType = {
+    id: string
+    userId: string
+    createdAt: Date
+    storeId: number
+    _count: StoreFavoriteCountAggregateOutputType | null
+    _avg: StoreFavoriteAvgAggregateOutputType | null
+    _sum: StoreFavoriteSumAggregateOutputType | null
+    _min: StoreFavoriteMinAggregateOutputType | null
+    _max: StoreFavoriteMaxAggregateOutputType | null
+  }
+
+  type GetStoreFavoriteGroupByPayload<T extends StoreFavoriteGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StoreFavoriteGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StoreFavoriteGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StoreFavoriteGroupByOutputType[P]>
+            : GetScalarType<T[P], StoreFavoriteGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StoreFavoriteSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    createdAt?: boolean
+    storeId?: boolean
+    store?: boolean | StoreDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["storeFavorite"]>
+
+
+
+  export type StoreFavoriteSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    createdAt?: boolean
+    storeId?: boolean
+  }
+
+  export type StoreFavoriteOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "createdAt" | "storeId", ExtArgs["result"]["storeFavorite"]>
+  export type StoreFavoriteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    store?: boolean | StoreDefaultArgs<ExtArgs>
+  }
+
+  export type $StoreFavoritePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "StoreFavorite"
+    objects: {
+      store: Prisma.$StorePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      createdAt: Date
+      storeId: number
+    }, ExtArgs["result"]["storeFavorite"]>
+    composites: {}
+  }
+
+  type StoreFavoriteGetPayload<S extends boolean | null | undefined | StoreFavoriteDefaultArgs> = $Result.GetResult<Prisma.$StoreFavoritePayload, S>
+
+  type StoreFavoriteCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StoreFavoriteFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StoreFavoriteCountAggregateInputType | true
+    }
+
+  export interface StoreFavoriteDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['StoreFavorite'], meta: { name: 'StoreFavorite' } }
+    /**
+     * Find zero or one StoreFavorite that matches the filter.
+     * @param {StoreFavoriteFindUniqueArgs} args - Arguments to find a StoreFavorite
+     * @example
+     * // Get one StoreFavorite
+     * const storeFavorite = await prisma.storeFavorite.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StoreFavoriteFindUniqueArgs>(args: SelectSubset<T, StoreFavoriteFindUniqueArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one StoreFavorite that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StoreFavoriteFindUniqueOrThrowArgs} args - Arguments to find a StoreFavorite
+     * @example
+     * // Get one StoreFavorite
+     * const storeFavorite = await prisma.storeFavorite.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StoreFavoriteFindUniqueOrThrowArgs>(args: SelectSubset<T, StoreFavoriteFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StoreFavorite that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StoreFavoriteFindFirstArgs} args - Arguments to find a StoreFavorite
+     * @example
+     * // Get one StoreFavorite
+     * const storeFavorite = await prisma.storeFavorite.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StoreFavoriteFindFirstArgs>(args?: SelectSubset<T, StoreFavoriteFindFirstArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StoreFavorite that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StoreFavoriteFindFirstOrThrowArgs} args - Arguments to find a StoreFavorite
+     * @example
+     * // Get one StoreFavorite
+     * const storeFavorite = await prisma.storeFavorite.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StoreFavoriteFindFirstOrThrowArgs>(args?: SelectSubset<T, StoreFavoriteFindFirstOrThrowArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more StoreFavorites that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StoreFavoriteFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all StoreFavorites
+     * const storeFavorites = await prisma.storeFavorite.findMany()
+     * 
+     * // Get first 10 StoreFavorites
+     * const storeFavorites = await prisma.storeFavorite.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const storeFavoriteWithIdOnly = await prisma.storeFavorite.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends StoreFavoriteFindManyArgs>(args?: SelectSubset<T, StoreFavoriteFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a StoreFavorite.
+     * @param {StoreFavoriteCreateArgs} args - Arguments to create a StoreFavorite.
+     * @example
+     * // Create one StoreFavorite
+     * const StoreFavorite = await prisma.storeFavorite.create({
+     *   data: {
+     *     // ... data to create a StoreFavorite
+     *   }
+     * })
+     * 
+     */
+    create<T extends StoreFavoriteCreateArgs>(args: SelectSubset<T, StoreFavoriteCreateArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many StoreFavorites.
+     * @param {StoreFavoriteCreateManyArgs} args - Arguments to create many StoreFavorites.
+     * @example
+     * // Create many StoreFavorites
+     * const storeFavorite = await prisma.storeFavorite.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StoreFavoriteCreateManyArgs>(args?: SelectSubset<T, StoreFavoriteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a StoreFavorite.
+     * @param {StoreFavoriteDeleteArgs} args - Arguments to delete one StoreFavorite.
+     * @example
+     * // Delete one StoreFavorite
+     * const StoreFavorite = await prisma.storeFavorite.delete({
+     *   where: {
+     *     // ... filter to delete one StoreFavorite
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StoreFavoriteDeleteArgs>(args: SelectSubset<T, StoreFavoriteDeleteArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one StoreFavorite.
+     * @param {StoreFavoriteUpdateArgs} args - Arguments to update one StoreFavorite.
+     * @example
+     * // Update one StoreFavorite
+     * const storeFavorite = await prisma.storeFavorite.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StoreFavoriteUpdateArgs>(args: SelectSubset<T, StoreFavoriteUpdateArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more StoreFavorites.
+     * @param {StoreFavoriteDeleteManyArgs} args - Arguments to filter StoreFavorites to delete.
+     * @example
+     * // Delete a few StoreFavorites
+     * const { count } = await prisma.storeFavorite.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StoreFavoriteDeleteManyArgs>(args?: SelectSubset<T, StoreFavoriteDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StoreFavorites.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StoreFavoriteUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many StoreFavorites
+     * const storeFavorite = await prisma.storeFavorite.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StoreFavoriteUpdateManyArgs>(args: SelectSubset<T, StoreFavoriteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one StoreFavorite.
+     * @param {StoreFavoriteUpsertArgs} args - Arguments to update or create a StoreFavorite.
+     * @example
+     * // Update or create a StoreFavorite
+     * const storeFavorite = await prisma.storeFavorite.upsert({
+     *   create: {
+     *     // ... data to create a StoreFavorite
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the StoreFavorite we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StoreFavoriteUpsertArgs>(args: SelectSubset<T, StoreFavoriteUpsertArgs<ExtArgs>>): Prisma__StoreFavoriteClient<$Result.GetResult<Prisma.$StoreFavoritePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of StoreFavorites.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StoreFavoriteCountArgs} args - Arguments to filter StoreFavorites to count.
+     * @example
+     * // Count the number of StoreFavorites
+     * const count = await prisma.storeFavorite.count({
+     *   where: {
+     *     // ... the filter for the StoreFavorites we want to count
+     *   }
+     * })
+    **/
+    count<T extends StoreFavoriteCountArgs>(
+      args?: Subset<T, StoreFavoriteCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StoreFavoriteCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a StoreFavorite.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StoreFavoriteAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StoreFavoriteAggregateArgs>(args: Subset<T, StoreFavoriteAggregateArgs>): Prisma.PrismaPromise<GetStoreFavoriteAggregateType<T>>
+
+    /**
+     * Group by StoreFavorite.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StoreFavoriteGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StoreFavoriteGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StoreFavoriteGroupByArgs['orderBy'] }
+        : { orderBy?: StoreFavoriteGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StoreFavoriteGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStoreFavoriteGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the StoreFavorite model
+   */
+  readonly fields: StoreFavoriteFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for StoreFavorite.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StoreFavoriteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    store<T extends StoreDefaultArgs<ExtArgs> = {}>(args?: Subset<T, StoreDefaultArgs<ExtArgs>>): Prisma__StoreClient<$Result.GetResult<Prisma.$StorePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the StoreFavorite model
+   */
+  interface StoreFavoriteFieldRefs {
+    readonly id: FieldRef<"StoreFavorite", 'String'>
+    readonly userId: FieldRef<"StoreFavorite", 'String'>
+    readonly createdAt: FieldRef<"StoreFavorite", 'DateTime'>
+    readonly storeId: FieldRef<"StoreFavorite", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * StoreFavorite findUnique
+   */
+  export type StoreFavoriteFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * Filter, which StoreFavorite to fetch.
+     */
+    where: StoreFavoriteWhereUniqueInput
+  }
+
+  /**
+   * StoreFavorite findUniqueOrThrow
+   */
+  export type StoreFavoriteFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * Filter, which StoreFavorite to fetch.
+     */
+    where: StoreFavoriteWhereUniqueInput
+  }
+
+  /**
+   * StoreFavorite findFirst
+   */
+  export type StoreFavoriteFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * Filter, which StoreFavorite to fetch.
+     */
+    where?: StoreFavoriteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StoreFavorites to fetch.
+     */
+    orderBy?: StoreFavoriteOrderByWithRelationInput | StoreFavoriteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StoreFavorites.
+     */
+    cursor?: StoreFavoriteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StoreFavorites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StoreFavorites.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StoreFavorites.
+     */
+    distinct?: StoreFavoriteScalarFieldEnum | StoreFavoriteScalarFieldEnum[]
+  }
+
+  /**
+   * StoreFavorite findFirstOrThrow
+   */
+  export type StoreFavoriteFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * Filter, which StoreFavorite to fetch.
+     */
+    where?: StoreFavoriteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StoreFavorites to fetch.
+     */
+    orderBy?: StoreFavoriteOrderByWithRelationInput | StoreFavoriteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StoreFavorites.
+     */
+    cursor?: StoreFavoriteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StoreFavorites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StoreFavorites.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StoreFavorites.
+     */
+    distinct?: StoreFavoriteScalarFieldEnum | StoreFavoriteScalarFieldEnum[]
+  }
+
+  /**
+   * StoreFavorite findMany
+   */
+  export type StoreFavoriteFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * Filter, which StoreFavorites to fetch.
+     */
+    where?: StoreFavoriteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StoreFavorites to fetch.
+     */
+    orderBy?: StoreFavoriteOrderByWithRelationInput | StoreFavoriteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing StoreFavorites.
+     */
+    cursor?: StoreFavoriteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StoreFavorites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StoreFavorites.
+     */
+    skip?: number
+    distinct?: StoreFavoriteScalarFieldEnum | StoreFavoriteScalarFieldEnum[]
+  }
+
+  /**
+   * StoreFavorite create
+   */
+  export type StoreFavoriteCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * The data needed to create a StoreFavorite.
+     */
+    data: XOR<StoreFavoriteCreateInput, StoreFavoriteUncheckedCreateInput>
+  }
+
+  /**
+   * StoreFavorite createMany
+   */
+  export type StoreFavoriteCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many StoreFavorites.
+     */
+    data: StoreFavoriteCreateManyInput | StoreFavoriteCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StoreFavorite update
+   */
+  export type StoreFavoriteUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * The data needed to update a StoreFavorite.
+     */
+    data: XOR<StoreFavoriteUpdateInput, StoreFavoriteUncheckedUpdateInput>
+    /**
+     * Choose, which StoreFavorite to update.
+     */
+    where: StoreFavoriteWhereUniqueInput
+  }
+
+  /**
+   * StoreFavorite updateMany
+   */
+  export type StoreFavoriteUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update StoreFavorites.
+     */
+    data: XOR<StoreFavoriteUpdateManyMutationInput, StoreFavoriteUncheckedUpdateManyInput>
+    /**
+     * Filter which StoreFavorites to update
+     */
+    where?: StoreFavoriteWhereInput
+    /**
+     * Limit how many StoreFavorites to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StoreFavorite upsert
+   */
+  export type StoreFavoriteUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * The filter to search for the StoreFavorite to update in case it exists.
+     */
+    where: StoreFavoriteWhereUniqueInput
+    /**
+     * In case the StoreFavorite found by the `where` argument doesn't exist, create a new StoreFavorite with this data.
+     */
+    create: XOR<StoreFavoriteCreateInput, StoreFavoriteUncheckedCreateInput>
+    /**
+     * In case the StoreFavorite was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StoreFavoriteUpdateInput, StoreFavoriteUncheckedUpdateInput>
+  }
+
+  /**
+   * StoreFavorite delete
+   */
+  export type StoreFavoriteDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+    /**
+     * Filter which StoreFavorite to delete.
+     */
+    where: StoreFavoriteWhereUniqueInput
+  }
+
+  /**
+   * StoreFavorite deleteMany
+   */
+  export type StoreFavoriteDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StoreFavorites to delete
+     */
+    where?: StoreFavoriteWhereInput
+    /**
+     * Limit how many StoreFavorites to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * StoreFavorite without action
+   */
+  export type StoreFavoriteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StoreFavorite
+     */
+    select?: StoreFavoriteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StoreFavorite
+     */
+    omit?: StoreFavoriteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StoreFavoriteInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -4301,6 +5373,16 @@ export namespace Prisma {
   };
 
   export type StoreRatingScalarFieldEnum = (typeof StoreRatingScalarFieldEnum)[keyof typeof StoreRatingScalarFieldEnum]
+
+
+  export const StoreFavoriteScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    createdAt: 'createdAt',
+    storeId: 'storeId'
+  };
+
+  export type StoreFavoriteScalarFieldEnum = (typeof StoreFavoriteScalarFieldEnum)[keyof typeof StoreFavoriteScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -4378,6 +5460,14 @@ export namespace Prisma {
   };
 
   export type StoreRatingOrderByRelevanceFieldEnum = (typeof StoreRatingOrderByRelevanceFieldEnum)[keyof typeof StoreRatingOrderByRelevanceFieldEnum]
+
+
+  export const StoreFavoriteOrderByRelevanceFieldEnum: {
+    id: 'id',
+    userId: 'userId'
+  };
+
+  export type StoreFavoriteOrderByRelevanceFieldEnum = (typeof StoreFavoriteOrderByRelevanceFieldEnum)[keyof typeof StoreFavoriteOrderByRelevanceFieldEnum]
 
 
   /**
@@ -4466,6 +5556,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Store"> | Date | string
     products?: StoreProductListRelationFilter
     ratings?: StoreRatingListRelationFilter
+    favorites?: StoreFavoriteListRelationFilter
   }
 
   export type StoreOrderByWithRelationInput = {
@@ -4487,6 +5578,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     products?: StoreProductOrderByRelationAggregateInput
     ratings?: StoreRatingOrderByRelationAggregateInput
+    favorites?: StoreFavoriteOrderByRelationAggregateInput
     _relevance?: StoreOrderByRelevanceInput
   }
 
@@ -4512,6 +5604,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Store"> | Date | string
     products?: StoreProductListRelationFilter
     ratings?: StoreRatingListRelationFilter
+    favorites?: StoreFavoriteListRelationFilter
   }, "id" | "ownerUserId">
 
   export type StoreOrderByWithAggregationInput = {
@@ -4707,6 +5800,60 @@ export namespace Prisma {
     storeId?: IntWithAggregatesFilter<"StoreRating"> | number
   }
 
+  export type StoreFavoriteWhereInput = {
+    AND?: StoreFavoriteWhereInput | StoreFavoriteWhereInput[]
+    OR?: StoreFavoriteWhereInput[]
+    NOT?: StoreFavoriteWhereInput | StoreFavoriteWhereInput[]
+    id?: StringFilter<"StoreFavorite"> | string
+    userId?: StringFilter<"StoreFavorite"> | string
+    createdAt?: DateTimeFilter<"StoreFavorite"> | Date | string
+    storeId?: IntFilter<"StoreFavorite"> | number
+    store?: XOR<StoreScalarRelationFilter, StoreWhereInput>
+  }
+
+  export type StoreFavoriteOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    storeId?: SortOrder
+    store?: StoreOrderByWithRelationInput
+    _relevance?: StoreFavoriteOrderByRelevanceInput
+  }
+
+  export type StoreFavoriteWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_storeId?: StoreFavoriteUserIdStoreIdCompoundUniqueInput
+    AND?: StoreFavoriteWhereInput | StoreFavoriteWhereInput[]
+    OR?: StoreFavoriteWhereInput[]
+    NOT?: StoreFavoriteWhereInput | StoreFavoriteWhereInput[]
+    userId?: StringFilter<"StoreFavorite"> | string
+    createdAt?: DateTimeFilter<"StoreFavorite"> | Date | string
+    storeId?: IntFilter<"StoreFavorite"> | number
+    store?: XOR<StoreScalarRelationFilter, StoreWhereInput>
+  }, "id" | "userId_storeId">
+
+  export type StoreFavoriteOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    storeId?: SortOrder
+    _count?: StoreFavoriteCountOrderByAggregateInput
+    _avg?: StoreFavoriteAvgOrderByAggregateInput
+    _max?: StoreFavoriteMaxOrderByAggregateInput
+    _min?: StoreFavoriteMinOrderByAggregateInput
+    _sum?: StoreFavoriteSumOrderByAggregateInput
+  }
+
+  export type StoreFavoriteScalarWhereWithAggregatesInput = {
+    AND?: StoreFavoriteScalarWhereWithAggregatesInput | StoreFavoriteScalarWhereWithAggregatesInput[]
+    OR?: StoreFavoriteScalarWhereWithAggregatesInput[]
+    NOT?: StoreFavoriteScalarWhereWithAggregatesInput | StoreFavoriteScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"StoreFavorite"> | string
+    userId?: StringWithAggregatesFilter<"StoreFavorite"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"StoreFavorite"> | Date | string
+    storeId?: IntWithAggregatesFilter<"StoreFavorite"> | number
+  }
+
   export type StoreCreateInput = {
     ownerUserId: string
     name: string
@@ -4725,6 +5872,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     products?: StoreProductCreateNestedManyWithoutStoreInput
     ratings?: StoreRatingCreateNestedManyWithoutStoreInput
+    favorites?: StoreFavoriteCreateNestedManyWithoutStoreInput
   }
 
   export type StoreUncheckedCreateInput = {
@@ -4746,6 +5894,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     products?: StoreProductUncheckedCreateNestedManyWithoutStoreInput
     ratings?: StoreRatingUncheckedCreateNestedManyWithoutStoreInput
+    favorites?: StoreFavoriteUncheckedCreateNestedManyWithoutStoreInput
   }
 
   export type StoreUpdateInput = {
@@ -4766,6 +5915,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     products?: StoreProductUpdateManyWithoutStoreNestedInput
     ratings?: StoreRatingUpdateManyWithoutStoreNestedInput
+    favorites?: StoreFavoriteUpdateManyWithoutStoreNestedInput
   }
 
   export type StoreUncheckedUpdateInput = {
@@ -4787,6 +5937,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     products?: StoreProductUncheckedUpdateManyWithoutStoreNestedInput
     ratings?: StoreRatingUncheckedUpdateManyWithoutStoreNestedInput
+    favorites?: StoreFavoriteUncheckedUpdateManyWithoutStoreNestedInput
   }
 
   export type StoreCreateManyInput = {
@@ -4994,6 +6145,54 @@ export namespace Prisma {
     storeId?: IntFieldUpdateOperationsInput | number
   }
 
+  export type StoreFavoriteCreateInput = {
+    id?: string
+    userId: string
+    createdAt?: Date | string
+    store: StoreCreateNestedOneWithoutFavoritesInput
+  }
+
+  export type StoreFavoriteUncheckedCreateInput = {
+    id?: string
+    userId: string
+    createdAt?: Date | string
+    storeId: number
+  }
+
+  export type StoreFavoriteUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    store?: StoreUpdateOneRequiredWithoutFavoritesNestedInput
+  }
+
+  export type StoreFavoriteUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    storeId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type StoreFavoriteCreateManyInput = {
+    id?: string
+    userId: string
+    createdAt?: Date | string
+    storeId: number
+  }
+
+  export type StoreFavoriteUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StoreFavoriteUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    storeId?: IntFieldUpdateOperationsInput | number
+  }
+
   export type IntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[]
@@ -5071,6 +6270,12 @@ export namespace Prisma {
     none?: StoreRatingWhereInput
   }
 
+  export type StoreFavoriteListRelationFilter = {
+    every?: StoreFavoriteWhereInput
+    some?: StoreFavoriteWhereInput
+    none?: StoreFavoriteWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -5081,6 +6286,10 @@ export namespace Prisma {
   }
 
   export type StoreRatingOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type StoreFavoriteOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -5405,6 +6614,46 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type StoreFavoriteOrderByRelevanceInput = {
+    fields: StoreFavoriteOrderByRelevanceFieldEnum | StoreFavoriteOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type StoreFavoriteUserIdStoreIdCompoundUniqueInput = {
+    userId: string
+    storeId: number
+  }
+
+  export type StoreFavoriteCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    storeId?: SortOrder
+  }
+
+  export type StoreFavoriteAvgOrderByAggregateInput = {
+    storeId?: SortOrder
+  }
+
+  export type StoreFavoriteMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    storeId?: SortOrder
+  }
+
+  export type StoreFavoriteMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    createdAt?: SortOrder
+    storeId?: SortOrder
+  }
+
+  export type StoreFavoriteSumOrderByAggregateInput = {
+    storeId?: SortOrder
+  }
+
   export type StoreProductCreateNestedManyWithoutStoreInput = {
     create?: XOR<StoreProductCreateWithoutStoreInput, StoreProductUncheckedCreateWithoutStoreInput> | StoreProductCreateWithoutStoreInput[] | StoreProductUncheckedCreateWithoutStoreInput[]
     connectOrCreate?: StoreProductCreateOrConnectWithoutStoreInput | StoreProductCreateOrConnectWithoutStoreInput[]
@@ -5419,6 +6668,13 @@ export namespace Prisma {
     connect?: StoreRatingWhereUniqueInput | StoreRatingWhereUniqueInput[]
   }
 
+  export type StoreFavoriteCreateNestedManyWithoutStoreInput = {
+    create?: XOR<StoreFavoriteCreateWithoutStoreInput, StoreFavoriteUncheckedCreateWithoutStoreInput> | StoreFavoriteCreateWithoutStoreInput[] | StoreFavoriteUncheckedCreateWithoutStoreInput[]
+    connectOrCreate?: StoreFavoriteCreateOrConnectWithoutStoreInput | StoreFavoriteCreateOrConnectWithoutStoreInput[]
+    createMany?: StoreFavoriteCreateManyStoreInputEnvelope
+    connect?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+  }
+
   export type StoreProductUncheckedCreateNestedManyWithoutStoreInput = {
     create?: XOR<StoreProductCreateWithoutStoreInput, StoreProductUncheckedCreateWithoutStoreInput> | StoreProductCreateWithoutStoreInput[] | StoreProductUncheckedCreateWithoutStoreInput[]
     connectOrCreate?: StoreProductCreateOrConnectWithoutStoreInput | StoreProductCreateOrConnectWithoutStoreInput[]
@@ -5431,6 +6687,13 @@ export namespace Prisma {
     connectOrCreate?: StoreRatingCreateOrConnectWithoutStoreInput | StoreRatingCreateOrConnectWithoutStoreInput[]
     createMany?: StoreRatingCreateManyStoreInputEnvelope
     connect?: StoreRatingWhereUniqueInput | StoreRatingWhereUniqueInput[]
+  }
+
+  export type StoreFavoriteUncheckedCreateNestedManyWithoutStoreInput = {
+    create?: XOR<StoreFavoriteCreateWithoutStoreInput, StoreFavoriteUncheckedCreateWithoutStoreInput> | StoreFavoriteCreateWithoutStoreInput[] | StoreFavoriteUncheckedCreateWithoutStoreInput[]
+    connectOrCreate?: StoreFavoriteCreateOrConnectWithoutStoreInput | StoreFavoriteCreateOrConnectWithoutStoreInput[]
+    createMany?: StoreFavoriteCreateManyStoreInputEnvelope
+    connect?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -5481,6 +6744,20 @@ export namespace Prisma {
     deleteMany?: StoreRatingScalarWhereInput | StoreRatingScalarWhereInput[]
   }
 
+  export type StoreFavoriteUpdateManyWithoutStoreNestedInput = {
+    create?: XOR<StoreFavoriteCreateWithoutStoreInput, StoreFavoriteUncheckedCreateWithoutStoreInput> | StoreFavoriteCreateWithoutStoreInput[] | StoreFavoriteUncheckedCreateWithoutStoreInput[]
+    connectOrCreate?: StoreFavoriteCreateOrConnectWithoutStoreInput | StoreFavoriteCreateOrConnectWithoutStoreInput[]
+    upsert?: StoreFavoriteUpsertWithWhereUniqueWithoutStoreInput | StoreFavoriteUpsertWithWhereUniqueWithoutStoreInput[]
+    createMany?: StoreFavoriteCreateManyStoreInputEnvelope
+    set?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    disconnect?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    delete?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    connect?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    update?: StoreFavoriteUpdateWithWhereUniqueWithoutStoreInput | StoreFavoriteUpdateWithWhereUniqueWithoutStoreInput[]
+    updateMany?: StoreFavoriteUpdateManyWithWhereWithoutStoreInput | StoreFavoriteUpdateManyWithWhereWithoutStoreInput[]
+    deleteMany?: StoreFavoriteScalarWhereInput | StoreFavoriteScalarWhereInput[]
+  }
+
   export type StoreProductUncheckedUpdateManyWithoutStoreNestedInput = {
     create?: XOR<StoreProductCreateWithoutStoreInput, StoreProductUncheckedCreateWithoutStoreInput> | StoreProductCreateWithoutStoreInput[] | StoreProductUncheckedCreateWithoutStoreInput[]
     connectOrCreate?: StoreProductCreateOrConnectWithoutStoreInput | StoreProductCreateOrConnectWithoutStoreInput[]
@@ -5507,6 +6784,20 @@ export namespace Prisma {
     update?: StoreRatingUpdateWithWhereUniqueWithoutStoreInput | StoreRatingUpdateWithWhereUniqueWithoutStoreInput[]
     updateMany?: StoreRatingUpdateManyWithWhereWithoutStoreInput | StoreRatingUpdateManyWithWhereWithoutStoreInput[]
     deleteMany?: StoreRatingScalarWhereInput | StoreRatingScalarWhereInput[]
+  }
+
+  export type StoreFavoriteUncheckedUpdateManyWithoutStoreNestedInput = {
+    create?: XOR<StoreFavoriteCreateWithoutStoreInput, StoreFavoriteUncheckedCreateWithoutStoreInput> | StoreFavoriteCreateWithoutStoreInput[] | StoreFavoriteUncheckedCreateWithoutStoreInput[]
+    connectOrCreate?: StoreFavoriteCreateOrConnectWithoutStoreInput | StoreFavoriteCreateOrConnectWithoutStoreInput[]
+    upsert?: StoreFavoriteUpsertWithWhereUniqueWithoutStoreInput | StoreFavoriteUpsertWithWhereUniqueWithoutStoreInput[]
+    createMany?: StoreFavoriteCreateManyStoreInputEnvelope
+    set?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    disconnect?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    delete?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    connect?: StoreFavoriteWhereUniqueInput | StoreFavoriteWhereUniqueInput[]
+    update?: StoreFavoriteUpdateWithWhereUniqueWithoutStoreInput | StoreFavoriteUpdateWithWhereUniqueWithoutStoreInput[]
+    updateMany?: StoreFavoriteUpdateManyWithWhereWithoutStoreInput | StoreFavoriteUpdateManyWithWhereWithoutStoreInput[]
+    deleteMany?: StoreFavoriteScalarWhereInput | StoreFavoriteScalarWhereInput[]
   }
 
   export type StoreCreateNestedOneWithoutProductsInput = {
@@ -5547,6 +6838,20 @@ export namespace Prisma {
     upsert?: StoreUpsertWithoutRatingsInput
     connect?: StoreWhereUniqueInput
     update?: XOR<XOR<StoreUpdateToOneWithWhereWithoutRatingsInput, StoreUpdateWithoutRatingsInput>, StoreUncheckedUpdateWithoutRatingsInput>
+  }
+
+  export type StoreCreateNestedOneWithoutFavoritesInput = {
+    create?: XOR<StoreCreateWithoutFavoritesInput, StoreUncheckedCreateWithoutFavoritesInput>
+    connectOrCreate?: StoreCreateOrConnectWithoutFavoritesInput
+    connect?: StoreWhereUniqueInput
+  }
+
+  export type StoreUpdateOneRequiredWithoutFavoritesNestedInput = {
+    create?: XOR<StoreCreateWithoutFavoritesInput, StoreUncheckedCreateWithoutFavoritesInput>
+    connectOrCreate?: StoreCreateOrConnectWithoutFavoritesInput
+    upsert?: StoreUpsertWithoutFavoritesInput
+    connect?: StoreWhereUniqueInput
+    update?: XOR<XOR<StoreUpdateToOneWithWhereWithoutFavoritesInput, StoreUpdateWithoutFavoritesInput>, StoreUncheckedUpdateWithoutFavoritesInput>
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -5811,6 +7116,28 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type StoreFavoriteCreateWithoutStoreInput = {
+    id?: string
+    userId: string
+    createdAt?: Date | string
+  }
+
+  export type StoreFavoriteUncheckedCreateWithoutStoreInput = {
+    id?: string
+    userId: string
+    createdAt?: Date | string
+  }
+
+  export type StoreFavoriteCreateOrConnectWithoutStoreInput = {
+    where: StoreFavoriteWhereUniqueInput
+    create: XOR<StoreFavoriteCreateWithoutStoreInput, StoreFavoriteUncheckedCreateWithoutStoreInput>
+  }
+
+  export type StoreFavoriteCreateManyStoreInputEnvelope = {
+    data: StoreFavoriteCreateManyStoreInput | StoreFavoriteCreateManyStoreInput[]
+    skipDuplicates?: boolean
+  }
+
   export type StoreProductUpsertWithWhereUniqueWithoutStoreInput = {
     where: StoreProductWhereUniqueInput
     update: XOR<StoreProductUpdateWithoutStoreInput, StoreProductUncheckedUpdateWithoutStoreInput>
@@ -5871,6 +7198,32 @@ export namespace Prisma {
     storeId?: IntFilter<"StoreRating"> | number
   }
 
+  export type StoreFavoriteUpsertWithWhereUniqueWithoutStoreInput = {
+    where: StoreFavoriteWhereUniqueInput
+    update: XOR<StoreFavoriteUpdateWithoutStoreInput, StoreFavoriteUncheckedUpdateWithoutStoreInput>
+    create: XOR<StoreFavoriteCreateWithoutStoreInput, StoreFavoriteUncheckedCreateWithoutStoreInput>
+  }
+
+  export type StoreFavoriteUpdateWithWhereUniqueWithoutStoreInput = {
+    where: StoreFavoriteWhereUniqueInput
+    data: XOR<StoreFavoriteUpdateWithoutStoreInput, StoreFavoriteUncheckedUpdateWithoutStoreInput>
+  }
+
+  export type StoreFavoriteUpdateManyWithWhereWithoutStoreInput = {
+    where: StoreFavoriteScalarWhereInput
+    data: XOR<StoreFavoriteUpdateManyMutationInput, StoreFavoriteUncheckedUpdateManyWithoutStoreInput>
+  }
+
+  export type StoreFavoriteScalarWhereInput = {
+    AND?: StoreFavoriteScalarWhereInput | StoreFavoriteScalarWhereInput[]
+    OR?: StoreFavoriteScalarWhereInput[]
+    NOT?: StoreFavoriteScalarWhereInput | StoreFavoriteScalarWhereInput[]
+    id?: StringFilter<"StoreFavorite"> | string
+    userId?: StringFilter<"StoreFavorite"> | string
+    createdAt?: DateTimeFilter<"StoreFavorite"> | Date | string
+    storeId?: IntFilter<"StoreFavorite"> | number
+  }
+
   export type StoreCreateWithoutProductsInput = {
     ownerUserId: string
     name: string
@@ -5888,6 +7241,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ratings?: StoreRatingCreateNestedManyWithoutStoreInput
+    favorites?: StoreFavoriteCreateNestedManyWithoutStoreInput
   }
 
   export type StoreUncheckedCreateWithoutProductsInput = {
@@ -5908,6 +7262,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ratings?: StoreRatingUncheckedCreateNestedManyWithoutStoreInput
+    favorites?: StoreFavoriteUncheckedCreateNestedManyWithoutStoreInput
   }
 
   export type StoreCreateOrConnectWithoutProductsInput = {
@@ -5943,6 +7298,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ratings?: StoreRatingUpdateManyWithoutStoreNestedInput
+    favorites?: StoreFavoriteUpdateManyWithoutStoreNestedInput
   }
 
   export type StoreUncheckedUpdateWithoutProductsInput = {
@@ -5963,6 +7319,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ratings?: StoreRatingUncheckedUpdateManyWithoutStoreNestedInput
+    favorites?: StoreFavoriteUncheckedUpdateManyWithoutStoreNestedInput
   }
 
   export type StoreCreateWithoutRatingsInput = {
@@ -5982,6 +7339,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     products?: StoreProductCreateNestedManyWithoutStoreInput
+    favorites?: StoreFavoriteCreateNestedManyWithoutStoreInput
   }
 
   export type StoreUncheckedCreateWithoutRatingsInput = {
@@ -6002,6 +7360,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     products?: StoreProductUncheckedCreateNestedManyWithoutStoreInput
+    favorites?: StoreFavoriteUncheckedCreateNestedManyWithoutStoreInput
   }
 
   export type StoreCreateOrConnectWithoutRatingsInput = {
@@ -6037,6 +7396,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     products?: StoreProductUpdateManyWithoutStoreNestedInput
+    favorites?: StoreFavoriteUpdateManyWithoutStoreNestedInput
   }
 
   export type StoreUncheckedUpdateWithoutRatingsInput = {
@@ -6057,6 +7417,105 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     products?: StoreProductUncheckedUpdateManyWithoutStoreNestedInput
+    favorites?: StoreFavoriteUncheckedUpdateManyWithoutStoreNestedInput
+  }
+
+  export type StoreCreateWithoutFavoritesInput = {
+    ownerUserId: string
+    name: string
+    active?: boolean
+    location: string
+    rating: string
+    image: string
+    badges?: NullableJsonNullValueInput | InputJsonValue
+    delivery: string
+    minOrderRs: string
+    openingTime?: string
+    closingTime?: string
+    phoneNumber: string
+    searchCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    products?: StoreProductCreateNestedManyWithoutStoreInput
+    ratings?: StoreRatingCreateNestedManyWithoutStoreInput
+  }
+
+  export type StoreUncheckedCreateWithoutFavoritesInput = {
+    id?: number
+    ownerUserId: string
+    name: string
+    active?: boolean
+    location: string
+    rating: string
+    image: string
+    badges?: NullableJsonNullValueInput | InputJsonValue
+    delivery: string
+    minOrderRs: string
+    openingTime?: string
+    closingTime?: string
+    phoneNumber: string
+    searchCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    products?: StoreProductUncheckedCreateNestedManyWithoutStoreInput
+    ratings?: StoreRatingUncheckedCreateNestedManyWithoutStoreInput
+  }
+
+  export type StoreCreateOrConnectWithoutFavoritesInput = {
+    where: StoreWhereUniqueInput
+    create: XOR<StoreCreateWithoutFavoritesInput, StoreUncheckedCreateWithoutFavoritesInput>
+  }
+
+  export type StoreUpsertWithoutFavoritesInput = {
+    update: XOR<StoreUpdateWithoutFavoritesInput, StoreUncheckedUpdateWithoutFavoritesInput>
+    create: XOR<StoreCreateWithoutFavoritesInput, StoreUncheckedCreateWithoutFavoritesInput>
+    where?: StoreWhereInput
+  }
+
+  export type StoreUpdateToOneWithWhereWithoutFavoritesInput = {
+    where?: StoreWhereInput
+    data: XOR<StoreUpdateWithoutFavoritesInput, StoreUncheckedUpdateWithoutFavoritesInput>
+  }
+
+  export type StoreUpdateWithoutFavoritesInput = {
+    ownerUserId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    location?: StringFieldUpdateOperationsInput | string
+    rating?: StringFieldUpdateOperationsInput | string
+    image?: StringFieldUpdateOperationsInput | string
+    badges?: NullableJsonNullValueInput | InputJsonValue
+    delivery?: StringFieldUpdateOperationsInput | string
+    minOrderRs?: StringFieldUpdateOperationsInput | string
+    openingTime?: StringFieldUpdateOperationsInput | string
+    closingTime?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: StringFieldUpdateOperationsInput | string
+    searchCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    products?: StoreProductUpdateManyWithoutStoreNestedInput
+    ratings?: StoreRatingUpdateManyWithoutStoreNestedInput
+  }
+
+  export type StoreUncheckedUpdateWithoutFavoritesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    ownerUserId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    location?: StringFieldUpdateOperationsInput | string
+    rating?: StringFieldUpdateOperationsInput | string
+    image?: StringFieldUpdateOperationsInput | string
+    badges?: NullableJsonNullValueInput | InputJsonValue
+    delivery?: StringFieldUpdateOperationsInput | string
+    minOrderRs?: StringFieldUpdateOperationsInput | string
+    openingTime?: StringFieldUpdateOperationsInput | string
+    closingTime?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: StringFieldUpdateOperationsInput | string
+    searchCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    products?: StoreProductUncheckedUpdateManyWithoutStoreNestedInput
+    ratings?: StoreRatingUncheckedUpdateManyWithoutStoreNestedInput
   }
 
   export type StoreProductCreateManyStoreInput = {
@@ -6077,6 +7536,12 @@ export namespace Prisma {
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type StoreFavoriteCreateManyStoreInput = {
+    id?: string
+    userId: string
+    createdAt?: Date | string
   }
 
   export type StoreProductUpdateWithoutStoreInput = {
@@ -6136,6 +7601,24 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StoreFavoriteUpdateWithoutStoreInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StoreFavoriteUncheckedUpdateWithoutStoreInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StoreFavoriteUncheckedUpdateManyWithoutStoreInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

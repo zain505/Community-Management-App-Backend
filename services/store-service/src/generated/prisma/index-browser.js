@@ -162,6 +162,13 @@ exports.Prisma.StoreRatingScalarFieldEnum = {
   storeId: 'storeId'
 };
 
+exports.Prisma.StoreFavoriteScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  storeId: 'storeId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -215,11 +222,17 @@ exports.Prisma.StoreRatingOrderByRelevanceFieldEnum = {
   description: 'description'
 };
 
+exports.Prisma.StoreFavoriteOrderByRelevanceFieldEnum = {
+  id: 'id',
+  userId: 'userId'
+};
+
 
 exports.Prisma.ModelName = {
   Store: 'Store',
   StoreProduct: 'StoreProduct',
-  StoreRating: 'StoreRating'
+  StoreRating: 'StoreRating',
+  StoreFavorite: 'StoreFavorite'
 };
 
 /**

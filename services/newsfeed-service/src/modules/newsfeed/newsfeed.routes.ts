@@ -8,10 +8,8 @@ import {
   likeNewsFeed,
   listMyNewsFeedPosts,
   listNewsFeed,
-  listSavedNewsFeed,
   listUserSubmittedNewsFeed,
   reviewNewsFeedPost,
-  saveNewsFeed,
   syncNewsFeed,
 } from './newsfeed.controller';
 import {
@@ -40,8 +38,6 @@ newsFeedRouter.get(
   validate({ query: listUserSubmittedNewsFeedQuerySchema }),
   asyncHandler(listUserSubmittedNewsFeed),
 );
-newsFeedRouter.get('/saved', requireAuth, validate({ query: listNewsFeedQuerySchema }), asyncHandler(listSavedNewsFeed));
-newsFeedRouter.post('/:id/save', requireAuth, validate({ params: newsFeedIdParamSchema }), asyncHandler(saveNewsFeed));
 newsFeedRouter.post('/:id/likes', requireAuth, validate({ params: newsFeedIdParamSchema }), asyncHandler(likeNewsFeed));
 newsFeedRouter.patch(
   '/:id/approval',

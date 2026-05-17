@@ -5,6 +5,7 @@ import { loginRateLimiter } from '../../middleware/rate-limit';
 import { validate } from '../../middleware/validate';
 import {
   changePassword,
+  deleteUserAccount,
   getManagedUserStatus,
   getUserStatus,
   listAllUsers,
@@ -64,6 +65,12 @@ authRouter.patch(
   requireAuth,
   validate({ params: userIdParamSchema, body: updateUserActivationBodySchema }),
   asyncHandler(updateUserActivation),
+);
+authRouter.delete(
+  '/users/:id',
+  requireAuth,
+  validate({ params: userIdParamSchema }),
+  asyncHandler(deleteUserAccount),
 );
 authRouter.patch(
   '/users/:id/name',

@@ -6,8 +6,6 @@ jest.mock('../../src/modules/newsfeed/newsfeed.service', () => ({
     reviewNewsFeedPost: jest.fn(),
     deleteMyNewsFeedPost: jest.fn(),
     listNewsFeed: jest.fn(),
-    listSavedNewsFeed: jest.fn(),
-    saveNewsFeed: jest.fn(),
     likeNewsFeed: jest.fn(),
     syncNewsFeed: jest.fn(),
   },

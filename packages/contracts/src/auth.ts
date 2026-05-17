@@ -89,3 +89,8 @@ export interface AdminResetUserPasswordResponse {
   message: string;
   mobileNumber: string;
 }
+
+export interface DeleteUserResponse {
+  id: string;
+  message: string;
+}

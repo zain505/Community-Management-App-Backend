@@ -64,6 +64,12 @@ export const authRepository = {
     });
   },
 
+  deleteUserById(id: string): Promise<User> {
+    return prisma.user.delete({
+      where: { id },
+    });
+  },
+
   async updateUserPasswordHashAndRevokeTokens(options: {
     userId: string;
     passwordHash: string;

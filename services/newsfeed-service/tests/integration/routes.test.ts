@@ -53,20 +53,16 @@ describe('routes', () => {
     expect(response.body.code).toBe('UNAUTHORIZED');
   });
 
-  it('requires auth to save a newsfeed item', async () => {
+  it('does not expose saved newsfeed routes', async () => {
     const response = await request(app).post('/v1/newsfeed/feed-1/save').send({});
+    const savedListResponse = await request(app).get('/v1/newsfeed/saved');
 
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(404);
     expect(response.body.success).toBe(false);
-    expect(response.body.code).toBe('UNAUTHORIZED');
-  });
-
-  it('requires auth to list saved newsfeed items', async () => {
-    const response = await request(app).get('/v1/newsfeed/saved');
-
-    expect(response.status).toBe(401);
-    expect(response.body.success).toBe(false);
-    expect(response.body.code).toBe('UNAUTHORIZED');
+    expect(response.body.code).toBe('NOT_FOUND');
+    expect(savedListResponse.status).toBe(404);
+    expect(savedListResponse.body.success).toBe(false);
+    expect(savedListResponse.body.code).toBe('NOT_FOUND');
   });
 
   it('requires auth to create a user newsfeed post', async () => {

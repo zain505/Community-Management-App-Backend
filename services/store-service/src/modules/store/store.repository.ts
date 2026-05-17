@@ -34,6 +34,13 @@ const storeWithProductsInclude = {
   },
 } satisfies Prisma.StoreInclude;
 
+const favoriteStoreSelect = {
+  createdAt: true,
+  store: {
+    include: storeListInclude,
+  },
+} satisfies Prisma.StoreFavoriteSelect;
+
 const storeRankingSelect = {
   id: true,
   name: true,
@@ -83,6 +90,10 @@ export type StoreReviewRecord = Prisma.StoreRatingGetPayload<{
 
 export type StoreRankingRecord = Prisma.StoreGetPayload<{
   select: typeof storeRankingSelect;
+}>;
+
+export type FavoriteStoreRecord = Prisma.StoreFavoriteGetPayload<{
+  select: typeof favoriteStoreSelect;
 }>;
 
 export type StoreBasicRecord = Prisma.StoreGetPayload<{
@@ -249,6 +260,23 @@ export const storeRepository = {
     });
   },
 
+  listFavoriteStores(userId: string, search?: string, page = 1): Promise<FavoriteStoreRecord[]> {
+    return prisma.storeFavorite.findMany({
+      where: {
+        userId,
+        store: {
+          is: buildStoreListWhere(search, true),
+        },
+      },
+      skip: (page - 1) * STORES_PER_PAGE,
+      take: STORES_PER_PAGE,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: favoriteStoreSelect,
+    });
+  },
+
   async incrementSearchCountByIds(storeIds: number[]): Promise<void> {
     if (storeIds.length === 0) {
       return;
@@ -315,6 +343,43 @@ export const storeRepository = {
             : undefined,
       },
       include: storeWithProductsInclude,
+    });
+  },
+
+  async saveFavoriteForUser(storeId: number, userId: string): Promise<FavoriteStoreRecord | null> {
+    return prisma.$transaction(async (transaction) => {
+      const store = await transaction.store.findFirst({
+        where: {
+          id: storeId,
+          active: true,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!store) {
+        return null;
+      }
+
+      return transaction.storeFavorite.upsert({
+        where: {
+          userId_storeId: {
+            userId,
+            storeId,
+          },
+        },
+        create: {
+          userId,
+          store: {
+            connect: {
+              id: storeId,
+            },
+          },
+        },
+        update: {},
+        select: favoriteStoreSelect,
+      });
     });
   },
 
@@ -450,6 +515,15 @@ export const storeRepository = {
       where: { id: storeId },
       data: { active },
       include: storeWithProductsInclude,
+    });
+  },
+
+  async deleteFavoriteForUser(storeId: number, userId: string): Promise<void> {
+    await prisma.storeFavorite.deleteMany({
+      where: {
+        storeId,
+        userId,
+      },
     });
   },
 

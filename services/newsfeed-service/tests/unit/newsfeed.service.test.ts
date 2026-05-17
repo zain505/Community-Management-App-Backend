@@ -9,9 +9,6 @@ jest.mock('../../src/modules/newsfeed/newsfeed.repository', () => ({
     listUserSubmittedEntries: jest.fn(),
     deleteEntriesOlderThan: jest.fn(),
     deleteUserPostByAuthor: jest.fn(),
-    deleteExpiredSavedEntries: jest.fn(),
-    saveEntry: jest.fn(),
-    listSavedEntries: jest.fn(),
     likeEntry: jest.fn(),
     updateApprovalStatus: jest.fn(),
     getMetricStateStoreId: jest.fn(),
@@ -120,7 +117,6 @@ describe('newsfeed service', () => {
       createdAt: new Date('2026-03-14T08:00:00.000Z'),
     } as never);
     mockedNewsFeedRepository.deleteEntriesOlderThan.mockResolvedValue([]);
-    mockedNewsFeedRepository.deleteExpiredSavedEntries.mockResolvedValue(0);
     mockedNewsFeedRepository.upsertMetricState.mockResolvedValue(undefined);
   });
 
@@ -962,235 +958,6 @@ describe('newsfeed service', () => {
     expect(mockedNewsFeedRepository.updateApprovalStatus).not.toHaveBeenCalled();
   });
 
-  it('saves a feed for one month and returns the enriched saved item', async () => {
-    mockedNewsFeedRepository.saveEntry.mockResolvedValue({
-      id: 'save-1',
-      savedAt: new Date('2026-03-19T12:00:00.000Z'),
-      expiresAt: new Date('2026-04-19T12:00:00.000Z'),
-      newsFeedItem: {
-        id: 'feed-3',
-        type: 'STORE_CREATED',
-        title: 'Fresh Mart opened nearby',
-        description: 'Fresh Mart is now open in your area.',
-        storeId: 7,
-        storeName: 'Fresh Mart',
-        metadata: null,
-        _count: {
-          likes: 2,
-        },
-        createdAt: new Date('2026-03-14T08:00:00.000Z'),
-      },
-    } as never);
-    mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
-      {
-        id: 7,
-        ownerUserId: 'user-123',
-        name: 'Fresh Mart',
-        active: true,
-        location: 'Main Road',
-        rating: '4.5',
-        image: 'https://example.com/fresh-mart.png',
-        badges: ['Popular'],
-        delivery: '30 mins',
-        minOrderRs: '500',
-        openingTime: '09:00',
-        closingTime: '22:00',
-        phoneNumber: '03001234567',
-      },
-    ]);
-    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
-      {
-        id: 'user-123',
-        name: 'Store Owner',
-        mobileNumber: '03009998888',
-        profile: {
-          image: null,
-        },
-        createdAt: '2026-03-01T08:00:00.000Z',
-      },
-    ]);
-
-    const savedFeed = await newsFeedService.saveNewsFeed('user-123', 'feed-3');
-
-    expect(savedFeed).toEqual({
-      id: 'feed-3',
-      type: 'STORE_CREATED',
-      source: 'SYSTEM',
-      approvalStatus: 'APPROVED',
-      title: 'Fresh Mart opened nearby',
-      description: 'Fresh Mart is now open in your area.',
-      storeId: 7,
-      storeName: 'Fresh Mart',
-      store: {
-        id: 7,
-        name: 'Fresh Mart',
-        active: true,
-        location: 'Main Road',
-        rating: '4.5',
-        image: 'https://example.com/fresh-mart.png',
-        badges: ['Popular'],
-        delivery: '30 mins',
-        minOrderRs: '500',
-        openingTime: '09:00',
-        closingTime: '22:00',
-        phoneNumber: '03001234567',
-      },
-      storeOwner: {
-        id: 'user-123',
-        name: 'Store Owner',
-        mobileNumber: '03009998888',
-        profile: {
-          image: null,
-        },
-        createdAt: '2026-03-01T08:00:00.000Z',
-      },
-      metadata: undefined,
-      likesCount: 2,
-      createdAt: '2026-03-14T08:00:00.000Z',
-      savedAt: '2026-03-19T12:00:00.000Z',
-      expiresAt: '2026-04-19T12:00:00.000Z',
-    });
-    expect(mockedNewsFeedRepository.deleteExpiredSavedEntries).toHaveBeenCalledWith(
-      new Date('2026-03-19T12:00:00.000Z'),
-    );
-    expect(mockedNewsFeedRepository.saveEntry).toHaveBeenCalledWith(
-      'feed-3',
-      'user-123',
-      new Date('2026-03-19T12:00:00.000Z'),
-      new Date('2026-04-19T12:00:00.000Z'),
-    );
-  });
-
-  it('lists saved feeds for a user and removes expired records first', async () => {
-    mockedNewsFeedRepository.listSavedEntries.mockResolvedValue([
-      {
-        id: 'save-1',
-        savedAt: new Date('2026-03-19T12:00:00.000Z'),
-        expiresAt: new Date('2026-04-19T12:00:00.000Z'),
-        newsFeedItem: {
-          id: 'feed-4',
-          type: 'PRODUCT_UPDATED',
-          title: 'Fresh Mart updated a product.',
-          description: 'Orange Juice price was updated.',
-          storeId: 7,
-          storeName: 'Fresh Mart',
-          metadata: {
-            current: {
-              id: 'prod-1',
-              name: 'Orange Juice',
-              price: '550',
-              image: 'https://example.com/orange-juice.png',
-              tag: 'Fresh',
-            },
-          },
-          _count: {
-            likes: 4,
-          },
-          createdAt: new Date('2026-03-14T08:00:00.000Z'),
-        },
-      },
-    ] as never);
-    mockedStoreClient.findStoreSummariesByIds.mockResolvedValue([
-      {
-        id: 7,
-        ownerUserId: 'user-123',
-        name: 'Fresh Mart',
-        active: true,
-        location: 'Main Road',
-        rating: '4.5',
-        image: 'https://example.com/fresh-mart.png',
-        badges: ['Popular'],
-        delivery: '30 mins',
-        minOrderRs: '500',
-        openingTime: '09:00',
-        closingTime: '22:00',
-        phoneNumber: '03001234567',
-      },
-    ]);
-    mockedAuthClient.findUsersPublicByIds.mockResolvedValue([
-      {
-        id: 'user-123',
-        name: 'Store Owner',
-        mobileNumber: '03009998888',
-        profile: {
-          image: null,
-        },
-        createdAt: '2026-03-01T08:00:00.000Z',
-      },
-    ]);
-
-    const savedFeeds = await newsFeedService.listSavedNewsFeed('user-123', 1, 10);
-
-    expect(savedFeeds).toEqual({
-      items: [
-        {
-          id: 'feed-4',
-          type: 'PRODUCT_UPDATED',
-          source: 'SYSTEM',
-          approvalStatus: 'APPROVED',
-          title: 'Fresh Mart updated a product.',
-          description: 'Orange Juice price was updated.',
-          storeId: 7,
-          storeName: 'Fresh Mart',
-          store: {
-            id: 7,
-            name: 'Fresh Mart',
-            active: true,
-            location: 'Main Road',
-            rating: '4.5',
-            image: 'https://example.com/fresh-mart.png',
-            badges: ['Popular'],
-            delivery: '30 mins',
-            minOrderRs: '500',
-            openingTime: '09:00',
-            closingTime: '22:00',
-            phoneNumber: '03001234567',
-          },
-          storeOwner: {
-            id: 'user-123',
-            name: 'Store Owner',
-            mobileNumber: '03009998888',
-            profile: {
-              image: null,
-            },
-            createdAt: '2026-03-01T08:00:00.000Z',
-          },
-          product: {
-            id: 'prod-1',
-            name: 'Orange Juice',
-            price: '550',
-            image: 'https://example.com/orange-juice.png',
-            tag: 'Fresh',
-          },
-          metadata: {
-            current: {
-              id: 'prod-1',
-              name: 'Orange Juice',
-              price: '550',
-              image: 'https://example.com/orange-juice.png',
-              tag: 'Fresh',
-            },
-          },
-          likesCount: 4,
-          createdAt: '2026-03-14T08:00:00.000Z',
-          savedAt: '2026-03-19T12:00:00.000Z',
-          expiresAt: '2026-04-19T12:00:00.000Z',
-        },
-      ],
-      page: 1,
-      limit: 10,
-    });
-    expect(mockedNewsFeedRepository.deleteExpiredSavedEntries).toHaveBeenCalledWith(
-      new Date('2026-03-19T12:00:00.000Z'),
-    );
-    expect(mockedNewsFeedRepository.listSavedEntries).toHaveBeenCalledWith(
-      'user-123',
-      new Date('2026-03-19T12:00:00.000Z'),
-      1,
-      10,
-    );
-  });
-
   it('updates most-active state without creating an extra metric feed for the same store update request', async () => {
     mockedNewsFeedRepository.getMetricStateStoreId.mockResolvedValue(null);
     mockedNewsFeedRepository.findMostActiveStoreId.mockResolvedValue(7);
@@ -1273,15 +1040,6 @@ describe('newsfeed service', () => {
     });
     expect(mockedNewsFeedRepository.likeEntry).toHaveBeenCalledWith('feed-1', 'user-123');
     expect(mockedNewsFeedCache.invalidateNewsFeedListCache).toHaveBeenCalled();
-  });
-
-  it('throws when saving a missing feed item', async () => {
-    mockedNewsFeedRepository.saveEntry.mockResolvedValue(null as never);
-
-    await expect(newsFeedService.saveNewsFeed('user-123', 'missing-feed')).rejects.toMatchObject({
-      code: 'NEWSFEED_NOT_FOUND',
-      statusCode: 404,
-    });
   });
 
   it('throws when liking a missing feed item', async () => {

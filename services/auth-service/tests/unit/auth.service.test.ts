@@ -4,6 +4,7 @@ jest.mock('../../src/modules/auth/auth.repository', () => ({
     findUserById: jest.fn(),
     findAllUsers: jest.fn(),
     createUser: jest.fn(),
+    deleteUserById: jest.fn(),
     updateUserActiveStatus: jest.fn(),
     updateUserPasswordHashAndRevokeTokens: jest.fn(),
     updateUserName: jest.fn(),
@@ -421,6 +422,57 @@ describe('auth service', () => {
     });
   });
 
+  it('allows active super admins to delete another user account', async () => {
+    mockedAuthRepository.findUserById
+      .mockResolvedValueOnce({
+        id: 'super-123',
+        mobileNumber: '+923000000001',
+        name: 'Super Admin',
+        usertype: 0,
+        profile: {
+          image: null,
+        },
+        passwordHash: 'hashed-password',
+        isActive: true,
+        createdAt: new Date('2026-03-15T09:00:00.000Z'),
+      } as never)
+      .mockResolvedValueOnce({
+        id: 'user-456',
+        mobileNumber: '+923009876543',
+        name: 'Community User',
+        usertype: 2,
+        profile: {
+          image: null,
+        },
+        passwordHash: 'hashed-password',
+        isActive: true,
+        createdAt: new Date('2026-03-15T09:00:00.000Z'),
+      } as never);
+    mockedAuthRepository.deleteUserById.mockResolvedValue({
+      id: 'user-456',
+      mobileNumber: '+923009876543',
+      name: 'Community User',
+      usertype: 2,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    const result = await authService.deleteUserAccount({
+      requesterId: 'super-123',
+      userId: 'user-456',
+    });
+
+    expect(mockedAuthRepository.deleteUserById).toHaveBeenCalledWith('user-456');
+    expect(result).toEqual({
+      id: 'user-456',
+      message: 'User account deleted',
+    });
+  });
+
   it('rejects password resets from non-super-admin users', async () => {
     mockedAuthRepository.findUserById.mockResolvedValue({
       id: 'admin-123',
@@ -448,6 +500,34 @@ describe('auth service', () => {
 
     expect(mockedAuthRepository.findUserByMobileNumber).not.toHaveBeenCalled();
     expect(mockedAuthRepository.updateUserPasswordHashAndRevokeTokens).not.toHaveBeenCalled();
+  });
+
+  it('rejects attempts by a super admin to delete their own account', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValueOnce({
+      id: 'super-123',
+      mobileNumber: '+923000000001',
+      name: 'Super Admin',
+      usertype: 0,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    await expect(
+      authService.deleteUserAccount({
+        requesterId: 'super-123',
+        userId: 'super-123',
+      }),
+    ).rejects.toMatchObject({
+      code: 'SELF_DELETE_FORBIDDEN',
+      statusCode: 403,
+    });
+
+    expect(mockedAuthRepository.findUserById).toHaveBeenCalledTimes(1);
+    expect(mockedAuthRepository.deleteUserById).not.toHaveBeenCalled();
   });
 
   it('allows a logged-in user to update their own name', async () => {

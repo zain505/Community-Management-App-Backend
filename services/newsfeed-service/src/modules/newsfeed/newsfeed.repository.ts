@@ -46,24 +46,11 @@ export type NewsFeedItemRecord = Prisma.NewsFeedItemGetPayload<{
   select: typeof newsFeedListSelect;
 }>;
 
-const savedNewsFeedSelect = {
-  id: true,
-  savedAt: true,
-  expiresAt: true,
-  newsFeedItem: {
-    select: newsFeedListSelect,
-  },
-} satisfies Prisma.NewsFeedSaveSelect;
-
 const deletedNewsFeedItemSelect = {
   id: true,
   image: true,
   metadata: true,
 } satisfies Prisma.NewsFeedItemSelect;
-
-export type SavedNewsFeedRecord = Prisma.NewsFeedSaveGetPayload<{
-  select: typeof savedNewsFeedSelect;
-}>;
 
 export type DeletedNewsFeedItemRecord = Prisma.NewsFeedItemGetPayload<{
   select: typeof deletedNewsFeedItemSelect;
@@ -292,83 +279,6 @@ export const newsFeedRepository = {
       });
 
       return item;
-    });
-  },
-
-  deleteExpiredSavedEntries(now: Date): Promise<number> {
-    return prisma.newsFeedSave
-      .deleteMany({
-        where: {
-          expiresAt: {
-            lte: now,
-          },
-        },
-      })
-      .then((result) => result.count);
-  },
-
-  async saveEntry(
-    newsFeedItemId: string,
-    userId: string,
-    savedAt: Date,
-    expiresAt: Date,
-  ): Promise<SavedNewsFeedRecord | null> {
-    return prisma.$transaction(async (transaction) => {
-      const item = await transaction.newsFeedItem.findFirst({
-        where: {
-          id: newsFeedItemId,
-          ...buildPublicNewsFeedWhere(),
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!item) {
-        return null;
-      }
-
-      return transaction.newsFeedSave.upsert({
-        where: {
-          newsFeedItemId_userId: {
-            newsFeedItemId,
-            userId,
-          },
-        },
-        create: {
-          userId,
-          savedAt,
-          expiresAt,
-          newsFeedItem: {
-            connect: {
-              id: newsFeedItemId,
-            },
-          },
-        },
-        update: {
-          savedAt,
-          expiresAt,
-        },
-        select: savedNewsFeedSelect,
-      });
-    });
-  },
-
-  listSavedEntries(userId: string, now: Date, page: number, limit: number): Promise<SavedNewsFeedRecord[]> {
-    return prisma.newsFeedSave.findMany({
-      where: {
-        userId,
-        expiresAt: {
-          gt: now,
-        },
-        newsFeedItem: buildPublicNewsFeedWhere(),
-      },
-      orderBy: {
-        savedAt: 'desc',
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      select: savedNewsFeedSelect,
     });
   },
 

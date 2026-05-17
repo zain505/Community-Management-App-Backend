@@ -2,16 +2,19 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 jest.mock('../../src/modules/store/store.repository', () => ({
   storeRepository: {
+    addRatingForUser: jest.fn(),
     createForUser: jest.fn(),
-    listStores: jest.fn(),
-    listStoresForAdmin: jest.fn(),
-    incrementSearchCountByIds: jest.fn(),
+    deleteById: jest.fn(),
+    deleteFavoriteForUser: jest.fn(),
     findStoreById: jest.fn(),
     findStoreByUserId: jest.fn(),
-    deleteById: jest.fn(),
-    addRatingForUser: jest.fn(),
     updateById: jest.fn(),
     updateActiveStatusById: jest.fn(),
+    incrementSearchCountByIds: jest.fn(),
+    listFavoriteStores: jest.fn(),
+    listStores: jest.fn(),
+    listStoresForAdmin: jest.fn(),
+    saveFavoriteForUser: jest.fn(),
   },
 }));
 
@@ -110,6 +113,14 @@ function buildStoreReview(overrides: Record<string, unknown> = {}) {
     rating: 4.5,
     description: 'Fresh produce and helpful staff.',
     createdAt: new Date('2026-03-14T10:00:00.000Z'),
+    ...overrides,
+  } as never;
+}
+
+function buildFavoriteStoreRecord(overrides: Record<string, unknown> = {}) {
+  return {
+    createdAt: new Date('2026-03-16T09:00:00.000Z'),
+    store: buildStoreRecord(),
     ...overrides,
   } as never;
 }
@@ -331,6 +342,69 @@ describe('store service', () => {
     ]);
     expect(mockedStoreRepository.listStoresForAdmin).toHaveBeenCalledWith('fresh', 2, false);
     expect(mockedStoreRepository.incrementSearchCountByIds).not.toHaveBeenCalled();
+  });
+
+  it('lists the authenticated user favorite stores with isFavorite set', async () => {
+    mockedStoreRepository.listFavoriteStores.mockResolvedValue([
+      buildFavoriteStoreRecord({
+        store: buildStoreRecord({
+          id: 25,
+          name: 'Favorite Mart',
+        }),
+      }),
+    ]);
+
+    const stores = await storeService.listFavoriteStores('user-123', 'favorite', 2);
+
+    expect(stores).toEqual([
+      expect.objectContaining({
+        id: 25,
+        name: 'Favorite Mart',
+        isFavorite: true,
+      }),
+    ]);
+    expect(mockedStoreRepository.listFavoriteStores).toHaveBeenCalledWith('user-123', 'favorite', 2);
+  });
+
+  it('marks an active store as favorite for an authenticated user', async () => {
+    mockedStoreRepository.saveFavoriteForUser.mockResolvedValue(
+      buildFavoriteStoreRecord({
+        store: buildStoreRecord({
+          id: 18,
+          name: 'Fresh Mart2',
+        }),
+      }),
+    );
+
+    const store = await storeService.favoriteStore('user-123', 18);
+
+    expect(store).toEqual(
+      expect.objectContaining({
+        id: 18,
+        name: 'Fresh Mart2',
+        isFavorite: true,
+        image: absoluteStoreImageUrl,
+      }),
+    );
+    expect(mockedStoreRepository.saveFavoriteForUser).toHaveBeenCalledWith(18, 'user-123');
+  });
+
+  it('rejects favorite requests for missing or inactive stores', async () => {
+    mockedStoreRepository.saveFavoriteForUser.mockResolvedValue(null);
+
+    await expect(storeService.favoriteStore('user-123', 999)).rejects.toMatchObject({
+      code: 'STORE_NOT_FOUND',
+      statusCode: 404,
+    });
+  });
+
+  it('removes a favorite store without touching public store caches', async () => {
+    mockedStoreRepository.deleteFavoriteForUser.mockResolvedValue(undefined);
+
+    await storeService.unfavoriteStore('user-123', 18);
+
+    expect(mockedStoreRepository.deleteFavoriteForUser).toHaveBeenCalledWith(18, 'user-123');
+    expect(mockedStoreCache.invalidateStoreListCache).not.toHaveBeenCalled();
   });
 
   it('publishes only a store-created event when creating a store', async () => {

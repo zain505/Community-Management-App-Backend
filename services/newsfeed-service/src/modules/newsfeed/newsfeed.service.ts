@@ -8,8 +8,6 @@ import type {
   NewsFeedListResponse,
   NewsFeedMetric,
   NewsFeedProductSnapshot,
-  SavedNewsFeedItem,
-  SavedNewsFeedListResponse,
   NewsFeedSyncEvent,
   NewsFeedSyncRequest,
   StoreBasicSnapshot,
@@ -39,7 +37,6 @@ import {
   newsFeedRepository,
   type DeletedNewsFeedItemRecord,
   type NewsFeedItemRecord,
-  type SavedNewsFeedRecord,
 } from './newsfeed.repository';
 import { storeClient } from '../store/store.client';
 
@@ -145,22 +142,6 @@ function normalizePagination(
     page: normalizedPage,
     limit: normalizedLimit,
   };
-}
-
-function addCalendarMonth(date: Date): Date {
-  const result = new Date(date);
-  const originalDay = result.getUTCDate();
-
-  result.setUTCDate(1);
-  result.setUTCMonth(result.getUTCMonth() + 1);
-
-  const lastDayOfTargetMonth = new Date(
-    Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-
-  result.setUTCDate(Math.min(originalDay, lastDayOfTargetMonth));
-
-  return result;
 }
 
 function subtractCalendarMonth(date: Date): Date {
@@ -571,19 +552,6 @@ async function enrichNewsFeedItems(items: NewsFeedItemRecord[]): Promise<NewsFee
   return items.map((item) => enrichNewsFeedItem(item, enrichmentData));
 }
 
-async function toSavedNewsFeedItem(
-  item: SavedNewsFeedRecord,
-  enrichmentData: NewsFeedEnrichmentData,
-): Promise<SavedNewsFeedItem> {
-  const newsFeedItem = enrichNewsFeedItem(item.newsFeedItem, enrichmentData);
-
-  return {
-    ...newsFeedItem,
-    savedAt: item.savedAt.toISOString(),
-    expiresAt: item.expiresAt.toISOString(),
-  };
-}
-
 async function createEntry(payload: NewsFeedSyncEvent): Promise<void> {
   const normalizedPayload = await normalizeSyncEventImages(payload);
 
@@ -829,52 +797,6 @@ export const newsFeedService = {
     return {
       id: deletedPost.id,
       message: 'Newsfeed post deleted',
-    };
-  },
-
-  async saveNewsFeed(userId: string, newsFeedId: string): Promise<SavedNewsFeedItem> {
-    const now = new Date();
-    const expiresAt = addCalendarMonth(now);
-
-    await cleanupExpiredNewsFeedEntries(now);
-    await newsFeedRepository.deleteExpiredSavedEntries(now);
-
-    const savedEntry = await newsFeedRepository.saveEntry(newsFeedId, userId, now, expiresAt);
-
-    if (!savedEntry) {
-      throwNewsFeedNotFound();
-    }
-
-    const enrichmentData = await buildNewsFeedEnrichmentData([savedEntry.newsFeedItem]);
-
-    return toSavedNewsFeedItem(savedEntry, enrichmentData);
-  },
-
-  async listSavedNewsFeed(
-    userId: string,
-    page = 1,
-    limit = DEFAULT_NEWSFEED_LIMIT,
-  ): Promise<SavedNewsFeedListResponse> {
-    const pagination = normalizePagination(page, limit);
-    const now = new Date();
-
-    await cleanupExpiredNewsFeedEntries(now);
-    await newsFeedRepository.deleteExpiredSavedEntries(now);
-
-    const items = await newsFeedRepository.listSavedEntries(
-      userId,
-      now,
-      pagination.page,
-      pagination.limit,
-    );
-    const enrichmentData = await buildNewsFeedEnrichmentData(
-      items.map((item) => item.newsFeedItem),
-    );
-
-    return {
-      items: await Promise.all(items.map((item) => toSavedNewsFeedItem(item, enrichmentData))),
-      page: pagination.page,
-      limit: pagination.limit,
     };
   },
 

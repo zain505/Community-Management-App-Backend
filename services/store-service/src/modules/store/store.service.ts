@@ -36,6 +36,7 @@ import { authClient } from '../auth/auth-client';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
 import {
   storeRepository,
+  type FavoriteStoreRecord,
   type StoreReviewRecord,
   type StoreWithProductsRecord,
 } from './store.repository';
@@ -82,8 +83,8 @@ function toStoreSummary(store: {
   closingTime: string;
   phoneNumber: string;
   ratings?: StoreReviewRecord[];
-}): StoreSummary {
-  return {
+}, options?: { isFavorite?: boolean }): StoreSummary {
+  const summary: StoreSummary = {
     id: store.id,
     name: store.name,
     active: store.active,
@@ -98,6 +99,12 @@ function toStoreSummary(store: {
     phoneNumber: store.phoneNumber,
     reviews: store.ratings?.map(toStoreReview),
   };
+
+  if (options?.isFavorite) {
+    summary.isFavorite = true;
+  }
+
+  return summary;
 }
 
 function sanitizeStoreSummary(store: StoreSummary): StoreSummary {
@@ -112,6 +119,10 @@ function toStoreDetails(store: StoreWithProductsRecord): StoreDetails {
     ...toStoreSummary(store),
     products: store.products.map(toStoreProduct),
   };
+}
+
+function toFavoriteStoreSummary(favoriteStore: FavoriteStoreRecord): StoreSummary {
+  return toStoreSummary(favoriteStore.store, { isFavorite: true });
 }
 
 function toStoreBasicSnapshot(store: { id: number; name: string }): StoreBasicSnapshot {
@@ -473,7 +484,7 @@ export const storeService = {
     }
 
     const stores = await storeRepository.listStores(search, page);
-    const storeSummaries = stores.map(toStoreSummary);
+    const storeSummaries = stores.map((store) => toStoreSummary(store));
 
     if (hasSearchTerm(search) && stores.length > 0) {
       await storeRepository.incrementSearchCountByIds(stores.map((store) => store.id));
@@ -498,7 +509,12 @@ export const storeService = {
 
     const stores = await storeRepository.listStoresForAdmin(search, page, active);
 
-    return stores.map(toStoreSummary);
+    return stores.map((store) => toStoreSummary(store));
+  },
+
+  async listFavoriteStores(userId: string, search?: string, page = 1): Promise<StoreSummary[]> {
+    const favorites = await storeRepository.listFavoriteStores(userId, search, page);
+    return favorites.map(toFavoriteStoreSummary);
   },
 
   async getMyStore(userId: string): Promise<StoreDetails> {
@@ -519,6 +535,16 @@ export const storeService = {
     }
 
     return store.products.map(toStoreProduct);
+  },
+
+  async favoriteStore(userId: string, storeId: number): Promise<StoreSummary> {
+    const favoriteStore = await storeRepository.saveFavoriteForUser(storeId, userId);
+
+    if (!favoriteStore) {
+      throwStoreNotFound();
+    }
+
+    return toFavoriteStoreSummary(favoriteStore);
   },
 
   async createMyStore(userId: string, payload: CreateStoreRequest): Promise<StoreDetails> {
@@ -655,6 +681,10 @@ export const storeService = {
     } catch (error) {
       handlePrismaError(error);
     }
+  },
+
+  async unfavoriteStore(userId: string, storeId: number): Promise<void> {
+    await storeRepository.deleteFavoriteForUser(storeId, userId);
   },
 
   async deleteMyStore(userId: string): Promise<void> {

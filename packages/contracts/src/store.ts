@@ -36,6 +36,7 @@ export interface StoreSummary {
   openingTime: string;
   closingTime: string;
   phoneNumber: string;
+  isFavorite?: boolean;
   reviews?: StoreReview[];
 }
 

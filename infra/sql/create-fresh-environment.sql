@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `Store` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `ownerUserId` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
+    `active` BOOLEAN NOT NULL DEFAULT true,
     `location` VARCHAR(191) NOT NULL,
     `rating` VARCHAR(191) NOT NULL,
     `image` LONGTEXT NOT NULL,
@@ -91,6 +92,7 @@ CREATE TABLE IF NOT EXISTS `StoreProduct` (
     `price` VARCHAR(191) NOT NULL,
     `image` VARCHAR(191) NOT NULL,
     `tag` VARCHAR(191) NULL,
+    `description` VARCHAR(100) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `storeId` INTEGER NOT NULL,
@@ -107,6 +109,7 @@ CREATE TABLE IF NOT EXISTS `StoreRating` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` VARCHAR(191) NOT NULL,
     `rating` DECIMAL(4, 2) NOT NULL,
+    `description` VARCHAR(100) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `storeId` INTEGER NOT NULL,
@@ -116,6 +119,21 @@ CREATE TABLE IF NOT EXISTS `StoreRating` (
     INDEX `StoreRating_userId_idx` (`userId`),
     PRIMARY KEY (`id`),
     CONSTRAINT `StoreRating_storeId_fkey`
+      FOREIGN KEY (`storeId`) REFERENCES `Store` (`id`)
+      ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `StoreFavorite` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `storeId` INTEGER NOT NULL,
+
+    UNIQUE INDEX `StoreFavorite_userId_storeId_key` (`userId`, `storeId`),
+    INDEX `StoreFavorite_userId_createdAt_idx` (`userId`, `createdAt`),
+    INDEX `StoreFavorite_storeId_idx` (`storeId`),
+    PRIMARY KEY (`id`),
+    CONSTRAINT `StoreFavorite_storeId_fkey`
       FOREIGN KEY (`storeId`) REFERENCES `Store` (`id`)
       ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

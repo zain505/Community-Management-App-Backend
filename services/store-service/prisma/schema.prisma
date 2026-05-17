@@ -27,6 +27,7 @@ model Store {
   updatedAt   DateTime       @updatedAt
   products    StoreProduct[]
   ratings     StoreRating[]
+  favorites   StoreFavorite[]
 
   @@index([name])
   @@index([location])
@@ -61,6 +62,18 @@ model StoreRating {
   @@unique([storeId, userId])
   @@index([storeId])
   @@index([userId])
+}
+
+model StoreFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  storeId   Int
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storeId])
+  @@index([userId, createdAt])
+  @@index([storeId])
 }
 
 enum NewsFeedEventType {

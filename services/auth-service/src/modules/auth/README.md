@@ -6,6 +6,7 @@
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `POST /auth/logout`
+- `DELETE /auth/users/:id`
 - `PATCH /auth/users/:id/name`
 - `PATCH /auth/users/:id/image`
 
@@ -43,11 +44,18 @@
 - Users can only update their own name
 - JSON body with a `name` field from 2 to 80 trimmed characters
 
+### Delete user account
+
+- Requires bearer access token
+- Only active super admins can delete user accounts
+- Super admins cannot delete their own account
+
 ## Behavior summary
 
 - Register and login both return user data plus access/refresh tokens.
 - Refresh validates and rotates refresh tokens.
 - Logout revokes the provided refresh token when valid.
+- Super admins can delete any other user account.
 - User responses include a `profile` object.
 - Public auth responses return managed user images as base64 data URLs.
 - User image uploads are stored locally after the base64 payload is decoded.

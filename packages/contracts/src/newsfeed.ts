@@ -87,22 +87,11 @@ export interface NewsFeedLikeResponse {
   likesCount: number;
 }
 
-export interface SavedNewsFeedItem extends NewsFeedItem {
-  savedAt: string;
-  expiresAt: string;
-}
-
 export interface NewsFeedListResponse {
   items: NewsFeedItem[];
   page: number;
   limit: number;
   hasMore: boolean;
-}
-
-export interface SavedNewsFeedListResponse {
-  items: SavedNewsFeedItem[];
-  page: number;
-  limit: number;
 }
 
 export interface NewsFeedDeleteResponse {

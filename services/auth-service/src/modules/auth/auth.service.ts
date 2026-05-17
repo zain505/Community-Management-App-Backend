@@ -6,6 +6,7 @@ import type {
   AdminResetUserPasswordResponse,
   AuthResponse,
   AuthTokens,
+  DeleteUserResponse,
   LoginRequest,
   ManagedUserStatus,
   PasswordChangeResponse,
@@ -17,6 +18,7 @@ import type {
   UserType,
 } from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
+import { logger } from '../../config/logger';
 import {
   decodeTokenExpiration,
   hashToken,
@@ -163,13 +165,24 @@ async function deleteFileIfPresent(filePath: string | null | undefined): Promise
     return;
   }
 
-  try {
-    await fs.unlink(filePath);
-  } catch (error) {
-    const nodeError = error as NodeJS.ErrnoException;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await fs.unlink(filePath);
+      return;
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
 
-    if (nodeError.code !== 'ENOENT') {
-      throw error;
+      if (nodeError.code === 'ENOENT') {
+        return;
+      }
+
+      if (!['EBUSY', 'EPERM'].includes(nodeError.code ?? '') || attempt === 4) {
+        throw error;
+      }
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
     }
   }
 }
@@ -200,6 +213,24 @@ async function deletePreviousUserImageIfManaged(publicPath: string | null): Prom
   }
 
   await deleteFileIfPresent(existingFilePath);
+}
+
+async function deleteManagedUserImageAfterUserDeletion(
+  userId: string,
+  publicPath: string | null,
+): Promise<void> {
+  try {
+    await deletePreviousUserImageIfManaged(publicPath);
+  } catch (error) {
+    logger.warn(
+      {
+        err: error,
+        userId,
+        publicPath,
+      },
+      'Failed to delete managed user image after user deletion',
+    );
+  }
 }
 
 async function ensureActiveSuperAdmin(requesterId: string, action: string): Promise<void> {
@@ -534,6 +565,38 @@ export const authService = {
     }
 
     return toUserStatus(updatedUser);
+  },
+
+  async deleteUserAccount(params: {
+    requesterId: string;
+    userId: string;
+  }): Promise<DeleteUserResponse> {
+    await ensureActiveSuperAdmin(params.requesterId, 'delete user accounts');
+
+    if (params.requesterId === params.userId) {
+      throw new AppError('Super admins cannot delete their own account', {
+        statusCode: StatusCodes.FORBIDDEN,
+        code: 'SELF_DELETE_FORBIDDEN',
+      });
+    }
+
+    const user = await authRepository.findUserById(params.userId);
+
+    if (!user) {
+      throw new AppError('User not found', {
+        statusCode: StatusCodes.NOT_FOUND,
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    const profile = toUserProfile(user.profile);
+    await authRepository.deleteUserById(user.id);
+    await deleteManagedUserImageAfterUserDeletion(user.id, profile.image);
+
+    return {
+      id: user.id,
+      message: 'User account deleted',
+    };
   },
 
   async updateUserName(params: {

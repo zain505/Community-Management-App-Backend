@@ -49,6 +49,16 @@ export async function listStoresForAdmin(req: Request, res: Response): Promise<v
   sendSuccess(res, StatusCodes.OK, stores);
 }
 
+export async function listFavoriteStores(req: Request, res: Response): Promise<void> {
+  const query = req.query as StoreListQuery;
+  const stores = await storeService.listFavoriteStores(
+    getAuthenticatedUserId(req),
+    query.search,
+    query.page,
+  );
+  sendSuccess(res, StatusCodes.OK, stores);
+}
+
 export async function getMyStore(req: Request, res: Response): Promise<void> {
   const store = await storeService.getMyStore(getAuthenticatedUserId(req));
   sendSuccess(res, StatusCodes.OK, store);
@@ -84,6 +94,11 @@ export async function updateStoreActivation(req: Request, res: Response): Promis
   sendSuccess(res, StatusCodes.OK, store);
 }
 
+export async function favoriteStore(req: Request, res: Response): Promise<void> {
+  const store = await storeService.favoriteStore(getAuthenticatedUserId(req), getStoreId(req));
+  sendSuccess(res, StatusCodes.OK, store);
+}
+
 export async function rateStore(req: Request, res: Response): Promise<void> {
   const store = await storeService.rateStore(
     getAuthenticatedUserId(req),
@@ -91,6 +106,13 @@ export async function rateStore(req: Request, res: Response): Promise<void> {
     req.body as CreateStoreRatingRequest,
   );
   sendSuccess(res, StatusCodes.CREATED, store);
+}
+
+export async function unfavoriteStore(req: Request, res: Response): Promise<void> {
+  await storeService.unfavoriteStore(getAuthenticatedUserId(req), getStoreId(req));
+  sendSuccess(res, StatusCodes.OK, {
+    message: 'Store removed from favorites',
+  });
 }
 
 export async function deleteMyStore(req: Request, res: Response): Promise<void> {

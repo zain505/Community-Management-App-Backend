@@ -53,17 +53,6 @@ export async function listMyNewsFeedPosts(req: Request, res: Response): Promise<
   sendSuccess(res, StatusCodes.OK, posts);
 }
 
-export async function saveNewsFeed(req: Request, res: Response): Promise<void> {
-  const savedFeed = await newsFeedService.saveNewsFeed(getAuthenticatedUserId(req), getNewsFeedId(req));
-  sendSuccess(res, StatusCodes.OK, savedFeed);
-}
-
-export async function listSavedNewsFeed(req: Request, res: Response): Promise<void> {
-  const query = req.query as NewsFeedListQuery;
-  const savedFeeds = await newsFeedService.listSavedNewsFeed(getAuthenticatedUserId(req), query.page, query.limit);
-  sendSuccess(res, StatusCodes.OK, savedFeeds);
-}
-
 export async function likeNewsFeed(req: Request, res: Response): Promise<void> {
   const newsFeed = await newsFeedService.likeNewsFeed(getAuthenticatedUserId(req), getNewsFeedId(req));
   sendSuccess(res, StatusCodes.OK, newsFeed);

@@ -120,6 +120,22 @@ export async function updateUserActivation(req: Request, res: Response): Promise
   sendSuccess(res, StatusCodes.OK, updatedUser);
 }
 
+export async function deleteUserAccount(req: Request, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new AppError('Access token is required', {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      code: 'UNAUTHORIZED',
+    });
+  }
+
+  const result = await authService.deleteUserAccount({
+    requesterId: req.user.id,
+    userId: (req.params as { id: string }).id,
+  });
+
+  sendSuccess(res, StatusCodes.OK, result);
+}
+
 export async function updateUserName(req: Request, res: Response): Promise<void> {
   if (!req.user) {
     throw new AppError('Access token is required', {
