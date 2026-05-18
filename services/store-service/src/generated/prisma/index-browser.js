@@ -121,6 +121,13 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.CategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.StoreScalarFieldEnum = {
   id: 'id',
   ownerUserId: 'ownerUserId',
@@ -135,6 +142,7 @@ exports.Prisma.StoreScalarFieldEnum = {
   openingTime: 'openingTime',
   closingTime: 'closingTime',
   phoneNumber: 'phoneNumber',
+  categoryId: 'categoryId',
   searchCount: 'searchCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -177,6 +185,10 @@ exports.Prisma.SortOrder = {
 exports.Prisma.NullableJsonNullValueInput = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.CategoryOrderByRelevanceFieldEnum = {
+  name: 'name'
 };
 
 exports.Prisma.JsonNullValueFilter = {
@@ -229,6 +241,7 @@ exports.Prisma.StoreFavoriteOrderByRelevanceFieldEnum = {
 
 
 exports.Prisma.ModelName = {
+  Category: 'Category',
   Store: 'Store',
   StoreProduct: 'StoreProduct',
   StoreRating: 'StoreRating',

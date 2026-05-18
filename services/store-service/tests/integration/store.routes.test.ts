@@ -144,6 +144,10 @@ describe('store routes', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '03001234567',
+      category: {
+        id: 3,
+        name: 'Groceries',
+      },
       products: [],
     });
 
@@ -159,6 +163,7 @@ describe('store routes', () => {
         openingTime: '09:00',
         closingTime: '22:00',
         phoneNumber: '03001234567',
+        categoryId: 3,
       });
 
     expect(response.status).toBe(201);
@@ -173,6 +178,7 @@ describe('store routes', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '03001234567',
+      categoryId: 3,
     });
   });
 

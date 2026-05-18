@@ -3,6 +3,13 @@ import { requireAuth } from '../../middleware/require-auth';
 import { asyncHandler } from '../../shared/async-handler';
 import { validate } from '../../middleware/validate';
 import {
+  createCategory,
+  deleteCategory,
+  getCategory,
+  listCategories,
+  updateCategory,
+} from './category.controller';
+import {
   createMyStore,
   deleteMyStore,
   favoriteStore,
@@ -17,6 +24,11 @@ import {
   updateMyStore,
 } from './store.controller';
 import {
+  categoryIdParamSchema,
+  createCategoryBodySchema,
+  updateCategoryBodySchema,
+} from './category.schemas';
+import {
   createStoreBodySchema,
   createStoreRatingBodySchema,
   listStoresForAdminQuerySchema,
@@ -28,6 +40,30 @@ import {
 
 const storeRouter = Router();
 
+storeRouter.get('/categories', asyncHandler(listCategories));
+storeRouter.get(
+  '/categories/:categoryId',
+  validate({ params: categoryIdParamSchema }),
+  asyncHandler(getCategory),
+);
+storeRouter.post(
+  '/categories',
+  requireAuth,
+  validate({ body: createCategoryBodySchema }),
+  asyncHandler(createCategory),
+);
+storeRouter.patch(
+  '/categories/:categoryId',
+  requireAuth,
+  validate({ params: categoryIdParamSchema, body: updateCategoryBodySchema }),
+  asyncHandler(updateCategory),
+);
+storeRouter.delete(
+  '/categories/:categoryId',
+  requireAuth,
+  validate({ params: categoryIdParamSchema }),
+  asyncHandler(deleteCategory),
+);
 storeRouter.get('/', validate({ query: listStoresQuerySchema }), asyncHandler(listStores));
 storeRouter.get(
   '/favorites',

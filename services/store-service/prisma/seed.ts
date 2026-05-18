@@ -4,6 +4,15 @@ const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
   const ownerUserId = 'seed-user-1';
+  const category = await prisma.category.upsert({
+    where: {
+      name: 'General Store',
+    },
+    update: {},
+    create: {
+      name: 'General Store',
+    },
+  });
   const existing = await prisma.store.findUnique({ where: { ownerUserId } });
 
   if (existing) {
@@ -23,6 +32,11 @@ async function main(): Promise<void> {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '+923000000000',
+      category: {
+        connect: {
+          id: category.id,
+        },
+      },
       products: {
         create: [
           {

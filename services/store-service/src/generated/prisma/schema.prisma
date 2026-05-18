@@ -8,6 +8,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(120)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  stores    Store[]
+}
+
 model Store {
   id          Int             @id @default(autoincrement())
   ownerUserId String          @unique
@@ -22,13 +30,16 @@ model Store {
   openingTime String          @default("00:00")
   closingTime String          @default("23:59")
   phoneNumber String
+  categoryId  Int?
   searchCount Int             @default(0)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   products    StoreProduct[]
   ratings     StoreRating[]
   favorites   StoreFavorite[]
 
+  @@index([categoryId])
   @@index([name])
   @@index([location])
 }

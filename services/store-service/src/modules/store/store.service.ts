@@ -5,6 +5,7 @@ import type {
   MostSearchedStoreSnapshot,
   NewsFeedMetric,
   StoreReview,
+  StoreCategory,
   NewsFeedSyncEvent,
   StoreBasicSnapshot,
   StoreDetails,
@@ -33,6 +34,7 @@ import {
   writeStoreListCache,
 } from './store.cache';
 import { authClient } from '../auth/auth-client';
+import { categoryRepository } from './category.repository';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
 import {
   storeRepository,
@@ -69,6 +71,22 @@ function toStoreReview(review: StoreReviewRecord): StoreReview {
   };
 }
 
+function toStoreCategory(
+  category?: {
+    id: number;
+    name: string;
+  } | null,
+): StoreCategory | null {
+  if (!category) {
+    return null;
+  }
+
+  return {
+    id: category.id,
+    name: category.name,
+  };
+}
+
 function toStoreSummary(store: {
   id: number;
   name: string;
@@ -82,6 +100,10 @@ function toStoreSummary(store: {
   openingTime: string;
   closingTime: string;
   phoneNumber: string;
+  category?: {
+    id: number;
+    name: string;
+  } | null;
   ratings?: StoreReviewRecord[];
 }, options?: { isFavorite?: boolean }): StoreSummary {
   const summary: StoreSummary = {
@@ -97,6 +119,7 @@ function toStoreSummary(store: {
     openingTime: store.openingTime,
     closingTime: store.closingTime,
     phoneNumber: store.phoneNumber,
+    category: toStoreCategory(store.category),
     reviews: store.ratings?.map(toStoreReview),
   };
 
@@ -227,6 +250,7 @@ async function buildCreatePayload(
 ): Promise<NormalizedStorePayloadResult<{
   badges: string[];
   closingTime: string;
+  categoryId: number;
   delivery: string;
   image: string;
   location: string;
@@ -270,6 +294,7 @@ async function buildUpdatePayload(
   payload: UpdateStoreRequest,
 ): Promise<NormalizedStorePayloadResult<{
   closingTime?: string;
+  categoryId?: number;
   delivery?: string;
   image?: string;
   location?: string;
@@ -383,14 +408,25 @@ function mergeStoreBadges(
   };
 }
 
-function hasSearchTerm(search?: string): boolean {
+function hasSearchTerm(search?: string): search is string {
   return typeof search === 'string' && search.trim().length > 0;
+}
+
+function normalizeSearchTerm(search: string): string {
+  return search.trim().replace(/\s+/g, ' ');
 }
 
 function throwMyStoreNotFound(): never {
   throw new AppError('Store not found for this user', {
     statusCode: StatusCodes.NOT_FOUND,
     code: 'STORE_NOT_FOUND',
+  });
+}
+
+function throwCategoryNotFound(): never {
+  throw new AppError('Category not found', {
+    statusCode: StatusCodes.NOT_FOUND,
+    code: 'CATEGORY_NOT_FOUND',
   });
 }
 
@@ -413,6 +449,14 @@ async function ensureActiveStoreManager(requesterId: string, action: string): Pr
       statusCode: StatusCodes.FORBIDDEN,
       code: 'STORE_ADMIN_REQUIRED',
     });
+  }
+}
+
+async function ensureCategoryExists(categoryId: number): Promise<void> {
+  const category = await categoryRepository.findById(categoryId);
+
+  if (!category) {
+    throwCategoryNotFound();
   }
 }
 
@@ -475,6 +519,8 @@ async function syncNewsFeed(
 
 export const storeService = {
   async listStores(search?: string, page = 1): Promise<StoreSummary[]> {
+    const normalizedSearch = hasSearchTerm(search) ? normalizeSearchTerm(search) : undefined;
+
     if (!hasSearchTerm(search)) {
       const cachedStores = await readStoreListCache(search, page);
 
@@ -483,10 +529,15 @@ export const storeService = {
       }
     }
 
-    const stores = await storeRepository.listStores(search, page);
+    const matchingCategory = normalizedSearch
+      ? await categoryRepository.findByName(normalizedSearch)
+      : null;
+    const stores = matchingCategory
+      ? await storeRepository.listStoresByCategoryIds([matchingCategory.id], page)
+      : await storeRepository.listStores(normalizedSearch, page);
     const storeSummaries = stores.map((store) => toStoreSummary(store));
 
-    if (hasSearchTerm(search) && stores.length > 0) {
+    if (normalizedSearch && stores.length > 0) {
       await storeRepository.incrementSearchCountByIds(stores.map((store) => store.id));
 
       if (await shouldSyncMostSearchedMetric()) {
@@ -557,6 +608,8 @@ export const storeService = {
       });
     }
 
+    await ensureCategoryExists(payload.categoryId);
+
     const normalizedPayload = await buildCreatePayload(payload);
 
     try {
@@ -578,6 +631,10 @@ export const storeService = {
 
     if (!existingStore) {
       throwMyStoreNotFound();
+    }
+
+    if (payload.categoryId !== undefined) {
+      await ensureCategoryExists(payload.categoryId);
     }
 
     const normalizedPayload = await buildUpdatePayload(payload);

@@ -11,7 +11,7 @@
     "contracts:build": "npm run build -w packages/contracts",
     "env:setup": "node ./scripts/setup-service-envs.mjs",
     "postinstall": "node ./scripts/postinstall-runner.js",
-    "start": "node ./scripts/production-services.js",
+    "start": "npm run prisma:deploy && node ./scripts/production-services.js",
     "start:dist": "npm run build && npm start",
     "dev": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs",
     "dev:restart": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs --restart",
@@ -54,8 +54,8 @@
     "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "docker:up:app": "docker compose -f infra/docker/docker-compose.yml --profile app up -d --build",
     "docker:down": "docker compose -f infra/docker/docker-compose.yml down -v",
-    "pm2:start": "pm2 start ecosystem.config.js",
-    "pm2:restart": "pm2 restart ecosystem.config.js --update-env",
+    "pm2:start": "npm run prisma:deploy && pm2 start ecosystem.config.js",
+    "pm2:restart": "npm run prisma:deploy && pm2 restart ecosystem.config.js --update-env",
     "pm2:logs": "pm2 logs"
   },
   "dependencies": {

@@ -91,10 +91,16 @@ npm install
 npm run build
 ```
 
-5. Start every compiled service with PM2:
+5. Apply Prisma migrations before the compiled services start:
 
 ```bash
-pm2 start ecosystem.config.js
+npm run prisma:deploy
+```
+
+6. Start every compiled service with PM2:
+
+```bash
+npm run pm2:start
 pm2 save
 pm2 startup
 ```
@@ -105,6 +111,8 @@ Helpful PM2 commands:
 npm run pm2:restart
 npm run pm2:logs
 ```
+
+`npm run pm2:start`, `npm run pm2:restart`, and `npm start` now run `prisma:deploy` first so new Prisma schema changes are applied before the services begin serving traffic.
 
 If you want to build and run only the compiled JavaScript services without PM2 first, use `npm run start:dist`.
 

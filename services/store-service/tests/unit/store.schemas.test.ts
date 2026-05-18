@@ -18,6 +18,7 @@ describe('store schemas', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '0300402505',
+      categoryId: 2,
       products: [
         {
           id: 'desi-1',
@@ -34,6 +35,7 @@ describe('store schemas', () => {
     expect(payload.openingTime).toBe('09:00');
     expect(payload.closingTime).toBe('22:00');
     expect(payload.phoneNumber).toBe('0300402505');
+    expect(payload.categoryId).toBe(2);
     expect(payload.products?.[0]?.id).toBe('desi-1');
   });
 
@@ -47,6 +49,7 @@ describe('store schemas', () => {
       openingTime: '08:00',
       closingTime: '23:00',
       contact: '+92 (300) 402-5050',
+      categoryId: 4,
     });
 
     expect(payload.phoneNumber).toBe('+923004025050');
@@ -79,6 +82,7 @@ describe('store schemas', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: 'abc123',
+      categoryId: 3,
     });
 
     expect(result.success).toBe(false);
@@ -95,6 +99,7 @@ describe('store schemas', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '0300402505',
+      categoryId: 3,
     });
 
     expect(result.success).toBe(false);
@@ -118,6 +123,7 @@ describe('store schemas', () => {
       openingTime: '9:00 AM',
       closingTime: '22:00',
       phoneNumber: '0300402505',
+      categoryId: 3,
     });
 
     expect(result.success).toBe(false);
@@ -133,9 +139,25 @@ describe('store schemas', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '0300402505',
+      categoryId: 5,
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('requires categoryId when creating a store', () => {
+    const result = createStoreBodySchema.safeParse({
+      name: 'Desi Eatery',
+      location: 'AWT Main Market',
+      image: storeImageBase64,
+      delivery: 'Free Delivery',
+      minOrderRs: '500',
+      openingTime: '09:00',
+      closingTime: '22:00',
+      phoneNumber: '0300402505',
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it('accepts a store rating payload for authenticated rating posts', () => {

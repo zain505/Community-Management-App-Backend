@@ -11,7 +11,15 @@ const storeReviewSelect = {
   createdAt: true,
 } satisfies Prisma.StoreRatingSelect;
 
+const storeCategorySelect = {
+  id: true,
+  name: true,
+} satisfies Prisma.CategorySelect;
+
 const storeListInclude = {
+  category: {
+    select: storeCategorySelect,
+  },
   ratings: {
     select: storeReviewSelect,
     orderBy: {
@@ -21,6 +29,9 @@ const storeListInclude = {
 } satisfies Prisma.StoreInclude;
 
 const storeWithProductsInclude = {
+  category: {
+    select: storeCategorySelect,
+  },
   products: {
     orderBy: {
       createdAt: 'asc',
@@ -68,6 +79,9 @@ const storeSummaryWithOwnerSelect = {
   openingTime: true,
   closingTime: true,
   phoneNumber: true,
+  category: {
+    select: storeCategorySelect,
+  },
 } satisfies Prisma.StoreSelect;
 
 const mostSearchedStoreSelect = {
@@ -127,6 +141,7 @@ interface CreateStoreRecordInput {
   openingTime: string;
   closingTime: string;
   phoneNumber: string;
+  categoryId: number;
   products: StoreProductWriteInput[];
 }
 
@@ -139,6 +154,7 @@ interface UpdateStoreRecordInput {
   openingTime?: string;
   closingTime?: string;
   phoneNumber?: string;
+  categoryId?: number;
   products?: StoreProductWriteInput[];
 }
 
@@ -164,11 +180,26 @@ function formatStoreRating(value: number): string {
   return Number(value.toFixed(2)).toString();
 }
 
-function buildStoreListWhere(search?: string, active?: boolean): Prisma.StoreWhereInput {
+interface StoreListWhereOptions {
+  active?: boolean;
+  categoryIds?: number[];
+  search?: string;
+}
+
+function buildStoreListWhere(options: StoreListWhereOptions = {}): Prisma.StoreWhereInput {
   const where: Prisma.StoreWhereInput = {};
+  const { active, categoryIds, search } = options;
 
   if (active !== undefined) {
     where.active = active;
+  }
+
+  if (categoryIds && categoryIds.length > 0) {
+    where.categoryId = {
+      in: categoryIds,
+    };
+
+    return where;
   }
 
   if (search) {
@@ -238,7 +269,19 @@ function buildProductRelationUpdate(
 export const storeRepository = {
   listStores(search?: string, page = 1): Promise<StoreListRecord[]> {
     return prisma.store.findMany({
-      where: buildStoreListWhere(search, true),
+      where: buildStoreListWhere({ search, active: true }),
+      skip: (page - 1) * STORES_PER_PAGE,
+      take: STORES_PER_PAGE,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: storeListInclude,
+    });
+  },
+
+  listStoresByCategoryIds(categoryIds: number[], page = 1): Promise<StoreListRecord[]> {
+    return prisma.store.findMany({
+      where: buildStoreListWhere({ active: true, categoryIds }),
       skip: (page - 1) * STORES_PER_PAGE,
       take: STORES_PER_PAGE,
       orderBy: {
@@ -250,7 +293,7 @@ export const storeRepository = {
 
   listStoresForAdmin(search?: string, page = 1, active?: boolean): Promise<StoreListRecord[]> {
     return prisma.store.findMany({
-      where: buildStoreListWhere(search, active),
+      where: buildStoreListWhere({ search, active }),
       skip: (page - 1) * STORES_PER_PAGE,
       take: STORES_PER_PAGE,
       orderBy: {
@@ -265,7 +308,7 @@ export const storeRepository = {
       where: {
         userId,
         store: {
-          is: buildStoreListWhere(search, true),
+          is: buildStoreListWhere({ search, active: true }),
         },
       },
       skip: (page - 1) * STORES_PER_PAGE,
@@ -334,6 +377,11 @@ export const storeRepository = {
         openingTime: payload.openingTime,
         closingTime: payload.closingTime,
         phoneNumber: payload.phoneNumber,
+        category: {
+          connect: {
+            id: payload.categoryId,
+          },
+        },
         ownerUserId,
         products:
           payload.products.length > 0
@@ -498,6 +546,13 @@ export const storeRepository = {
     if (payload.openingTime !== undefined) data.openingTime = payload.openingTime;
     if (payload.closingTime !== undefined) data.closingTime = payload.closingTime;
     if (payload.phoneNumber !== undefined) data.phoneNumber = payload.phoneNumber;
+    if (payload.categoryId !== undefined) {
+      data.category = {
+        connect: {
+          id: payload.categoryId,
+        },
+      };
+    }
 
     if (payload.products !== undefined) {
       data.products = buildProductRelationUpdate(existingProducts, payload.products);

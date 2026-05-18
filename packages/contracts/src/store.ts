@@ -23,6 +23,11 @@ export interface StoreReview {
   createdAt: string;
 }
 
+export interface StoreCategory {
+  id: number;
+  name: string;
+}
+
 export interface StoreSummary {
   id: number;
   name: string;
@@ -36,6 +41,7 @@ export interface StoreSummary {
   openingTime: string;
   closingTime: string;
   phoneNumber: string;
+  category?: StoreCategory | null;
   isFavorite?: boolean;
   reviews?: StoreReview[];
 }
@@ -57,6 +63,7 @@ export interface CreateStoreRequest {
   openingTime: string;
   closingTime: string;
   phoneNumber: string;
+  categoryId: number;
   products?: StoreProductInput[];
 }
 
@@ -69,6 +76,7 @@ export interface UpdateStoreRequest {
   openingTime?: string;
   closingTime?: string;
   phoneNumber?: string;
+  categoryId?: number;
   products?: StoreProductInput[];
 }
 
@@ -80,6 +88,14 @@ export interface CreateStoreRatingRequest {
   rating: number;
   badges?: string[];
   description?: string;
+}
+
+export interface CreateStoreCategoryRequest {
+  name: string;
+}
+
+export interface UpdateStoreCategoryRequest {
+  name: string;
 }
 
 export interface StoreListQuery {

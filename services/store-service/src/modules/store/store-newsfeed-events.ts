@@ -95,7 +95,7 @@ type StoreFieldEventType =
   | 'STORE_CONTACT_UPDATED';
 
 type StoreHoursProfileField = 'openingTime' | 'closingTime';
-type MeaningfulStoreProfileField = 'badges' | StoreHoursProfileField;
+type MeaningfulStoreProfileField = 'badges' | 'category' | StoreHoursProfileField;
 
 interface StoreFieldEventDescriptor<K extends TrackedStoreField = TrackedStoreField> {
   field: K;
@@ -212,6 +212,24 @@ const storeProfileChangeDescriptors: StoreProfileChangeDescriptor[] = [
     buildMetadata: (params) => ({
       previous: params.existingStore.openingTime,
       current: params.updatedStore.openingTime,
+    }),
+  },
+  {
+    field: 'category',
+    hasChanged: (params) => params.existingStore.categoryId !== params.updatedStore.categoryId,
+    buildMetadata: (params) => ({
+      previous: params.existingStore.category
+        ? {
+            id: params.existingStore.category.id,
+            name: params.existingStore.category.name,
+          }
+        : null,
+      current: params.updatedStore.category
+        ? {
+            id: params.updatedStore.category.id,
+            name: params.updatedStore.category.name,
+          }
+        : null,
     }),
   },
   {

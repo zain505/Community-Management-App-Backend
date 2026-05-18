@@ -17,6 +17,7 @@ const storeTimeSchema = z
   });
 
 const storeBadgeSchema = z.string().trim().min(1).max(40);
+const categoryIdSchema = z.coerce.number().int().positive();
 const activeStoreSchema = z
   .union([z.boolean(), z.literal(0), z.literal(1)])
   .transform((value) => value === true || value === 1);
@@ -59,6 +60,7 @@ const storePayloadFields = {
   closingTime: storeTimeSchema,
   phoneNumber: phoneNumberSchema.optional(),
   contact: phoneNumberSchema.optional(),
+  categoryId: categoryIdSchema,
   products: z.array(storeProductSchema).max(500).optional(),
 };
 

@@ -13,8 +13,16 @@ jest.mock('../../src/modules/store/store.repository', () => ({
     incrementSearchCountByIds: jest.fn(),
     listFavoriteStores: jest.fn(),
     listStores: jest.fn(),
+    listStoresByCategoryIds: jest.fn(),
     listStoresForAdmin: jest.fn(),
     saveFavoriteForUser: jest.fn(),
+  },
+}));
+
+jest.mock('../../src/modules/store/category.repository', () => ({
+  categoryRepository: {
+    findById: jest.fn(),
+    findByName: jest.fn(),
   },
 }));
 
@@ -39,11 +47,13 @@ jest.mock('../../src/modules/store/store.cache', () => ({
 
 import { authClient } from '../../src/modules/auth/auth-client';
 import { newsFeedClient } from '../../src/modules/newsfeed/newsfeed.client';
+import { categoryRepository } from '../../src/modules/store/category.repository';
 import * as storeCache from '../../src/modules/store/store.cache';
 import { storeRepository } from '../../src/modules/store/store.repository';
 import { storeService } from '../../src/modules/store/store.service';
 
 const mockedAuthClient = jest.mocked(authClient);
+const mockedCategoryRepository = jest.mocked(categoryRepository);
 const mockedStoreRepository = jest.mocked(storeRepository);
 const mockedNewsFeedClient = jest.mocked(newsFeedClient);
 const mockedStoreCache = jest.mocked(storeCache);
@@ -98,6 +108,11 @@ function buildStoreRecord(overrides: Record<string, unknown> = {}) {
     openingTime: '09:00',
     closingTime: '22:00',
     phoneNumber: '03001234567',
+    categoryId: 3,
+    category: {
+      id: 3,
+      name: 'Groceries',
+    },
     searchCount: 0,
     createdAt: new Date('2026-03-14T08:00:00.000Z'),
     updatedAt: new Date('2026-03-14T08:00:00.000Z'),
@@ -207,6 +222,7 @@ const storeFieldChangeCases = [
 describe('store service', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockedCategoryRepository.findByName.mockResolvedValue(null);
     mockedStoreCache.invalidateStoreListCache.mockResolvedValue(undefined);
     mockedStoreCache.readStoreListCache.mockResolvedValue(null);
     mockedStoreCache.shouldSyncMostSearchedMetric.mockResolvedValue(true);
@@ -311,6 +327,51 @@ describe('store service', () => {
     expect(mockedStoreCache.writeStoreListCache).not.toHaveBeenCalled();
   });
 
+  it('prefers exact category matches over the regular public store search', async () => {
+    mockedCategoryRepository.findByName.mockResolvedValue({
+      id: 9,
+      name: 'Groceries',
+    } as never);
+    mockedStoreRepository.listStoresByCategoryIds.mockResolvedValue([
+      buildStoreRecord({
+        id: 22,
+        categoryId: 9,
+        category: {
+          id: 9,
+          name: 'Groceries',
+        },
+      }),
+    ]);
+    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+
+    const stores = await storeService.listStores('  Groceries  ', 2);
+
+    expect(stores).toEqual([
+      expect.objectContaining({
+        id: 22,
+        category: {
+          id: 9,
+          name: 'Groceries',
+        },
+      }),
+    ]);
+    expect(mockedStoreRepository.listStoresByCategoryIds).toHaveBeenCalledWith([9], 2);
+    expect(mockedStoreRepository.listStores).not.toHaveBeenCalled();
+    expect(mockedStoreRepository.incrementSearchCountByIds).toHaveBeenCalledWith([22]);
+  });
+
+  it('falls back to the regular public store search when no category name matches', async () => {
+    mockedCategoryRepository.findByName.mockResolvedValue(null);
+    mockedStoreRepository.listStores.mockResolvedValue([buildStoreRecord()]);
+    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+
+    await storeService.listStores('Fresh Mart', 3);
+
+    expect(mockedCategoryRepository.findByName).toHaveBeenCalledWith('Fresh Mart');
+    expect(mockedStoreRepository.listStores).toHaveBeenCalledWith('Fresh Mart', 3);
+    expect(mockedStoreRepository.listStoresByCategoryIds).not.toHaveBeenCalled();
+  });
+
   it('allows active admin users to list stores for management without affecting search metrics', async () => {
     mockedAuthClient.getManagedUserStatus.mockResolvedValue({
       id: 'admin-123',
@@ -409,6 +470,10 @@ describe('store service', () => {
 
   it('publishes only a store-created event when creating a store', async () => {
     mockedStoreRepository.findStoreByUserId.mockResolvedValue(null);
+    mockedCategoryRepository.findById.mockResolvedValue({
+      id: 3,
+      name: 'Groceries',
+    } as never);
     mockedStoreRepository.createForUser.mockResolvedValue({
       id: 18,
       name: 'Fresh Mart2',
@@ -422,6 +487,11 @@ describe('store service', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '03001234567',
+      categoryId: 3,
+      category: {
+        id: 3,
+        name: 'Groceries',
+      },
       products: [],
     } as never);
     mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
@@ -435,6 +505,7 @@ describe('store service', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '03001234567',
+      categoryId: 3,
       products: [],
     });
 
@@ -462,8 +533,34 @@ describe('store service', () => {
       openingTime: '09:00',
       closingTime: '22:00',
       phoneNumber: '03001234567',
+      categoryId: 3,
       products: [],
     });
+  });
+
+  it('rejects store creation when the selected category does not exist', async () => {
+    mockedStoreRepository.findStoreByUserId.mockResolvedValue(null);
+    mockedCategoryRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      storeService.createMyStore('user-123', {
+        name: 'Fresh Mart2',
+        location: 'Main Road',
+        image: storeImageBase64,
+        delivery: '30 mins',
+        minOrderRs: '500',
+        openingTime: '09:00',
+        closingTime: '22:00',
+        phoneNumber: '03001234567',
+        categoryId: 999,
+        products: [],
+      }),
+    ).rejects.toMatchObject({
+      code: 'CATEGORY_NOT_FOUND',
+      statusCode: 404,
+    });
+
+    expect(mockedStoreRepository.createForUser).not.toHaveBeenCalled();
   });
 
   it('allows active admin users to deactivate a store without publishing a newsfeed update', async () => {
@@ -719,6 +816,80 @@ describe('store service', () => {
       ],
       refreshMetrics: ['MOST_ACTIVE_STORE'],
     });
+  });
+
+  it('publishes a profile event when the selected category changes', async () => {
+    const existingStore = buildStoreRecord();
+    const updatedStore = buildStoreRecord({
+      categoryId: 8,
+      category: {
+        id: 8,
+        name: 'Pharmacy',
+      },
+    });
+
+    mockedCategoryRepository.findById.mockResolvedValue({
+      id: 8,
+      name: 'Pharmacy',
+    } as never);
+    mockedStoreRepository.findStoreByUserId.mockResolvedValue(existingStore);
+    mockedStoreRepository.updateById.mockResolvedValue(updatedStore);
+    mockedNewsFeedClient.syncBestEffort.mockResolvedValue(undefined);
+
+    await storeService.updateMyStore('user-123', {
+      categoryId: 8,
+    });
+
+    expect(mockedStoreRepository.updateById).toHaveBeenCalledWith(
+      18,
+      expect.objectContaining({
+        categoryId: 8,
+      }),
+      [],
+    );
+    expect(mockedNewsFeedClient.syncBestEffort).toHaveBeenCalledWith({
+      events: [
+        {
+          type: 'STORE_PROFILE_UPDATED',
+          storeId: 18,
+          storeName: 'Fresh Mart2',
+          title: 'Fresh Mart2 updated their store profile.',
+          description: "Take a look at what's new.",
+          metadata: {
+            changedFields: ['category'],
+            changes: {
+              category: {
+                previous: {
+                  id: 3,
+                  name: 'Groceries',
+                },
+                current: {
+                  id: 8,
+                  name: 'Pharmacy',
+                },
+              },
+            },
+          },
+        },
+      ],
+      refreshMetrics: ['MOST_ACTIVE_STORE'],
+    });
+  });
+
+  it('rejects store updates when the selected category does not exist', async () => {
+    mockedStoreRepository.findStoreByUserId.mockResolvedValue(buildStoreRecord());
+    mockedCategoryRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      storeService.updateMyStore('user-123', {
+        categoryId: 999,
+      }),
+    ).rejects.toMatchObject({
+      code: 'CATEGORY_NOT_FOUND',
+      statusCode: 404,
+    });
+
+    expect(mockedStoreRepository.updateById).not.toHaveBeenCalled();
   });
 
   it('publishes rating and badge profile events when an authenticated user rates a store with a new badge', async () => {
