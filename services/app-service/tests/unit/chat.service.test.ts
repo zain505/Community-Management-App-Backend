@@ -22,13 +22,21 @@ import { chatService } from '../../src/modules/chat/chat.service';
 const mockedAuthClient = jest.mocked(authClient);
 const mockedChatRepository = jest.mocked(chatRepository);
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+function buildRecentDate(daysAgo = 1) {
+  return new Date(Date.now() - daysAgo * DAY_IN_MS);
+}
+
 function buildChatRecord(overrides: Record<string, unknown> = {}) {
+  const createdAt = buildRecentDate();
+
   return {
     id: 'chat-message-1',
     content: 'Hello everyone',
     authorName: 'Community Admin',
-    createdAt: new Date('2026-03-20T10:00:00.000Z'),
-    updatedAt: new Date('2026-03-20T10:00:00.000Z'),
+    createdAt,
+    updatedAt: createdAt,
     createdByUserId: 'user-123',
     ...overrides,
   } as never;
@@ -82,12 +90,12 @@ describe('chat service', () => {
       buildChatRecord({
         id: 'chat-message-2',
         content: 'Second',
-        createdAt: new Date('2026-03-20T11:00:00.000Z'),
+        createdAt: buildRecentDate(1),
       }),
       buildChatRecord({
         id: 'chat-message-1',
         content: 'First',
-        createdAt: new Date('2026-03-20T10:00:00.000Z'),
+        createdAt: buildRecentDate(2),
       }),
     ]);
 
@@ -119,7 +127,7 @@ describe('chat service', () => {
     mockedAuthClient.getUserStatus.mockResolvedValue(buildActiveUser());
     mockedChatRepository.findById.mockResolvedValue(
       buildChatRecord({
-        createdAt: new Date('2025-12-01T10:00:00.000Z'),
+        createdAt: buildRecentDate(45),
       }),
     );
 

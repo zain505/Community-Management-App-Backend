@@ -16,6 +16,7 @@ module.exports = {
     'dist/',
     'coverage/',
     'node_modules/',
+    'src/generated/',
     'tests/unit/store.schemas.test.ts',
   ],
   rules: {
