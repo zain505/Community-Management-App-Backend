@@ -972,14 +972,25 @@ export namespace Prisma {
 
   export type AggregateUser = {
     _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
+  }
+
+  export type UserAvgAggregateOutputType = {
+    usertype: number | null
+  }
+
+  export type UserSumAggregateOutputType = {
+    usertype: number | null
   }
 
   export type UserMinAggregateOutputType = {
     id: string | null
     mobileNumber: string | null
     name: string | null
+    usertype: number | null
     passwordHash: string | null
     isActive: boolean | null
     createdAt: Date | null
@@ -990,6 +1001,7 @@ export namespace Prisma {
     id: string | null
     mobileNumber: string | null
     name: string | null
+    usertype: number | null
     passwordHash: string | null
     isActive: boolean | null
     createdAt: Date | null
@@ -1000,6 +1012,8 @@ export namespace Prisma {
     id: number
     mobileNumber: number
     name: number
+    usertype: number
+    profile: number
     passwordHash: number
     isActive: number
     createdAt: number
@@ -1008,10 +1022,19 @@ export namespace Prisma {
   }
 
 
+  export type UserAvgAggregateInputType = {
+    usertype?: true
+  }
+
+  export type UserSumAggregateInputType = {
+    usertype?: true
+  }
+
   export type UserMinAggregateInputType = {
     id?: true
     mobileNumber?: true
     name?: true
+    usertype?: true
     passwordHash?: true
     isActive?: true
     createdAt?: true
@@ -1022,6 +1045,7 @@ export namespace Prisma {
     id?: true
     mobileNumber?: true
     name?: true
+    usertype?: true
     passwordHash?: true
     isActive?: true
     createdAt?: true
@@ -1032,6 +1056,8 @@ export namespace Prisma {
     id?: true
     mobileNumber?: true
     name?: true
+    usertype?: true
+    profile?: true
     passwordHash?: true
     isActive?: true
     createdAt?: true
@@ -1077,6 +1103,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: UserAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: UserMinAggregateInputType
@@ -1107,6 +1145,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: UserCountAggregateInputType | true
+    _avg?: UserAvgAggregateInputType
+    _sum?: UserSumAggregateInputType
     _min?: UserMinAggregateInputType
     _max?: UserMaxAggregateInputType
   }
@@ -1115,11 +1155,15 @@ export namespace Prisma {
     id: string
     mobileNumber: string
     name: string
+    usertype: number
+    profile: JsonValue | null
     passwordHash: string
     isActive: boolean
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
   }
@@ -1142,6 +1186,8 @@ export namespace Prisma {
     id?: boolean
     mobileNumber?: boolean
     name?: boolean
+    usertype?: boolean
+    profile?: boolean
     passwordHash?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -1156,13 +1202,15 @@ export namespace Prisma {
     id?: boolean
     mobileNumber?: boolean
     name?: boolean
+    usertype?: boolean
+    profile?: boolean
     passwordHash?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "mobileNumber" | "name" | "passwordHash" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "mobileNumber" | "name" | "usertype" | "profile" | "passwordHash" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     refreshTokens?: boolean | User$refreshTokensArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1177,6 +1225,8 @@ export namespace Prisma {
       id: string
       mobileNumber: string
       name: string
+      usertype: number
+      profile: Prisma.JsonValue | null
       passwordHash: string
       isActive: boolean
       createdAt: Date
@@ -1554,6 +1604,8 @@ export namespace Prisma {
     readonly id: FieldRef<"User", 'String'>
     readonly mobileNumber: FieldRef<"User", 'String'>
     readonly name: FieldRef<"User", 'String'>
+    readonly usertype: FieldRef<"User", 'Int'>
+    readonly profile: FieldRef<"User", 'Json'>
     readonly passwordHash: FieldRef<"User", 'String'>
     readonly isActive: FieldRef<"User", 'Boolean'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
@@ -2901,6 +2953,8 @@ export namespace Prisma {
     id: 'id',
     mobileNumber: 'mobileNumber',
     name: 'name',
+    usertype: 'usertype',
+    profile: 'profile',
     passwordHash: 'passwordHash',
     isActive: 'isActive',
     createdAt: 'createdAt',
@@ -2930,14 +2984,29 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-  export const UserOrderByRelevanceFieldEnum: {
-    id: 'id',
-    mobileNumber: 'mobileNumber',
-    name: 'name',
-    passwordHash: 'passwordHash'
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
   };
 
-  export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+  export const QueryMode: {
+    default: 'default',
+    insensitive: 'insensitive'
+  };
+
+  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
   export const NullsOrder: {
@@ -2946,6 +3015,16 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const UserOrderByRelevanceFieldEnum: {
+    id: 'id',
+    mobileNumber: 'mobileNumber',
+    name: 'name',
+    passwordHash: 'passwordHash'
+  };
+
+  export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
 
 
   export const RefreshTokenOrderByRelevanceFieldEnum: {
@@ -2970,6 +3049,27 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -2984,9 +3084,9 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
+   * Reference to a field of type 'Float'
    */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
   /**
    * Deep Input Types
@@ -3000,6 +3100,8 @@ export namespace Prisma {
     id?: StringFilter<"User"> | string
     mobileNumber?: StringFilter<"User"> | string
     name?: StringFilter<"User"> | string
+    usertype?: IntFilter<"User"> | number
+    profile?: JsonNullableFilter<"User">
     passwordHash?: StringFilter<"User"> | string
     isActive?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
@@ -3011,6 +3113,8 @@ export namespace Prisma {
     id?: SortOrder
     mobileNumber?: SortOrder
     name?: SortOrder
+    usertype?: SortOrder
+    profile?: SortOrderInput | SortOrder
     passwordHash?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -3026,6 +3130,8 @@ export namespace Prisma {
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
     name?: StringFilter<"User"> | string
+    usertype?: IntFilter<"User"> | number
+    profile?: JsonNullableFilter<"User">
     passwordHash?: StringFilter<"User"> | string
     isActive?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
@@ -3037,13 +3143,17 @@ export namespace Prisma {
     id?: SortOrder
     mobileNumber?: SortOrder
     name?: SortOrder
+    usertype?: SortOrder
+    profile?: SortOrderInput | SortOrder
     passwordHash?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
+    _avg?: UserAvgOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
+    _sum?: UserSumOrderByAggregateInput
   }
 
   export type UserScalarWhereWithAggregatesInput = {
@@ -3053,6 +3163,8 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"User"> | string
     mobileNumber?: StringWithAggregatesFilter<"User"> | string
     name?: StringWithAggregatesFilter<"User"> | string
+    usertype?: IntWithAggregatesFilter<"User"> | number
+    profile?: JsonNullableWithAggregatesFilter<"User">
     passwordHash?: StringWithAggregatesFilter<"User"> | string
     isActive?: BoolWithAggregatesFilter<"User"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -3124,6 +3236,8 @@ export namespace Prisma {
     id?: string
     mobileNumber: string
     name: string
+    usertype?: number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash: string
     isActive?: boolean
     createdAt?: Date | string
@@ -3135,6 +3249,8 @@ export namespace Prisma {
     id?: string
     mobileNumber: string
     name: string
+    usertype?: number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash: string
     isActive?: boolean
     createdAt?: Date | string
@@ -3146,6 +3262,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     mobileNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    usertype?: IntFieldUpdateOperationsInput | number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -3157,6 +3275,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     mobileNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    usertype?: IntFieldUpdateOperationsInput | number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -3168,6 +3288,8 @@ export namespace Prisma {
     id?: string
     mobileNumber: string
     name: string
+    usertype?: number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash: string
     isActive?: boolean
     createdAt?: Date | string
@@ -3178,6 +3300,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     mobileNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    usertype?: IntFieldUpdateOperationsInput | number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -3188,6 +3312,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     mobileNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    usertype?: IntFieldUpdateOperationsInput | number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -3271,6 +3397,40 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
   export type BoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -3293,6 +3453,11 @@ export namespace Prisma {
     none?: RefreshTokenWhereInput
   }
 
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
   export type RefreshTokenOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -3307,16 +3472,23 @@ export namespace Prisma {
     id?: SortOrder
     mobileNumber?: SortOrder
     name?: SortOrder
+    usertype?: SortOrder
+    profile?: SortOrder
     passwordHash?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
+  export type UserAvgOrderByAggregateInput = {
+    usertype?: SortOrder
+  }
+
   export type UserMaxOrderByAggregateInput = {
     id?: SortOrder
     mobileNumber?: SortOrder
     name?: SortOrder
+    usertype?: SortOrder
     passwordHash?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -3327,10 +3499,15 @@ export namespace Prisma {
     id?: SortOrder
     mobileNumber?: SortOrder
     name?: SortOrder
+    usertype?: SortOrder
     passwordHash?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type UserSumOrderByAggregateInput = {
+    usertype?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -3349,6 +3526,48 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type BoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -3387,11 +3606,6 @@ export namespace Prisma {
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
-  }
-
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
   }
 
   export type RefreshTokenOrderByRelevanceInput = {
@@ -3457,6 +3671,14 @@ export namespace Prisma {
 
   export type StringFieldUpdateOperationsInput = {
     set?: string
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type BoolFieldUpdateOperationsInput = {
@@ -3528,6 +3750,17 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type NestedIntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type NestedBoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -3562,7 +3795,7 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
-  export type NestedIntFilter<$PrismaModel = never> = {
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[]
     notIn?: number[]
@@ -3570,7 +3803,57 @@ export namespace Prisma {
     lte?: number | IntFieldRefInput<$PrismaModel>
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -3618,17 +3901,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type RefreshTokenCreateWithoutUserInput = {
@@ -3689,6 +3961,8 @@ export namespace Prisma {
     id?: string
     mobileNumber: string
     name: string
+    usertype?: number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash: string
     isActive?: boolean
     createdAt?: Date | string
@@ -3699,6 +3973,8 @@ export namespace Prisma {
     id?: string
     mobileNumber: string
     name: string
+    usertype?: number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash: string
     isActive?: boolean
     createdAt?: Date | string
@@ -3725,6 +4001,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     mobileNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    usertype?: IntFieldUpdateOperationsInput | number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -3735,6 +4013,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     mobileNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    usertype?: IntFieldUpdateOperationsInput | number
+    profile?: NullableJsonNullValueInput | InputJsonValue
     passwordHash?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

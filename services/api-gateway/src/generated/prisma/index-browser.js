@@ -125,6 +125,8 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   mobileNumber: 'mobileNumber',
   name: 'name',
+  usertype: 'usertype',
+  profile: 'profile',
   passwordHash: 'passwordHash',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -145,16 +147,32 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.UserOrderByRelevanceFieldEnum = {
-  id: 'id',
-  mobileNumber: 'mobileNumber',
-  name: 'name',
-  passwordHash: 'passwordHash'
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
 };
 
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.UserOrderByRelevanceFieldEnum = {
+  id: 'id',
+  mobileNumber: 'mobileNumber',
+  name: 'name',
+  passwordHash: 'passwordHash'
 };
 
 exports.Prisma.RefreshTokenOrderByRelevanceFieldEnum = {
