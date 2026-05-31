@@ -190,6 +190,21 @@ describe('routes', () => {
     }
   });
 
+  it('rejects chat attachment uploads that are not multipart', async () => {
+    const response = await request(app)
+      .post('/v1/chat/attachments')
+      .send({
+        type: 'image',
+        mimeType: 'image/png',
+        fileName: 'chat.png',
+        sizeBytes: 16,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('VALIDATION_ERROR');
+  });
+
   it('reports app-service unavailability for event management', async () => {
     const response = await request(app).post('/v1/event-management').send({});
 

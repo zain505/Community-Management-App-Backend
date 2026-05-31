@@ -261,4 +261,21 @@ describe('chat routes', () => {
     expect(response.body.code).toBe('VALIDATION_ERROR');
     expect(mockedChatService.uploadAttachment).not.toHaveBeenCalled();
   });
+
+  it('returns validation errors when chat attachment uploads are not multipart', async () => {
+    const response = await request(app)
+      .post('/v1/chat/attachments')
+      .set('Authorization', `Bearer ${getAccessToken()}`)
+      .send({
+        type: 'image',
+        mimeType: 'image/png',
+        fileName: 'chat-image.png',
+        sizeBytes: pngImageBuffer.length,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.code).toBe('VALIDATION_ERROR');
+    expect(mockedChatService.uploadAttachment).not.toHaveBeenCalled();
+  });
 });

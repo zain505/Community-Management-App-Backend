@@ -100,6 +100,18 @@ function buildTargetUrl(req: Request, route: ProxyRouteConfig): string {
   return `${route.targetBaseUrl}${rewrittenPathname}${query ? `?${query}` : ''}`;
 }
 
+function isChatAttachmentUploadRequest(req: Request): boolean {
+  const [pathname] = req.originalUrl.split('?');
+
+  return req.method.toUpperCase() === 'POST' && pathname === '/v1/chat/attachments';
+}
+
+function getProxyTimeoutMs(req: Request): number {
+  return isChatAttachmentUploadRequest(req)
+    ? env.CHAT_ATTACHMENT_PROXY_TIMEOUT_MS
+    : env.PROXY_TIMEOUT_MS;
+}
+
 function getForwardHeaders(req: Request): Record<string, string> {
   const headers: Record<string, string> = {
     'x-request-id': req.requestId,
@@ -146,6 +158,15 @@ function copyResponseHeaders(res: Response, headers: Record<string, unknown>): v
 async function proxyRequest(route: ProxyRouteConfig, req: Request, res: Response): Promise<Response | void> {
   const method = req.method.toUpperCase() as Method;
   const targetUrl = buildTargetUrl(req, route);
+  const isChatAttachmentUpload = isChatAttachmentUploadRequest(req);
+
+  if (isChatAttachmentUpload && !req.is('multipart/form-data')) {
+    return sendError(res, StatusCodes.BAD_REQUEST, {
+      code: 'VALIDATION_ERROR',
+      message: 'Chat attachment uploads must use multipart/form-data',
+    });
+  }
+
   const shouldForwardRequestStream =
     method !== 'GET' && method !== 'HEAD' && req.is('multipart/form-data');
   const data =
@@ -162,7 +183,7 @@ async function proxyRequest(route: ProxyRouteConfig, req: Request, res: Response
       url: targetUrl,
       data,
       headers: getForwardHeaders(req),
-      timeout: env.PROXY_TIMEOUT_MS,
+      timeout: getProxyTimeoutMs(req),
       responseType: 'stream',
       decompress: false,
       validateStatus: () => true,

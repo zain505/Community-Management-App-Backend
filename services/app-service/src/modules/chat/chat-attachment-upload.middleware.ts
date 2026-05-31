@@ -51,6 +51,13 @@ export async function parseChatAttachmentUpload(
 ): Promise<void> {
   void res;
 
+  if (!req.is('multipart/form-data')) {
+    throw new AppError('Chat attachment uploads must use multipart/form-data', {
+      statusCode: StatusCodes.BAD_REQUEST,
+      code: 'VALIDATION_ERROR',
+    });
+  }
+
   await ensureChatAttachmentUploadDirs();
 
   const form = formidable({

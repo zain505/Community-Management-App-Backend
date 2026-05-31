@@ -55,6 +55,7 @@ const envSchema = z.object({
   NEWSFEED_SERVICE_URL: z.string().url().default(DEFAULT_NEWSFEED_SERVICE_URL),
   APP_SERVICE_URL: z.string().url().default(DEFAULT_APP_SERVICE_URL),
   PROXY_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  CHAT_ATTACHMENT_PROXY_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
 });
 
 const parsed = envSchema.safeParse(process.env);
