@@ -43,6 +43,13 @@ describe('routes', () => {
     expect(response.headers['access-control-allow-origin']).toBe('https://hzhtechco.site');
   });
 
+  it('allows mobile app origins through CORS', async () => {
+    const response = await request(app).get('/health').set('origin', 'capacitor://localhost');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBe('capacitor://localhost');
+  });
+
   it('reports auth-service unavailability', async () => {
     const response = await request(app).post('/v1/auth/register').send({});
 

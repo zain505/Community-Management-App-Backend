@@ -12,6 +12,10 @@ const DEFAULT_CORS_ORIGINS = [
   'https://hzhtechco.site',
   'http://www.hzhtechco.site',
   'https://www.hzhtechco.site',
+  'capacitor://localhost',
+  'ionic://localhost',
+  'http://localhost',
+  'https://localhost',
   'http://localhost:3000',
   'http://localhost:5173',
 ].join(',');
@@ -58,6 +62,7 @@ const corsOrigins = rawEnv.CORS_ORIGINS.split(',')
 
 const developmentCorsOriginPatterns = [
   /^http:\/\/localhost(?::\d+)?$/i,
+  /^https:\/\/localhost(?::\d+)?$/i,
   /^http:\/\/127\.0\.0\.1(?::\d+)?$/i,
   /^http:\/\/192\.168(?:\.\d{1,3}){2}(?::\d+)?$/i,
   /^http:\/\/10(?:\.\d{1,3}){3}(?::\d+)?$/i,

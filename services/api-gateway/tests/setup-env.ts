@@ -8,6 +8,10 @@ process.env.CORS_ORIGINS = [
   'https://hzhtechco.site',
   'http://www.hzhtechco.site',
   'https://www.hzhtechco.site',
+  'capacitor://localhost',
+  'ionic://localhost',
+  'http://localhost',
+  'https://localhost',
   'http://localhost:3000',
   'http://localhost:5173',
 ].join(',');
