@@ -14,6 +14,7 @@ import { ZodError } from 'zod';
 import { AppError } from '../../shared/app-error';
 import { authClient } from '../auth/auth-client';
 import {
+  buildChatAttachmentDownloadPath,
   buildChatAttachmentPublicPath,
   buildStoredChatAttachmentFilename,
   chatAttachmentUploadDir,
@@ -46,6 +47,7 @@ function toChatAttachment(attachment: ChatAttachmentRecord): ChatAttachment {
     id: attachment.id,
     type: attachment.type,
     url: attachment.url,
+    downloadUrl: buildChatAttachmentDownloadPath(attachment.id),
     mimeType: attachment.mimeType,
     fileName: attachment.fileName,
     sizeBytes: attachment.sizeBytes,
@@ -122,6 +124,11 @@ function throwAttachmentOwnershipInvalid(): never {
     statusCode: StatusCodes.FORBIDDEN,
     code: 'CHAT_ATTACHMENT_OWNERSHIP_INVALID',
   });
+}
+
+function isPathInsideDirectory(filePath: string, directory: string): boolean {
+  const relativePath = path.relative(directory, filePath);
+  return relativePath.length === 0 || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
 }
 
 function throwChatMessageEditNotAllowed(): never {
@@ -427,6 +434,53 @@ export const chatService = {
     });
 
     return toChatMessage(message);
+  },
+
+  async getAttachmentDownload(
+    userId: string,
+    attachmentId: string,
+  ): Promise<{ fileName: string; mimeType: string; storagePath: string; sizeBytes: number }> {
+    await performCleanup();
+    await getActiveUser(userId);
+
+    const attachment = await chatRepository.findAttachmentById(attachmentId);
+
+    if (!attachment || attachment.status === 'deleted' || attachment.status === 'expired') {
+      throwAttachmentNotFound();
+    }
+
+    if (attachment.status === 'uploaded') {
+      if (attachment.createdByUserId !== userId || attachment.messageId !== null || isExpiredAttachment(attachment)) {
+        throwAttachmentNotFound();
+      }
+    } else if (attachment.status !== 'attached') {
+      throwAttachmentNotFound();
+    }
+
+    const resolvedStoragePath = path.resolve(attachment.storagePath);
+
+    if (!isPathInsideDirectory(resolvedStoragePath, chatAttachmentUploadDir)) {
+      throwAttachmentNotFound();
+    }
+
+    try {
+      await fs.access(resolvedStoragePath);
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+
+      if (nodeError.code === 'ENOENT') {
+        throwAttachmentNotFound();
+      }
+
+      throw error;
+    }
+
+    return {
+      fileName: attachment.fileName,
+      mimeType: attachment.mimeType,
+      sizeBytes: attachment.sizeBytes,
+      storagePath: resolvedStoragePath,
+    };
   },
 
   async updateMessage(

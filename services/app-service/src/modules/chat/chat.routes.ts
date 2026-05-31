@@ -5,6 +5,7 @@ import { validate } from '../../middleware/validate';
 import {
   createChatMessage,
   deleteChatMessage,
+  downloadChatAttachment,
   listChatMessages,
   uploadChatAttachment,
   updateChatMessage,
@@ -24,6 +25,12 @@ chatRouter.post(
   requireAuth,
   asyncHandler(parseChatAttachmentUpload),
   asyncHandler(uploadChatAttachment),
+);
+chatRouter.get(
+  '/attachments/:id/download',
+  requireAuth,
+  validate({ params: chatMessageIdParamSchema }),
+  asyncHandler(downloadChatAttachment),
 );
 chatRouter.get(
   '/messages',

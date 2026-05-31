@@ -6,6 +6,7 @@ export interface ChatAttachment {
   id: string;
   type: ChatAttachmentType;
   url: string;
+  downloadUrl?: string;
   mimeType: string;
   fileName: string;
   sizeBytes: number;

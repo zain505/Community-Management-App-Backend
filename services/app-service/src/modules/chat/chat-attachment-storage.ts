@@ -30,6 +30,10 @@ export function buildChatAttachmentPublicPath(filename: string): string {
   return `${chatAttachmentPublicPathPrefix}/${filename}`;
 }
 
+export function buildChatAttachmentDownloadPath(id: string): string {
+  return `/v1/chat/attachments/${id}/download`;
+}
+
 export function buildStoredChatAttachmentFilename(type: ChatAttachmentType, mimeType: string): string {
   const extension = extensionByMimeType[mimeType];
 

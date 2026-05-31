@@ -141,6 +141,13 @@ export const chatRepository = {
     });
   },
 
+  findAttachmentById(id: string): Promise<ChatAttachmentRecord | null> {
+    return prisma.chatAttachment.findUnique({
+      where: { id },
+      select: chatAttachmentSelect,
+    });
+  },
+
   createAttachmentUpload(options: CreateChatAttachmentUploadOptions): Promise<ChatAttachmentRecord> {
     return prisma.chatAttachment.create({
       data: {

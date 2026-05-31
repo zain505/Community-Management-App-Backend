@@ -58,6 +58,18 @@ export async function uploadChatAttachment(req: Request, res: Response): Promise
   sendSuccess(res, StatusCodes.CREATED, attachment);
 }
 
+export async function downloadChatAttachment(req: Request, res: Response): Promise<void> {
+  const attachment = await chatService.getAttachmentDownload(
+    getAuthenticatedUserId(req),
+    getChatMessageId(req),
+  );
+
+  res.setHeader('Content-Type', attachment.mimeType);
+  res.setHeader('Content-Length', String(attachment.sizeBytes));
+  res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(attachment.fileName)}"`);
+  res.sendFile(attachment.storagePath);
+}
+
 export async function updateChatMessage(req: Request, res: Response): Promise<void> {
   const message = await chatService.updateMessage(
     getAuthenticatedUserId(req),

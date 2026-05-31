@@ -34,6 +34,7 @@ export const chatAttachmentSchema = z.object({
   id: z.string().trim().min(1).max(64),
   type: chatAttachmentTypeSchema,
   url: z.string().trim().min(1).max(512),
+  downloadUrl: z.string().trim().min(1).max(512).optional(),
   mimeType: z.string().trim().min(1).max(191),
   fileName: z.string().trim().min(1).max(191),
   sizeBytes: z.number().int().positive().max(CHAT_ATTACHMENT_UPLOAD_MAX_FILE_SIZE_BYTES),

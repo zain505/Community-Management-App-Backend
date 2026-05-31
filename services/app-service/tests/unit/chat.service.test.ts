@@ -1,4 +1,6 @@
 import type { ChatAttachment, ManagedUserStatus, UserStatus, UserType } from '@community/contracts';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 jest.mock('../../src/modules/chat/chat.repository', () => ({
   chatRepository: {
@@ -7,6 +9,7 @@ jest.mock('../../src/modules/chat/chat.repository', () => ({
     deleteById: jest.fn(),
     deleteOlderThan: jest.fn(),
     expireUnusedUploads: jest.fn(),
+    findAttachmentById: jest.fn(),
     findAttachmentsByIds: jest.fn(),
     findById: jest.fn(),
     findCursorById: jest.fn(),
@@ -23,6 +26,7 @@ jest.mock('../../src/modules/auth/auth-client', () => ({
 }));
 
 import { authClient } from '../../src/modules/auth/auth-client';
+import { chatAttachmentUploadDir } from '../../src/modules/chat/chat-attachment-storage';
 import { chatRepository } from '../../src/modules/chat/chat.repository';
 import { chatService } from '../../src/modules/chat/chat.service';
 
@@ -178,6 +182,45 @@ describe('chat service', () => {
     expect(result.type).toBe('image');
     expect(result.attachments).toHaveLength(1);
     expect(result.attachments[0]?.id).toBe('attachment-1');
+    expect(result.attachments[0]?.downloadUrl).toBe('/v1/chat/attachments/attachment-1/download');
+  });
+
+  it('resolves attached chat attachments for download', async () => {
+    const storagePath = path.join(chatAttachmentUploadDir, 'attachment-1.png');
+    const accessSpy = jest.spyOn(fs, 'access').mockResolvedValue(undefined);
+    mockedAuthClient.getUserStatus.mockResolvedValue(buildActiveUser());
+    mockedChatRepository.findAttachmentById.mockResolvedValue(
+      buildAttachmentRecord({
+        status: 'attached',
+        messageId: 'chat-message-1',
+        storagePath,
+      }),
+    );
+
+    try {
+      await expect(chatService.getAttachmentDownload('user-123', 'attachment-1')).resolves.toEqual({
+        fileName: 'chat-image.png',
+        mimeType: 'image/png',
+        sizeBytes: 824123,
+        storagePath,
+      });
+    } finally {
+      accessSpy.mockRestore();
+    }
+  });
+
+  it('hides another user unused upload from download', async () => {
+    mockedAuthClient.getUserStatus.mockResolvedValue(buildActiveUser());
+    mockedChatRepository.findAttachmentById.mockResolvedValue(
+      buildAttachmentRecord({
+        createdByUserId: 'another-user',
+      }),
+    );
+
+    await expect(chatService.getAttachmentDownload('user-123', 'attachment-1')).rejects.toMatchObject({
+      code: 'CHAT_ATTACHMENT_NOT_FOUND',
+      statusCode: 404,
+    });
   });
 
   it('rejects attachments that belong to another user', async () => {

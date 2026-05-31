@@ -4,6 +4,7 @@ jest.mock('../../src/modules/chat/chat.service', () => ({
   chatService: {
     createMessage: jest.fn(),
     deleteMessage: jest.fn(),
+    getAttachmentDownload: jest.fn(),
     listMessages: jest.fn(),
     updateMessage: jest.fn(),
     uploadAttachment: jest.fn(),
@@ -140,6 +141,27 @@ describe('chat routes', () => {
     );
   });
 
+  it('downloads a chat attachment', async () => {
+    const storagePath = __filename;
+    const fileBuffer = await fs.readFile(storagePath);
+
+    mockedChatService.getAttachmentDownload.mockResolvedValue({
+      fileName: 'voice-note.m4a',
+      mimeType: 'audio/mp4',
+      sizeBytes: fileBuffer.length,
+      storagePath,
+    });
+
+    const response = await request(app)
+      .get('/v1/chat/attachments/attachment-1/download')
+      .set('Authorization', `Bearer ${getAccessToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('audio/mp4');
+    expect(response.body).toEqual(fileBuffer);
+    expect(mockedChatService.getAttachmentDownload).toHaveBeenCalledWith('user-123', 'attachment-1');
+  });
+
   it('creates a text chat message', async () => {
     mockedChatService.createMessage.mockResolvedValue(buildChatMessage());
 
@@ -199,6 +221,7 @@ describe('chat routes', () => {
   });
 
   it.each([
+    ['GET', '/v1/chat/attachments/attachment-1/download'],
     ['GET', '/v1/chat/messages'],
     ['POST', '/v1/chat/messages'],
     ['PATCH', '/v1/chat/messages/chat-message-1'],

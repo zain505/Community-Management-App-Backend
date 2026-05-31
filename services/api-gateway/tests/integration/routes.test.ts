@@ -114,6 +114,46 @@ describe('routes', () => {
     }
   });
 
+  it('proxies chat attachment files to app-service', async () => {
+    const audioBytes = Buffer.from('chat-audio-bytes');
+    const mockAppService: Server = http.createServer((req, res) => {
+      if (req.url === '/uploads/chat/audio-1.m4a') {
+        res.statusCode = 200;
+        res.setHeader('content-type', 'audio/mp4');
+        res.end(audioBytes);
+        return;
+      }
+
+      res.statusCode = 404;
+      res.end();
+    });
+
+    await new Promise<void>((resolve) => {
+      mockAppService.listen(59996, '127.0.0.1', () => {
+        resolve();
+      });
+    });
+
+    try {
+      const response = await request(app).get('/uploads/chat/audio-1.m4a');
+
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toContain('audio/mp4');
+      expect(response.body).toEqual(audioBytes);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        mockAppService.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
+
   it('reports app-service unavailability for announcements', async () => {
     const response = await request(app).post('/v1/announcements').send({});
 

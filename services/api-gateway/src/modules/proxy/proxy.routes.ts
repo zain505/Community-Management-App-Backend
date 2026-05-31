@@ -41,6 +41,12 @@ const proxyRoutes: ProxyRouteConfig[] = [
     unavailableMessage: 'Auth service is unavailable',
   },
   {
+    prefix: '/uploads/chat',
+    targetBaseUrl: env.APP_SERVICE_URL,
+    unavailableCode: 'APP_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'App service is unavailable',
+  },
+  {
     prefix: '/v1/stores/newsfeed',
     targetBaseUrl: env.NEWSFEED_SERVICE_URL,
     unavailableCode: 'NEWSFEED_SERVICE_UNAVAILABLE',
