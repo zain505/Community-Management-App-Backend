@@ -146,7 +146,14 @@ function copyResponseHeaders(res: Response, headers: Record<string, unknown>): v
 async function proxyRequest(route: ProxyRouteConfig, req: Request, res: Response): Promise<Response | void> {
   const method = req.method.toUpperCase() as Method;
   const targetUrl = buildTargetUrl(req, route);
-  const data = method === 'GET' || method === 'HEAD' ? undefined : req.body;
+  const shouldForwardRequestStream =
+    method !== 'GET' && method !== 'HEAD' && req.is('multipart/form-data');
+  const data =
+    method === 'GET' || method === 'HEAD'
+      ? undefined
+      : shouldForwardRequestStream
+        ? req
+        : req.body;
   let response: Awaited<ReturnType<typeof axios.request<Readable>>>;
 
   try {

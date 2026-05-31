@@ -122,6 +122,74 @@ describe('routes', () => {
     expect(response.body.code).toBe('APP_SERVICE_UNAVAILABLE');
   });
 
+  it('streams chat attachment multipart uploads to app-service', async () => {
+    const mockAppService: Server = http.createServer((req, res) => {
+      if (req.method !== 'POST' || req.url !== '/v1/chat/attachments') {
+        res.statusCode = 404;
+        res.end();
+        return;
+      }
+
+      const chunks: Buffer[] = [];
+
+      req.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
+      });
+      req.on('end', () => {
+        const body = Buffer.concat(chunks).toString('utf8');
+        const contentType = req.headers['content-type'] ?? '';
+
+        res.statusCode = 201;
+        res.setHeader('content-type', 'application/json');
+        res.end(
+          JSON.stringify({
+            hasMultipartContentType:
+              typeof contentType === 'string' && contentType.includes('multipart/form-data'),
+            hasFileBytes: body.includes('chat-image-bytes'),
+            hasTypeField: body.includes('name="type"') && body.includes('image'),
+          }),
+        );
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      mockAppService.listen(59996, '127.0.0.1', () => {
+        resolve();
+      });
+    });
+
+    try {
+      const response = await request(app)
+        .post('/v1/chat/attachments')
+        .field('type', 'image')
+        .field('mimeType', 'image/png')
+        .field('fileName', 'chat.png')
+        .field('sizeBytes', '16')
+        .attach('file', Buffer.from('chat-image-bytes'), {
+          filename: 'chat.png',
+          contentType: 'image/png',
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        hasMultipartContentType: true,
+        hasFileBytes: true,
+        hasTypeField: true,
+      });
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        mockAppService.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
+
   it('reports app-service unavailability for event management', async () => {
     const response = await request(app).post('/v1/event-management').send({});
 
