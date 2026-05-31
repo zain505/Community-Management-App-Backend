@@ -1,3 +1,4 @@
+import path from 'node:path';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors, { type CorsOptions } from 'cors';
@@ -40,6 +41,7 @@ app.use(compression());
 app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(cookieParser());
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 app.use(globalRateLimiter);
 
 app.use(healthRouter);

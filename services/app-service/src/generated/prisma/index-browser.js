@@ -167,11 +167,32 @@ exports.Prisma.EventManagementScalarFieldEnum = {
 
 exports.Prisma.ChatMessageScalarFieldEnum = {
   id: 'id',
+  type: 'type',
   content: 'content',
   authorName: 'authorName',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   createdByUserId: 'createdByUserId'
+};
+
+exports.Prisma.ChatAttachmentScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  url: 'url',
+  storagePath: 'storagePath',
+  mimeType: 'mimeType',
+  fileName: 'fileName',
+  sizeBytes: 'sizeBytes',
+  width: 'width',
+  height: 'height',
+  durationMillis: 'durationMillis',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdByUserId: 'createdByUserId',
+  messageId: 'messageId'
 };
 
 exports.Prisma.SortOrder = {
@@ -222,13 +243,40 @@ exports.Prisma.ChatMessageOrderByRelevanceFieldEnum = {
   createdByUserId: 'createdByUserId'
 };
 
+exports.Prisma.ChatAttachmentOrderByRelevanceFieldEnum = {
+  id: 'id',
+  url: 'url',
+  storagePath: 'storagePath',
+  mimeType: 'mimeType',
+  fileName: 'fileName',
+  createdByUserId: 'createdByUserId',
+  messageId: 'messageId'
+};
+exports.ChatMessageType = exports.$Enums.ChatMessageType = {
+  text: 'text',
+  image: 'image',
+  audio: 'audio'
+};
+
+exports.ChatAttachmentType = exports.$Enums.ChatAttachmentType = {
+  image: 'image',
+  audio: 'audio'
+};
+
+exports.ChatAttachmentStatus = exports.$Enums.ChatAttachmentStatus = {
+  uploaded: 'uploaded',
+  attached: 'attached',
+  expired: 'expired',
+  deleted: 'deleted'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
   RefreshToken: 'RefreshToken',
   Announcement: 'Announcement',
   EventManagement: 'EventManagement',
-  ChatMessage: 'ChatMessage'
+  ChatMessage: 'ChatMessage',
+  ChatAttachment: 'ChatAttachment'
 };
 
 /**

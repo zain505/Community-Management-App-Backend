@@ -139,11 +139,32 @@ exports.Prisma.EventManagementScalarFieldEnum = {
 
 exports.Prisma.ChatMessageScalarFieldEnum = {
   id: 'id',
+  type: 'type',
   content: 'content',
   authorName: 'authorName',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   createdByUserId: 'createdByUserId'
+};
+
+exports.Prisma.ChatAttachmentScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  url: 'url',
+  storagePath: 'storagePath',
+  mimeType: 'mimeType',
+  fileName: 'fileName',
+  sizeBytes: 'sizeBytes',
+  width: 'width',
+  height: 'height',
+  durationMillis: 'durationMillis',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdByUserId: 'createdByUserId',
+  messageId: 'messageId'
 };
 
 exports.Prisma.SortOrder = {
@@ -194,13 +215,40 @@ exports.Prisma.ChatMessageOrderByRelevanceFieldEnum = {
   createdByUserId: 'createdByUserId'
 };
 
+exports.Prisma.ChatAttachmentOrderByRelevanceFieldEnum = {
+  id: 'id',
+  url: 'url',
+  storagePath: 'storagePath',
+  mimeType: 'mimeType',
+  fileName: 'fileName',
+  createdByUserId: 'createdByUserId',
+  messageId: 'messageId'
+};
+exports.ChatMessageType = exports.$Enums.ChatMessageType = {
+  text: 'text',
+  image: 'image',
+  audio: 'audio'
+};
+
+exports.ChatAttachmentType = exports.$Enums.ChatAttachmentType = {
+  image: 'image',
+  audio: 'audio'
+};
+
+exports.ChatAttachmentStatus = exports.$Enums.ChatAttachmentStatus = {
+  uploaded: 'uploaded',
+  attached: 'attached',
+  expired: 'expired',
+  deleted: 'deleted'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
   RefreshToken: 'RefreshToken',
   Announcement: 'Announcement',
   EventManagement: 'EventManagement',
-  ChatMessage: 'ChatMessage'
+  ChatMessage: 'ChatMessage',
+  ChatAttachment: 'ChatAttachment'
 };
 /**
  * Create the Client
@@ -250,13 +298,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id            String         @id @default(cuid())\n  mobileNumber  String         @unique\n  name          String\n  usertype      Int            @default(2)\n  passwordHash  String\n  isActive      Boolean        @default(true)\n  createdAt     DateTime       @default(now())\n  updatedAt     DateTime       @updatedAt\n  refreshTokens RefreshToken[]\n}\n\nmodel RefreshToken {\n  id        String    @id @default(cuid())\n  tokenHash String    @unique\n  expiresAt DateTime\n  revokedAt DateTime?\n  createdAt DateTime  @default(now())\n  userId    String\n  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n  @@index([expiresAt])\n}\n\nmodel Announcement {\n  id              String   @id @default(cuid())\n  title           String\n  content         String   @db.Text\n  authorName      String\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([title])\n}\n\nmodel EventManagement {\n  id              String    @id @default(cuid())\n  title           String\n  description     String    @db.Text\n  image           String    @db.LongText\n  location        String\n  startAt         DateTime\n  endAt           DateTime?\n  authorName      String\n  createdAt       DateTime  @default(now())\n  updatedAt       DateTime  @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([startAt])\n  @@index([title])\n}\n\nmodel ChatMessage {\n  id              String   @id @default(cuid())\n  content         String   @db.Text\n  authorName      String\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  createdByUserId String\n\n  @@index([createdAt])\n  @@index([createdByUserId])\n}\n",
-  "inlineSchemaHash": "0bb009eb3021953fd44316c57205fc08167275a8ce26a51b16f6c2a870d0117c",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum ChatMessageType {\n  text\n  image\n  audio\n}\n\nenum ChatAttachmentType {\n  image\n  audio\n}\n\nenum ChatAttachmentStatus {\n  uploaded\n  attached\n  expired\n  deleted\n}\n\nmodel User {\n  id            String         @id @default(cuid())\n  mobileNumber  String         @unique\n  name          String\n  usertype      Int            @default(2)\n  passwordHash  String\n  isActive      Boolean        @default(true)\n  createdAt     DateTime       @default(now())\n  updatedAt     DateTime       @updatedAt\n  refreshTokens RefreshToken[]\n}\n\nmodel RefreshToken {\n  id        String    @id @default(cuid())\n  tokenHash String    @unique\n  expiresAt DateTime\n  revokedAt DateTime?\n  createdAt DateTime  @default(now())\n  userId    String\n  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n  @@index([expiresAt])\n}\n\nmodel Announcement {\n  id              String   @id @default(cuid())\n  title           String\n  content         String   @db.Text\n  authorName      String\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([title])\n}\n\nmodel EventManagement {\n  id              String    @id @default(cuid())\n  title           String\n  description     String    @db.Text\n  image           String    @db.LongText\n  location        String\n  startAt         DateTime\n  endAt           DateTime?\n  authorName      String\n  createdAt       DateTime  @default(now())\n  updatedAt       DateTime  @updatedAt\n  createdByUserId String\n\n  @@index([createdByUserId])\n  @@index([createdAt])\n  @@index([startAt])\n  @@index([title])\n}\n\nmodel ChatMessage {\n  id              String           @id @default(cuid())\n  type            ChatMessageType  @default(text)\n  content         String           @db.Text\n  authorName      String\n  createdAt       DateTime         @default(now())\n  updatedAt       DateTime         @updatedAt\n  createdByUserId String\n  attachments     ChatAttachment[]\n\n  @@index([createdAt])\n  @@index([createdByUserId])\n}\n\nmodel ChatAttachment {\n  id              String               @id @default(cuid())\n  type            ChatAttachmentType\n  url             String\n  storagePath     String\n  mimeType        String\n  fileName        String\n  sizeBytes       Int\n  width           Int?\n  height          Int?\n  durationMillis  Int?\n  status          ChatAttachmentStatus @default(uploaded)\n  expiresAt       DateTime?\n  consumedAt      DateTime?\n  createdAt       DateTime             @default(now())\n  updatedAt       DateTime             @updatedAt\n  createdByUserId String\n  messageId       String?\n  message         ChatMessage?         @relation(fields: [messageId], references: [id], onDelete: Cascade)\n\n  @@index([createdAt])\n  @@index([expiresAt])\n  @@index([messageId])\n  @@index([createdByUserId, status])\n}\n",
+  "inlineSchemaHash": "5559cdb3de1935cf67f22b5479778c1347a36e286a9eaead378686d9d9b6dd0f",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mobileNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"usertype\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"refreshTokens\",\"kind\":\"object\",\"type\":\"RefreshToken\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"RefreshToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"revokedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"Announcement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"EventManagement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ChatMessage\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mobileNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"usertype\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"refreshTokens\",\"kind\":\"object\",\"type\":\"RefreshToken\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"RefreshToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tokenHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"revokedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"RefreshTokenToUser\"}],\"dbName\":null},\"Announcement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"EventManagement\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ChatMessage\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"ChatMessageType\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"authorName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"attachments\",\"kind\":\"object\",\"type\":\"ChatAttachment\",\"relationName\":\"ChatAttachmentToChatMessage\"}],\"dbName\":null},\"ChatAttachment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"ChatAttachmentType\"},{\"name\":\"url\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"storagePath\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"mimeType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sizeBytes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"width\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"height\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"durationMillis\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"ChatAttachmentStatus\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"consumedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdByUserId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"messageId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"message\",\"kind\":\"object\",\"type\":\"ChatMessage\",\"relationName\":\"ChatAttachmentToChatMessage\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

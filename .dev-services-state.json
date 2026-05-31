@@ -18,10 +18,5 @@
     "pid": 8948,
     "port": 4300,
     "name": "newsfeed-service"
-  },
-  "services/app-service": {
-    "pid": 11824,
-    "port": 4400,
-    "name": "app-service"
   }
 }

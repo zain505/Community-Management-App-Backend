@@ -38,6 +38,55 @@ export type EventManagement = $Result.DefaultSelection<Prisma.$EventManagementPa
  * 
  */
 export type ChatMessage = $Result.DefaultSelection<Prisma.$ChatMessagePayload>
+/**
+ * Model ChatAttachment
+ * 
+ */
+export type ChatAttachment = $Result.DefaultSelection<Prisma.$ChatAttachmentPayload>
+
+/**
+ * Enums
+ */
+export namespace $Enums {
+  export const ChatMessageType: {
+  text: 'text',
+  image: 'image',
+  audio: 'audio'
+};
+
+export type ChatMessageType = (typeof ChatMessageType)[keyof typeof ChatMessageType]
+
+
+export const ChatAttachmentType: {
+  image: 'image',
+  audio: 'audio'
+};
+
+export type ChatAttachmentType = (typeof ChatAttachmentType)[keyof typeof ChatAttachmentType]
+
+
+export const ChatAttachmentStatus: {
+  uploaded: 'uploaded',
+  attached: 'attached',
+  expired: 'expired',
+  deleted: 'deleted'
+};
+
+export type ChatAttachmentStatus = (typeof ChatAttachmentStatus)[keyof typeof ChatAttachmentStatus]
+
+}
+
+export type ChatMessageType = $Enums.ChatMessageType
+
+export const ChatMessageType: typeof $Enums.ChatMessageType
+
+export type ChatAttachmentType = $Enums.ChatAttachmentType
+
+export const ChatAttachmentType: typeof $Enums.ChatAttachmentType
+
+export type ChatAttachmentStatus = $Enums.ChatAttachmentStatus
+
+export const ChatAttachmentStatus: typeof $Enums.ChatAttachmentStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -206,6 +255,16 @@ export class PrismaClient<
     * ```
     */
   get chatMessage(): Prisma.ChatMessageDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.chatAttachment`: Exposes CRUD operations for the **ChatAttachment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ChatAttachments
+    * const chatAttachments = await prisma.chatAttachment.findMany()
+    * ```
+    */
+  get chatAttachment(): Prisma.ChatAttachmentDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -651,7 +710,8 @@ export namespace Prisma {
     RefreshToken: 'RefreshToken',
     Announcement: 'Announcement',
     EventManagement: 'EventManagement',
-    ChatMessage: 'ChatMessage'
+    ChatMessage: 'ChatMessage',
+    ChatAttachment: 'ChatAttachment'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -670,7 +730,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "refreshToken" | "announcement" | "eventManagement" | "chatMessage"
+      modelProps: "user" | "refreshToken" | "announcement" | "eventManagement" | "chatMessage" | "chatAttachment"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1004,6 +1064,72 @@ export namespace Prisma {
           }
         }
       }
+      ChatAttachment: {
+        payload: Prisma.$ChatAttachmentPayload<ExtArgs>
+        fields: Prisma.ChatAttachmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ChatAttachmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ChatAttachmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload>
+          }
+          findFirst: {
+            args: Prisma.ChatAttachmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ChatAttachmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload>
+          }
+          findMany: {
+            args: Prisma.ChatAttachmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload>[]
+          }
+          create: {
+            args: Prisma.ChatAttachmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload>
+          }
+          createMany: {
+            args: Prisma.ChatAttachmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.ChatAttachmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload>
+          }
+          update: {
+            args: Prisma.ChatAttachmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.ChatAttachmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ChatAttachmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ChatAttachmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ChatAttachmentPayload>
+          }
+          aggregate: {
+            args: Prisma.ChatAttachmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateChatAttachment>
+          }
+          groupBy: {
+            args: Prisma.ChatAttachmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ChatAttachmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ChatAttachmentCountArgs<ExtArgs>
+            result: $Utils.Optional<ChatAttachmentCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1105,6 +1231,7 @@ export namespace Prisma {
     announcement?: AnnouncementOmit
     eventManagement?: EventManagementOmit
     chatMessage?: ChatMessageOmit
+    chatAttachment?: ChatAttachmentOmit
   }
 
   /* Types for Logging */
@@ -1208,6 +1335,37 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountRefreshTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: RefreshTokenWhereInput
+  }
+
+
+  /**
+   * Count Type ChatMessageCountOutputType
+   */
+
+  export type ChatMessageCountOutputType = {
+    attachments: number
+  }
+
+  export type ChatMessageCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    attachments?: boolean | ChatMessageCountOutputTypeCountAttachmentsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ChatMessageCountOutputType without action
+   */
+  export type ChatMessageCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatMessageCountOutputType
+     */
+    select?: ChatMessageCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ChatMessageCountOutputType without action
+   */
+  export type ChatMessageCountOutputTypeCountAttachmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ChatAttachmentWhereInput
   }
 
 
@@ -5041,6 +5199,7 @@ export namespace Prisma {
 
   export type ChatMessageMinAggregateOutputType = {
     id: string | null
+    type: $Enums.ChatMessageType | null
     content: string | null
     authorName: string | null
     createdAt: Date | null
@@ -5050,6 +5209,7 @@ export namespace Prisma {
 
   export type ChatMessageMaxAggregateOutputType = {
     id: string | null
+    type: $Enums.ChatMessageType | null
     content: string | null
     authorName: string | null
     createdAt: Date | null
@@ -5059,6 +5219,7 @@ export namespace Prisma {
 
   export type ChatMessageCountAggregateOutputType = {
     id: number
+    type: number
     content: number
     authorName: number
     createdAt: number
@@ -5070,6 +5231,7 @@ export namespace Prisma {
 
   export type ChatMessageMinAggregateInputType = {
     id?: true
+    type?: true
     content?: true
     authorName?: true
     createdAt?: true
@@ -5079,6 +5241,7 @@ export namespace Prisma {
 
   export type ChatMessageMaxAggregateInputType = {
     id?: true
+    type?: true
     content?: true
     authorName?: true
     createdAt?: true
@@ -5088,6 +5251,7 @@ export namespace Prisma {
 
   export type ChatMessageCountAggregateInputType = {
     id?: true
+    type?: true
     content?: true
     authorName?: true
     createdAt?: true
@@ -5170,6 +5334,7 @@ export namespace Prisma {
 
   export type ChatMessageGroupByOutputType = {
     id: string
+    type: $Enums.ChatMessageType
     content: string
     authorName: string
     createdAt: Date
@@ -5196,17 +5361,21 @@ export namespace Prisma {
 
   export type ChatMessageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    type?: boolean
     content?: boolean
     authorName?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     createdByUserId?: boolean
+    attachments?: boolean | ChatMessage$attachmentsArgs<ExtArgs>
+    _count?: boolean | ChatMessageCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chatMessage"]>
 
 
 
   export type ChatMessageSelectScalar = {
     id?: boolean
+    type?: boolean
     content?: boolean
     authorName?: boolean
     createdAt?: boolean
@@ -5214,13 +5383,20 @@ export namespace Prisma {
     createdByUserId?: boolean
   }
 
-  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "content" | "authorName" | "createdAt" | "updatedAt" | "createdByUserId", ExtArgs["result"]["chatMessage"]>
+  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "content" | "authorName" | "createdAt" | "updatedAt" | "createdByUserId", ExtArgs["result"]["chatMessage"]>
+  export type ChatMessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    attachments?: boolean | ChatMessage$attachmentsArgs<ExtArgs>
+    _count?: boolean | ChatMessageCountOutputTypeDefaultArgs<ExtArgs>
+  }
 
   export type $ChatMessagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "ChatMessage"
-    objects: {}
+    objects: {
+      attachments: Prisma.$ChatAttachmentPayload<ExtArgs>[]
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      type: $Enums.ChatMessageType
       content: string
       authorName: string
       createdAt: Date
@@ -5566,6 +5742,7 @@ export namespace Prisma {
    */
   export interface Prisma__ChatMessageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    attachments<T extends ChatMessage$attachmentsArgs<ExtArgs> = {}>(args?: Subset<T, ChatMessage$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5596,6 +5773,7 @@ export namespace Prisma {
    */
   interface ChatMessageFieldRefs {
     readonly id: FieldRef<"ChatMessage", 'String'>
+    readonly type: FieldRef<"ChatMessage", 'ChatMessageType'>
     readonly content: FieldRef<"ChatMessage", 'String'>
     readonly authorName: FieldRef<"ChatMessage", 'String'>
     readonly createdAt: FieldRef<"ChatMessage", 'DateTime'>
@@ -5618,6 +5796,10 @@ export namespace Prisma {
      */
     omit?: ChatMessageOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    /**
      * Filter, which ChatMessage to fetch.
      */
     where: ChatMessageWhereUniqueInput
@@ -5636,6 +5818,10 @@ export namespace Prisma {
      */
     omit?: ChatMessageOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    /**
      * Filter, which ChatMessage to fetch.
      */
     where: ChatMessageWhereUniqueInput
@@ -5653,6 +5839,10 @@ export namespace Prisma {
      * Omit specific fields from the ChatMessage
      */
     omit?: ChatMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
     /**
      * Filter, which ChatMessage to fetch.
      */
@@ -5702,6 +5892,10 @@ export namespace Prisma {
      */
     omit?: ChatMessageOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    /**
      * Filter, which ChatMessage to fetch.
      */
     where?: ChatMessageWhereInput
@@ -5750,6 +5944,10 @@ export namespace Prisma {
      */
     omit?: ChatMessageOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    /**
      * Filter, which ChatMessages to fetch.
      */
     where?: ChatMessageWhereInput
@@ -5793,6 +5991,10 @@ export namespace Prisma {
      */
     omit?: ChatMessageOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    /**
      * The data needed to create a ChatMessage.
      */
     data: XOR<ChatMessageCreateInput, ChatMessageUncheckedCreateInput>
@@ -5821,6 +6023,10 @@ export namespace Prisma {
      * Omit specific fields from the ChatMessage
      */
     omit?: ChatMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
     /**
      * The data needed to update a ChatMessage.
      */
@@ -5862,6 +6068,10 @@ export namespace Prisma {
      */
     omit?: ChatMessageOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    /**
      * The filter to search for the ChatMessage to update in case it exists.
      */
     where: ChatMessageWhereUniqueInput
@@ -5888,6 +6098,10 @@ export namespace Prisma {
      */
     omit?: ChatMessageOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    /**
      * Filter which ChatMessage to delete.
      */
     where: ChatMessageWhereUniqueInput
@@ -5908,6 +6122,30 @@ export namespace Prisma {
   }
 
   /**
+   * ChatMessage.attachments
+   */
+  export type ChatMessage$attachmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    where?: ChatAttachmentWhereInput
+    orderBy?: ChatAttachmentOrderByWithRelationInput | ChatAttachmentOrderByWithRelationInput[]
+    cursor?: ChatAttachmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ChatAttachmentScalarFieldEnum | ChatAttachmentScalarFieldEnum[]
+  }
+
+  /**
    * ChatMessage without action
    */
   export type ChatMessageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5919,6 +6157,1136 @@ export namespace Prisma {
      * Omit specific fields from the ChatMessage
      */
     omit?: ChatMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ChatAttachment
+   */
+
+  export type AggregateChatAttachment = {
+    _count: ChatAttachmentCountAggregateOutputType | null
+    _avg: ChatAttachmentAvgAggregateOutputType | null
+    _sum: ChatAttachmentSumAggregateOutputType | null
+    _min: ChatAttachmentMinAggregateOutputType | null
+    _max: ChatAttachmentMaxAggregateOutputType | null
+  }
+
+  export type ChatAttachmentAvgAggregateOutputType = {
+    sizeBytes: number | null
+    width: number | null
+    height: number | null
+    durationMillis: number | null
+  }
+
+  export type ChatAttachmentSumAggregateOutputType = {
+    sizeBytes: number | null
+    width: number | null
+    height: number | null
+    durationMillis: number | null
+  }
+
+  export type ChatAttachmentMinAggregateOutputType = {
+    id: string | null
+    type: $Enums.ChatAttachmentType | null
+    url: string | null
+    storagePath: string | null
+    mimeType: string | null
+    fileName: string | null
+    sizeBytes: number | null
+    width: number | null
+    height: number | null
+    durationMillis: number | null
+    status: $Enums.ChatAttachmentStatus | null
+    expiresAt: Date | null
+    consumedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    createdByUserId: string | null
+    messageId: string | null
+  }
+
+  export type ChatAttachmentMaxAggregateOutputType = {
+    id: string | null
+    type: $Enums.ChatAttachmentType | null
+    url: string | null
+    storagePath: string | null
+    mimeType: string | null
+    fileName: string | null
+    sizeBytes: number | null
+    width: number | null
+    height: number | null
+    durationMillis: number | null
+    status: $Enums.ChatAttachmentStatus | null
+    expiresAt: Date | null
+    consumedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    createdByUserId: string | null
+    messageId: string | null
+  }
+
+  export type ChatAttachmentCountAggregateOutputType = {
+    id: number
+    type: number
+    url: number
+    storagePath: number
+    mimeType: number
+    fileName: number
+    sizeBytes: number
+    width: number
+    height: number
+    durationMillis: number
+    status: number
+    expiresAt: number
+    consumedAt: number
+    createdAt: number
+    updatedAt: number
+    createdByUserId: number
+    messageId: number
+    _all: number
+  }
+
+
+  export type ChatAttachmentAvgAggregateInputType = {
+    sizeBytes?: true
+    width?: true
+    height?: true
+    durationMillis?: true
+  }
+
+  export type ChatAttachmentSumAggregateInputType = {
+    sizeBytes?: true
+    width?: true
+    height?: true
+    durationMillis?: true
+  }
+
+  export type ChatAttachmentMinAggregateInputType = {
+    id?: true
+    type?: true
+    url?: true
+    storagePath?: true
+    mimeType?: true
+    fileName?: true
+    sizeBytes?: true
+    width?: true
+    height?: true
+    durationMillis?: true
+    status?: true
+    expiresAt?: true
+    consumedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    createdByUserId?: true
+    messageId?: true
+  }
+
+  export type ChatAttachmentMaxAggregateInputType = {
+    id?: true
+    type?: true
+    url?: true
+    storagePath?: true
+    mimeType?: true
+    fileName?: true
+    sizeBytes?: true
+    width?: true
+    height?: true
+    durationMillis?: true
+    status?: true
+    expiresAt?: true
+    consumedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    createdByUserId?: true
+    messageId?: true
+  }
+
+  export type ChatAttachmentCountAggregateInputType = {
+    id?: true
+    type?: true
+    url?: true
+    storagePath?: true
+    mimeType?: true
+    fileName?: true
+    sizeBytes?: true
+    width?: true
+    height?: true
+    durationMillis?: true
+    status?: true
+    expiresAt?: true
+    consumedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    createdByUserId?: true
+    messageId?: true
+    _all?: true
+  }
+
+  export type ChatAttachmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ChatAttachment to aggregate.
+     */
+    where?: ChatAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ChatAttachments to fetch.
+     */
+    orderBy?: ChatAttachmentOrderByWithRelationInput | ChatAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ChatAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ChatAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ChatAttachments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ChatAttachments
+    **/
+    _count?: true | ChatAttachmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ChatAttachmentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ChatAttachmentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ChatAttachmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ChatAttachmentMaxAggregateInputType
+  }
+
+  export type GetChatAttachmentAggregateType<T extends ChatAttachmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateChatAttachment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateChatAttachment[P]>
+      : GetScalarType<T[P], AggregateChatAttachment[P]>
+  }
+
+
+
+
+  export type ChatAttachmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ChatAttachmentWhereInput
+    orderBy?: ChatAttachmentOrderByWithAggregationInput | ChatAttachmentOrderByWithAggregationInput[]
+    by: ChatAttachmentScalarFieldEnum[] | ChatAttachmentScalarFieldEnum
+    having?: ChatAttachmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ChatAttachmentCountAggregateInputType | true
+    _avg?: ChatAttachmentAvgAggregateInputType
+    _sum?: ChatAttachmentSumAggregateInputType
+    _min?: ChatAttachmentMinAggregateInputType
+    _max?: ChatAttachmentMaxAggregateInputType
+  }
+
+  export type ChatAttachmentGroupByOutputType = {
+    id: string
+    type: $Enums.ChatAttachmentType
+    url: string
+    storagePath: string
+    mimeType: string
+    fileName: string
+    sizeBytes: number
+    width: number | null
+    height: number | null
+    durationMillis: number | null
+    status: $Enums.ChatAttachmentStatus
+    expiresAt: Date | null
+    consumedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    createdByUserId: string
+    messageId: string | null
+    _count: ChatAttachmentCountAggregateOutputType | null
+    _avg: ChatAttachmentAvgAggregateOutputType | null
+    _sum: ChatAttachmentSumAggregateOutputType | null
+    _min: ChatAttachmentMinAggregateOutputType | null
+    _max: ChatAttachmentMaxAggregateOutputType | null
+  }
+
+  type GetChatAttachmentGroupByPayload<T extends ChatAttachmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ChatAttachmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ChatAttachmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ChatAttachmentGroupByOutputType[P]>
+            : GetScalarType<T[P], ChatAttachmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ChatAttachmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    type?: boolean
+    url?: boolean
+    storagePath?: boolean
+    mimeType?: boolean
+    fileName?: boolean
+    sizeBytes?: boolean
+    width?: boolean
+    height?: boolean
+    durationMillis?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    consumedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    createdByUserId?: boolean
+    messageId?: boolean
+    message?: boolean | ChatAttachment$messageArgs<ExtArgs>
+  }, ExtArgs["result"]["chatAttachment"]>
+
+
+
+  export type ChatAttachmentSelectScalar = {
+    id?: boolean
+    type?: boolean
+    url?: boolean
+    storagePath?: boolean
+    mimeType?: boolean
+    fileName?: boolean
+    sizeBytes?: boolean
+    width?: boolean
+    height?: boolean
+    durationMillis?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    consumedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    createdByUserId?: boolean
+    messageId?: boolean
+  }
+
+  export type ChatAttachmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "url" | "storagePath" | "mimeType" | "fileName" | "sizeBytes" | "width" | "height" | "durationMillis" | "status" | "expiresAt" | "consumedAt" | "createdAt" | "updatedAt" | "createdByUserId" | "messageId", ExtArgs["result"]["chatAttachment"]>
+  export type ChatAttachmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    message?: boolean | ChatAttachment$messageArgs<ExtArgs>
+  }
+
+  export type $ChatAttachmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ChatAttachment"
+    objects: {
+      message: Prisma.$ChatMessagePayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      type: $Enums.ChatAttachmentType
+      url: string
+      storagePath: string
+      mimeType: string
+      fileName: string
+      sizeBytes: number
+      width: number | null
+      height: number | null
+      durationMillis: number | null
+      status: $Enums.ChatAttachmentStatus
+      expiresAt: Date | null
+      consumedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+      createdByUserId: string
+      messageId: string | null
+    }, ExtArgs["result"]["chatAttachment"]>
+    composites: {}
+  }
+
+  type ChatAttachmentGetPayload<S extends boolean | null | undefined | ChatAttachmentDefaultArgs> = $Result.GetResult<Prisma.$ChatAttachmentPayload, S>
+
+  type ChatAttachmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ChatAttachmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ChatAttachmentCountAggregateInputType | true
+    }
+
+  export interface ChatAttachmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ChatAttachment'], meta: { name: 'ChatAttachment' } }
+    /**
+     * Find zero or one ChatAttachment that matches the filter.
+     * @param {ChatAttachmentFindUniqueArgs} args - Arguments to find a ChatAttachment
+     * @example
+     * // Get one ChatAttachment
+     * const chatAttachment = await prisma.chatAttachment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ChatAttachmentFindUniqueArgs>(args: SelectSubset<T, ChatAttachmentFindUniqueArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ChatAttachment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ChatAttachmentFindUniqueOrThrowArgs} args - Arguments to find a ChatAttachment
+     * @example
+     * // Get one ChatAttachment
+     * const chatAttachment = await prisma.chatAttachment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ChatAttachmentFindUniqueOrThrowArgs>(args: SelectSubset<T, ChatAttachmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ChatAttachment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChatAttachmentFindFirstArgs} args - Arguments to find a ChatAttachment
+     * @example
+     * // Get one ChatAttachment
+     * const chatAttachment = await prisma.chatAttachment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ChatAttachmentFindFirstArgs>(args?: SelectSubset<T, ChatAttachmentFindFirstArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ChatAttachment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChatAttachmentFindFirstOrThrowArgs} args - Arguments to find a ChatAttachment
+     * @example
+     * // Get one ChatAttachment
+     * const chatAttachment = await prisma.chatAttachment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ChatAttachmentFindFirstOrThrowArgs>(args?: SelectSubset<T, ChatAttachmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ChatAttachments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChatAttachmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ChatAttachments
+     * const chatAttachments = await prisma.chatAttachment.findMany()
+     * 
+     * // Get first 10 ChatAttachments
+     * const chatAttachments = await prisma.chatAttachment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const chatAttachmentWithIdOnly = await prisma.chatAttachment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ChatAttachmentFindManyArgs>(args?: SelectSubset<T, ChatAttachmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ChatAttachment.
+     * @param {ChatAttachmentCreateArgs} args - Arguments to create a ChatAttachment.
+     * @example
+     * // Create one ChatAttachment
+     * const ChatAttachment = await prisma.chatAttachment.create({
+     *   data: {
+     *     // ... data to create a ChatAttachment
+     *   }
+     * })
+     * 
+     */
+    create<T extends ChatAttachmentCreateArgs>(args: SelectSubset<T, ChatAttachmentCreateArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ChatAttachments.
+     * @param {ChatAttachmentCreateManyArgs} args - Arguments to create many ChatAttachments.
+     * @example
+     * // Create many ChatAttachments
+     * const chatAttachment = await prisma.chatAttachment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ChatAttachmentCreateManyArgs>(args?: SelectSubset<T, ChatAttachmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a ChatAttachment.
+     * @param {ChatAttachmentDeleteArgs} args - Arguments to delete one ChatAttachment.
+     * @example
+     * // Delete one ChatAttachment
+     * const ChatAttachment = await prisma.chatAttachment.delete({
+     *   where: {
+     *     // ... filter to delete one ChatAttachment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ChatAttachmentDeleteArgs>(args: SelectSubset<T, ChatAttachmentDeleteArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ChatAttachment.
+     * @param {ChatAttachmentUpdateArgs} args - Arguments to update one ChatAttachment.
+     * @example
+     * // Update one ChatAttachment
+     * const chatAttachment = await prisma.chatAttachment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ChatAttachmentUpdateArgs>(args: SelectSubset<T, ChatAttachmentUpdateArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ChatAttachments.
+     * @param {ChatAttachmentDeleteManyArgs} args - Arguments to filter ChatAttachments to delete.
+     * @example
+     * // Delete a few ChatAttachments
+     * const { count } = await prisma.chatAttachment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ChatAttachmentDeleteManyArgs>(args?: SelectSubset<T, ChatAttachmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ChatAttachments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChatAttachmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ChatAttachments
+     * const chatAttachment = await prisma.chatAttachment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ChatAttachmentUpdateManyArgs>(args: SelectSubset<T, ChatAttachmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ChatAttachment.
+     * @param {ChatAttachmentUpsertArgs} args - Arguments to update or create a ChatAttachment.
+     * @example
+     * // Update or create a ChatAttachment
+     * const chatAttachment = await prisma.chatAttachment.upsert({
+     *   create: {
+     *     // ... data to create a ChatAttachment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ChatAttachment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ChatAttachmentUpsertArgs>(args: SelectSubset<T, ChatAttachmentUpsertArgs<ExtArgs>>): Prisma__ChatAttachmentClient<$Result.GetResult<Prisma.$ChatAttachmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ChatAttachments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChatAttachmentCountArgs} args - Arguments to filter ChatAttachments to count.
+     * @example
+     * // Count the number of ChatAttachments
+     * const count = await prisma.chatAttachment.count({
+     *   where: {
+     *     // ... the filter for the ChatAttachments we want to count
+     *   }
+     * })
+    **/
+    count<T extends ChatAttachmentCountArgs>(
+      args?: Subset<T, ChatAttachmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ChatAttachmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ChatAttachment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChatAttachmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ChatAttachmentAggregateArgs>(args: Subset<T, ChatAttachmentAggregateArgs>): Prisma.PrismaPromise<GetChatAttachmentAggregateType<T>>
+
+    /**
+     * Group by ChatAttachment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChatAttachmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ChatAttachmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ChatAttachmentGroupByArgs['orderBy'] }
+        : { orderBy?: ChatAttachmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ChatAttachmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetChatAttachmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ChatAttachment model
+   */
+  readonly fields: ChatAttachmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ChatAttachment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ChatAttachmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    message<T extends ChatAttachment$messageArgs<ExtArgs> = {}>(args?: Subset<T, ChatAttachment$messageArgs<ExtArgs>>): Prisma__ChatMessageClient<$Result.GetResult<Prisma.$ChatMessagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ChatAttachment model
+   */
+  interface ChatAttachmentFieldRefs {
+    readonly id: FieldRef<"ChatAttachment", 'String'>
+    readonly type: FieldRef<"ChatAttachment", 'ChatAttachmentType'>
+    readonly url: FieldRef<"ChatAttachment", 'String'>
+    readonly storagePath: FieldRef<"ChatAttachment", 'String'>
+    readonly mimeType: FieldRef<"ChatAttachment", 'String'>
+    readonly fileName: FieldRef<"ChatAttachment", 'String'>
+    readonly sizeBytes: FieldRef<"ChatAttachment", 'Int'>
+    readonly width: FieldRef<"ChatAttachment", 'Int'>
+    readonly height: FieldRef<"ChatAttachment", 'Int'>
+    readonly durationMillis: FieldRef<"ChatAttachment", 'Int'>
+    readonly status: FieldRef<"ChatAttachment", 'ChatAttachmentStatus'>
+    readonly expiresAt: FieldRef<"ChatAttachment", 'DateTime'>
+    readonly consumedAt: FieldRef<"ChatAttachment", 'DateTime'>
+    readonly createdAt: FieldRef<"ChatAttachment", 'DateTime'>
+    readonly updatedAt: FieldRef<"ChatAttachment", 'DateTime'>
+    readonly createdByUserId: FieldRef<"ChatAttachment", 'String'>
+    readonly messageId: FieldRef<"ChatAttachment", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ChatAttachment findUnique
+   */
+  export type ChatAttachmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * Filter, which ChatAttachment to fetch.
+     */
+    where: ChatAttachmentWhereUniqueInput
+  }
+
+  /**
+   * ChatAttachment findUniqueOrThrow
+   */
+  export type ChatAttachmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * Filter, which ChatAttachment to fetch.
+     */
+    where: ChatAttachmentWhereUniqueInput
+  }
+
+  /**
+   * ChatAttachment findFirst
+   */
+  export type ChatAttachmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * Filter, which ChatAttachment to fetch.
+     */
+    where?: ChatAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ChatAttachments to fetch.
+     */
+    orderBy?: ChatAttachmentOrderByWithRelationInput | ChatAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ChatAttachments.
+     */
+    cursor?: ChatAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ChatAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ChatAttachments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ChatAttachments.
+     */
+    distinct?: ChatAttachmentScalarFieldEnum | ChatAttachmentScalarFieldEnum[]
+  }
+
+  /**
+   * ChatAttachment findFirstOrThrow
+   */
+  export type ChatAttachmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * Filter, which ChatAttachment to fetch.
+     */
+    where?: ChatAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ChatAttachments to fetch.
+     */
+    orderBy?: ChatAttachmentOrderByWithRelationInput | ChatAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ChatAttachments.
+     */
+    cursor?: ChatAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ChatAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ChatAttachments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ChatAttachments.
+     */
+    distinct?: ChatAttachmentScalarFieldEnum | ChatAttachmentScalarFieldEnum[]
+  }
+
+  /**
+   * ChatAttachment findMany
+   */
+  export type ChatAttachmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * Filter, which ChatAttachments to fetch.
+     */
+    where?: ChatAttachmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ChatAttachments to fetch.
+     */
+    orderBy?: ChatAttachmentOrderByWithRelationInput | ChatAttachmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ChatAttachments.
+     */
+    cursor?: ChatAttachmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ChatAttachments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ChatAttachments.
+     */
+    skip?: number
+    distinct?: ChatAttachmentScalarFieldEnum | ChatAttachmentScalarFieldEnum[]
+  }
+
+  /**
+   * ChatAttachment create
+   */
+  export type ChatAttachmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ChatAttachment.
+     */
+    data: XOR<ChatAttachmentCreateInput, ChatAttachmentUncheckedCreateInput>
+  }
+
+  /**
+   * ChatAttachment createMany
+   */
+  export type ChatAttachmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ChatAttachments.
+     */
+    data: ChatAttachmentCreateManyInput | ChatAttachmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ChatAttachment update
+   */
+  export type ChatAttachmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ChatAttachment.
+     */
+    data: XOR<ChatAttachmentUpdateInput, ChatAttachmentUncheckedUpdateInput>
+    /**
+     * Choose, which ChatAttachment to update.
+     */
+    where: ChatAttachmentWhereUniqueInput
+  }
+
+  /**
+   * ChatAttachment updateMany
+   */
+  export type ChatAttachmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ChatAttachments.
+     */
+    data: XOR<ChatAttachmentUpdateManyMutationInput, ChatAttachmentUncheckedUpdateManyInput>
+    /**
+     * Filter which ChatAttachments to update
+     */
+    where?: ChatAttachmentWhereInput
+    /**
+     * Limit how many ChatAttachments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ChatAttachment upsert
+   */
+  export type ChatAttachmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ChatAttachment to update in case it exists.
+     */
+    where: ChatAttachmentWhereUniqueInput
+    /**
+     * In case the ChatAttachment found by the `where` argument doesn't exist, create a new ChatAttachment with this data.
+     */
+    create: XOR<ChatAttachmentCreateInput, ChatAttachmentUncheckedCreateInput>
+    /**
+     * In case the ChatAttachment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ChatAttachmentUpdateInput, ChatAttachmentUncheckedUpdateInput>
+  }
+
+  /**
+   * ChatAttachment delete
+   */
+  export type ChatAttachmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
+    /**
+     * Filter which ChatAttachment to delete.
+     */
+    where: ChatAttachmentWhereUniqueInput
+  }
+
+  /**
+   * ChatAttachment deleteMany
+   */
+  export type ChatAttachmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ChatAttachments to delete
+     */
+    where?: ChatAttachmentWhereInput
+    /**
+     * Limit how many ChatAttachments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ChatAttachment.message
+   */
+  export type ChatAttachment$messageArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatMessage
+     */
+    select?: ChatMessageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatMessage
+     */
+    omit?: ChatMessageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatMessageInclude<ExtArgs> | null
+    where?: ChatMessageWhereInput
+  }
+
+  /**
+   * ChatAttachment without action
+   */
+  export type ChatAttachmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ChatAttachment
+     */
+    select?: ChatAttachmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ChatAttachment
+     */
+    omit?: ChatAttachmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChatAttachmentInclude<ExtArgs> | null
   }
 
 
@@ -5994,6 +7362,7 @@ export namespace Prisma {
 
   export const ChatMessageScalarFieldEnum: {
     id: 'id',
+    type: 'type',
     content: 'content',
     authorName: 'authorName',
     createdAt: 'createdAt',
@@ -6002,6 +7371,29 @@ export namespace Prisma {
   };
 
   export type ChatMessageScalarFieldEnum = (typeof ChatMessageScalarFieldEnum)[keyof typeof ChatMessageScalarFieldEnum]
+
+
+  export const ChatAttachmentScalarFieldEnum: {
+    id: 'id',
+    type: 'type',
+    url: 'url',
+    storagePath: 'storagePath',
+    mimeType: 'mimeType',
+    fileName: 'fileName',
+    sizeBytes: 'sizeBytes',
+    width: 'width',
+    height: 'height',
+    durationMillis: 'durationMillis',
+    status: 'status',
+    expiresAt: 'expiresAt',
+    consumedAt: 'consumedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    createdByUserId: 'createdByUserId',
+    messageId: 'messageId'
+  };
+
+  export type ChatAttachmentScalarFieldEnum = (typeof ChatAttachmentScalarFieldEnum)[keyof typeof ChatAttachmentScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -6073,6 +7465,19 @@ export namespace Prisma {
   export type ChatMessageOrderByRelevanceFieldEnum = (typeof ChatMessageOrderByRelevanceFieldEnum)[keyof typeof ChatMessageOrderByRelevanceFieldEnum]
 
 
+  export const ChatAttachmentOrderByRelevanceFieldEnum: {
+    id: 'id',
+    url: 'url',
+    storagePath: 'storagePath',
+    mimeType: 'mimeType',
+    fileName: 'fileName',
+    createdByUserId: 'createdByUserId',
+    messageId: 'messageId'
+  };
+
+  export type ChatAttachmentOrderByRelevanceFieldEnum = (typeof ChatAttachmentOrderByRelevanceFieldEnum)[keyof typeof ChatAttachmentOrderByRelevanceFieldEnum]
+
+
   /**
    * Field references
    */
@@ -6103,6 +7508,27 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime'
    */
   export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'ChatMessageType'
+   */
+  export type EnumChatMessageTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChatMessageType'>
+    
+
+
+  /**
+   * Reference to a field of type 'ChatAttachmentType'
+   */
+  export type EnumChatAttachmentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChatAttachmentType'>
+    
+
+
+  /**
+   * Reference to a field of type 'ChatAttachmentStatus'
+   */
+  export type EnumChatAttachmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChatAttachmentStatus'>
     
 
 
@@ -6401,20 +7827,24 @@ export namespace Prisma {
     OR?: ChatMessageWhereInput[]
     NOT?: ChatMessageWhereInput | ChatMessageWhereInput[]
     id?: StringFilter<"ChatMessage"> | string
+    type?: EnumChatMessageTypeFilter<"ChatMessage"> | $Enums.ChatMessageType
     content?: StringFilter<"ChatMessage"> | string
     authorName?: StringFilter<"ChatMessage"> | string
     createdAt?: DateTimeFilter<"ChatMessage"> | Date | string
     updatedAt?: DateTimeFilter<"ChatMessage"> | Date | string
     createdByUserId?: StringFilter<"ChatMessage"> | string
+    attachments?: ChatAttachmentListRelationFilter
   }
 
   export type ChatMessageOrderByWithRelationInput = {
     id?: SortOrder
+    type?: SortOrder
     content?: SortOrder
     authorName?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     createdByUserId?: SortOrder
+    attachments?: ChatAttachmentOrderByRelationAggregateInput
     _relevance?: ChatMessageOrderByRelevanceInput
   }
 
@@ -6423,15 +7853,18 @@ export namespace Prisma {
     AND?: ChatMessageWhereInput | ChatMessageWhereInput[]
     OR?: ChatMessageWhereInput[]
     NOT?: ChatMessageWhereInput | ChatMessageWhereInput[]
+    type?: EnumChatMessageTypeFilter<"ChatMessage"> | $Enums.ChatMessageType
     content?: StringFilter<"ChatMessage"> | string
     authorName?: StringFilter<"ChatMessage"> | string
     createdAt?: DateTimeFilter<"ChatMessage"> | Date | string
     updatedAt?: DateTimeFilter<"ChatMessage"> | Date | string
     createdByUserId?: StringFilter<"ChatMessage"> | string
+    attachments?: ChatAttachmentListRelationFilter
   }, "id">
 
   export type ChatMessageOrderByWithAggregationInput = {
     id?: SortOrder
+    type?: SortOrder
     content?: SortOrder
     authorName?: SortOrder
     createdAt?: SortOrder
@@ -6447,11 +7880,130 @@ export namespace Prisma {
     OR?: ChatMessageScalarWhereWithAggregatesInput[]
     NOT?: ChatMessageScalarWhereWithAggregatesInput | ChatMessageScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"ChatMessage"> | string
+    type?: EnumChatMessageTypeWithAggregatesFilter<"ChatMessage"> | $Enums.ChatMessageType
     content?: StringWithAggregatesFilter<"ChatMessage"> | string
     authorName?: StringWithAggregatesFilter<"ChatMessage"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ChatMessage"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ChatMessage"> | Date | string
     createdByUserId?: StringWithAggregatesFilter<"ChatMessage"> | string
+  }
+
+  export type ChatAttachmentWhereInput = {
+    AND?: ChatAttachmentWhereInput | ChatAttachmentWhereInput[]
+    OR?: ChatAttachmentWhereInput[]
+    NOT?: ChatAttachmentWhereInput | ChatAttachmentWhereInput[]
+    id?: StringFilter<"ChatAttachment"> | string
+    type?: EnumChatAttachmentTypeFilter<"ChatAttachment"> | $Enums.ChatAttachmentType
+    url?: StringFilter<"ChatAttachment"> | string
+    storagePath?: StringFilter<"ChatAttachment"> | string
+    mimeType?: StringFilter<"ChatAttachment"> | string
+    fileName?: StringFilter<"ChatAttachment"> | string
+    sizeBytes?: IntFilter<"ChatAttachment"> | number
+    width?: IntNullableFilter<"ChatAttachment"> | number | null
+    height?: IntNullableFilter<"ChatAttachment"> | number | null
+    durationMillis?: IntNullableFilter<"ChatAttachment"> | number | null
+    status?: EnumChatAttachmentStatusFilter<"ChatAttachment"> | $Enums.ChatAttachmentStatus
+    expiresAt?: DateTimeNullableFilter<"ChatAttachment"> | Date | string | null
+    consumedAt?: DateTimeNullableFilter<"ChatAttachment"> | Date | string | null
+    createdAt?: DateTimeFilter<"ChatAttachment"> | Date | string
+    updatedAt?: DateTimeFilter<"ChatAttachment"> | Date | string
+    createdByUserId?: StringFilter<"ChatAttachment"> | string
+    messageId?: StringNullableFilter<"ChatAttachment"> | string | null
+    message?: XOR<ChatMessageNullableScalarRelationFilter, ChatMessageWhereInput> | null
+  }
+
+  export type ChatAttachmentOrderByWithRelationInput = {
+    id?: SortOrder
+    type?: SortOrder
+    url?: SortOrder
+    storagePath?: SortOrder
+    mimeType?: SortOrder
+    fileName?: SortOrder
+    sizeBytes?: SortOrder
+    width?: SortOrderInput | SortOrder
+    height?: SortOrderInput | SortOrder
+    durationMillis?: SortOrderInput | SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    consumedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    createdByUserId?: SortOrder
+    messageId?: SortOrderInput | SortOrder
+    message?: ChatMessageOrderByWithRelationInput
+    _relevance?: ChatAttachmentOrderByRelevanceInput
+  }
+
+  export type ChatAttachmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ChatAttachmentWhereInput | ChatAttachmentWhereInput[]
+    OR?: ChatAttachmentWhereInput[]
+    NOT?: ChatAttachmentWhereInput | ChatAttachmentWhereInput[]
+    type?: EnumChatAttachmentTypeFilter<"ChatAttachment"> | $Enums.ChatAttachmentType
+    url?: StringFilter<"ChatAttachment"> | string
+    storagePath?: StringFilter<"ChatAttachment"> | string
+    mimeType?: StringFilter<"ChatAttachment"> | string
+    fileName?: StringFilter<"ChatAttachment"> | string
+    sizeBytes?: IntFilter<"ChatAttachment"> | number
+    width?: IntNullableFilter<"ChatAttachment"> | number | null
+    height?: IntNullableFilter<"ChatAttachment"> | number | null
+    durationMillis?: IntNullableFilter<"ChatAttachment"> | number | null
+    status?: EnumChatAttachmentStatusFilter<"ChatAttachment"> | $Enums.ChatAttachmentStatus
+    expiresAt?: DateTimeNullableFilter<"ChatAttachment"> | Date | string | null
+    consumedAt?: DateTimeNullableFilter<"ChatAttachment"> | Date | string | null
+    createdAt?: DateTimeFilter<"ChatAttachment"> | Date | string
+    updatedAt?: DateTimeFilter<"ChatAttachment"> | Date | string
+    createdByUserId?: StringFilter<"ChatAttachment"> | string
+    messageId?: StringNullableFilter<"ChatAttachment"> | string | null
+    message?: XOR<ChatMessageNullableScalarRelationFilter, ChatMessageWhereInput> | null
+  }, "id">
+
+  export type ChatAttachmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    type?: SortOrder
+    url?: SortOrder
+    storagePath?: SortOrder
+    mimeType?: SortOrder
+    fileName?: SortOrder
+    sizeBytes?: SortOrder
+    width?: SortOrderInput | SortOrder
+    height?: SortOrderInput | SortOrder
+    durationMillis?: SortOrderInput | SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    consumedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    createdByUserId?: SortOrder
+    messageId?: SortOrderInput | SortOrder
+    _count?: ChatAttachmentCountOrderByAggregateInput
+    _avg?: ChatAttachmentAvgOrderByAggregateInput
+    _max?: ChatAttachmentMaxOrderByAggregateInput
+    _min?: ChatAttachmentMinOrderByAggregateInput
+    _sum?: ChatAttachmentSumOrderByAggregateInput
+  }
+
+  export type ChatAttachmentScalarWhereWithAggregatesInput = {
+    AND?: ChatAttachmentScalarWhereWithAggregatesInput | ChatAttachmentScalarWhereWithAggregatesInput[]
+    OR?: ChatAttachmentScalarWhereWithAggregatesInput[]
+    NOT?: ChatAttachmentScalarWhereWithAggregatesInput | ChatAttachmentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ChatAttachment"> | string
+    type?: EnumChatAttachmentTypeWithAggregatesFilter<"ChatAttachment"> | $Enums.ChatAttachmentType
+    url?: StringWithAggregatesFilter<"ChatAttachment"> | string
+    storagePath?: StringWithAggregatesFilter<"ChatAttachment"> | string
+    mimeType?: StringWithAggregatesFilter<"ChatAttachment"> | string
+    fileName?: StringWithAggregatesFilter<"ChatAttachment"> | string
+    sizeBytes?: IntWithAggregatesFilter<"ChatAttachment"> | number
+    width?: IntNullableWithAggregatesFilter<"ChatAttachment"> | number | null
+    height?: IntNullableWithAggregatesFilter<"ChatAttachment"> | number | null
+    durationMillis?: IntNullableWithAggregatesFilter<"ChatAttachment"> | number | null
+    status?: EnumChatAttachmentStatusWithAggregatesFilter<"ChatAttachment"> | $Enums.ChatAttachmentStatus
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"ChatAttachment"> | Date | string | null
+    consumedAt?: DateTimeNullableWithAggregatesFilter<"ChatAttachment"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ChatAttachment"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ChatAttachment"> | Date | string
+    createdByUserId?: StringWithAggregatesFilter<"ChatAttachment"> | string
+    messageId?: StringNullableWithAggregatesFilter<"ChatAttachment"> | string | null
   }
 
   export type UserCreateInput = {
@@ -6767,42 +8319,51 @@ export namespace Prisma {
 
   export type ChatMessageCreateInput = {
     id?: string
+    type?: $Enums.ChatMessageType
     content: string
     authorName: string
     createdAt?: Date | string
     updatedAt?: Date | string
     createdByUserId: string
+    attachments?: ChatAttachmentCreateNestedManyWithoutMessageInput
   }
 
   export type ChatMessageUncheckedCreateInput = {
     id?: string
+    type?: $Enums.ChatMessageType
     content: string
     authorName: string
     createdAt?: Date | string
     updatedAt?: Date | string
     createdByUserId: string
+    attachments?: ChatAttachmentUncheckedCreateNestedManyWithoutMessageInput
   }
 
   export type ChatMessageUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatMessageTypeFieldUpdateOperationsInput | $Enums.ChatMessageType
     content?: StringFieldUpdateOperationsInput | string
     authorName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdByUserId?: StringFieldUpdateOperationsInput | string
+    attachments?: ChatAttachmentUpdateManyWithoutMessageNestedInput
   }
 
   export type ChatMessageUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatMessageTypeFieldUpdateOperationsInput | $Enums.ChatMessageType
     content?: StringFieldUpdateOperationsInput | string
     authorName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdByUserId?: StringFieldUpdateOperationsInput | string
+    attachments?: ChatAttachmentUncheckedUpdateManyWithoutMessageNestedInput
   }
 
   export type ChatMessageCreateManyInput = {
     id?: string
+    type?: $Enums.ChatMessageType
     content: string
     authorName: string
     createdAt?: Date | string
@@ -6812,6 +8373,7 @@ export namespace Prisma {
 
   export type ChatMessageUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatMessageTypeFieldUpdateOperationsInput | $Enums.ChatMessageType
     content?: StringFieldUpdateOperationsInput | string
     authorName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6821,11 +8383,151 @@ export namespace Prisma {
 
   export type ChatMessageUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatMessageTypeFieldUpdateOperationsInput | $Enums.ChatMessageType
     content?: StringFieldUpdateOperationsInput | string
     authorName?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdByUserId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ChatAttachmentCreateInput = {
+    id?: string
+    type: $Enums.ChatAttachmentType
+    url: string
+    storagePath: string
+    mimeType: string
+    fileName: string
+    sizeBytes: number
+    width?: number | null
+    height?: number | null
+    durationMillis?: number | null
+    status?: $Enums.ChatAttachmentStatus
+    expiresAt?: Date | string | null
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+    message?: ChatMessageCreateNestedOneWithoutAttachmentsInput
+  }
+
+  export type ChatAttachmentUncheckedCreateInput = {
+    id?: string
+    type: $Enums.ChatAttachmentType
+    url: string
+    storagePath: string
+    mimeType: string
+    fileName: string
+    sizeBytes: number
+    width?: number | null
+    height?: number | null
+    durationMillis?: number | null
+    status?: $Enums.ChatAttachmentStatus
+    expiresAt?: Date | string | null
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+    messageId?: string | null
+  }
+
+  export type ChatAttachmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatAttachmentTypeFieldUpdateOperationsInput | $Enums.ChatAttachmentType
+    url?: StringFieldUpdateOperationsInput | string
+    storagePath?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    width?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: NullableIntFieldUpdateOperationsInput | number | null
+    durationMillis?: NullableIntFieldUpdateOperationsInput | number | null
+    status?: EnumChatAttachmentStatusFieldUpdateOperationsInput | $Enums.ChatAttachmentStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    message?: ChatMessageUpdateOneWithoutAttachmentsNestedInput
+  }
+
+  export type ChatAttachmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatAttachmentTypeFieldUpdateOperationsInput | $Enums.ChatAttachmentType
+    url?: StringFieldUpdateOperationsInput | string
+    storagePath?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    width?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: NullableIntFieldUpdateOperationsInput | number | null
+    durationMillis?: NullableIntFieldUpdateOperationsInput | number | null
+    status?: EnumChatAttachmentStatusFieldUpdateOperationsInput | $Enums.ChatAttachmentStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    messageId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ChatAttachmentCreateManyInput = {
+    id?: string
+    type: $Enums.ChatAttachmentType
+    url: string
+    storagePath: string
+    mimeType: string
+    fileName: string
+    sizeBytes: number
+    width?: number | null
+    height?: number | null
+    durationMillis?: number | null
+    status?: $Enums.ChatAttachmentStatus
+    expiresAt?: Date | string | null
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+    messageId?: string | null
+  }
+
+  export type ChatAttachmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatAttachmentTypeFieldUpdateOperationsInput | $Enums.ChatAttachmentType
+    url?: StringFieldUpdateOperationsInput | string
+    storagePath?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    width?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: NullableIntFieldUpdateOperationsInput | number | null
+    durationMillis?: NullableIntFieldUpdateOperationsInput | number | null
+    status?: EnumChatAttachmentStatusFieldUpdateOperationsInput | $Enums.ChatAttachmentStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ChatAttachmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatAttachmentTypeFieldUpdateOperationsInput | $Enums.ChatAttachmentType
+    url?: StringFieldUpdateOperationsInput | string
+    storagePath?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    width?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: NullableIntFieldUpdateOperationsInput | number | null
+    durationMillis?: NullableIntFieldUpdateOperationsInput | number | null
+    status?: EnumChatAttachmentStatusFieldUpdateOperationsInput | $Enums.ChatAttachmentStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+    messageId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -7135,6 +8837,23 @@ export namespace Prisma {
     createdByUserId?: SortOrder
   }
 
+  export type EnumChatMessageTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatMessageType | EnumChatMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatMessageType[]
+    notIn?: $Enums.ChatMessageType[]
+    not?: NestedEnumChatMessageTypeFilter<$PrismaModel> | $Enums.ChatMessageType
+  }
+
+  export type ChatAttachmentListRelationFilter = {
+    every?: ChatAttachmentWhereInput
+    some?: ChatAttachmentWhereInput
+    none?: ChatAttachmentWhereInput
+  }
+
+  export type ChatAttachmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type ChatMessageOrderByRelevanceInput = {
     fields: ChatMessageOrderByRelevanceFieldEnum | ChatMessageOrderByRelevanceFieldEnum[]
     sort: SortOrder
@@ -7143,6 +8862,7 @@ export namespace Prisma {
 
   export type ChatMessageCountOrderByAggregateInput = {
     id?: SortOrder
+    type?: SortOrder
     content?: SortOrder
     authorName?: SortOrder
     createdAt?: SortOrder
@@ -7152,6 +8872,7 @@ export namespace Prisma {
 
   export type ChatMessageMaxOrderByAggregateInput = {
     id?: SortOrder
+    type?: SortOrder
     content?: SortOrder
     authorName?: SortOrder
     createdAt?: SortOrder
@@ -7161,11 +8882,201 @@ export namespace Prisma {
 
   export type ChatMessageMinOrderByAggregateInput = {
     id?: SortOrder
+    type?: SortOrder
     content?: SortOrder
     authorName?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     createdByUserId?: SortOrder
+  }
+
+  export type EnumChatMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatMessageType | EnumChatMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatMessageType[]
+    notIn?: $Enums.ChatMessageType[]
+    not?: NestedEnumChatMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.ChatMessageType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChatMessageTypeFilter<$PrismaModel>
+    _max?: NestedEnumChatMessageTypeFilter<$PrismaModel>
+  }
+
+  export type EnumChatAttachmentTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentType | EnumChatAttachmentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentType[]
+    notIn?: $Enums.ChatAttachmentType[]
+    not?: NestedEnumChatAttachmentTypeFilter<$PrismaModel> | $Enums.ChatAttachmentType
+  }
+
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type EnumChatAttachmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentStatus | EnumChatAttachmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentStatus[]
+    notIn?: $Enums.ChatAttachmentStatus[]
+    not?: NestedEnumChatAttachmentStatusFilter<$PrismaModel> | $Enums.ChatAttachmentStatus
+  }
+
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type ChatMessageNullableScalarRelationFilter = {
+    is?: ChatMessageWhereInput | null
+    isNot?: ChatMessageWhereInput | null
+  }
+
+  export type ChatAttachmentOrderByRelevanceInput = {
+    fields: ChatAttachmentOrderByRelevanceFieldEnum | ChatAttachmentOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type ChatAttachmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    url?: SortOrder
+    storagePath?: SortOrder
+    mimeType?: SortOrder
+    fileName?: SortOrder
+    sizeBytes?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    durationMillis?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    createdByUserId?: SortOrder
+    messageId?: SortOrder
+  }
+
+  export type ChatAttachmentAvgOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    durationMillis?: SortOrder
+  }
+
+  export type ChatAttachmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    url?: SortOrder
+    storagePath?: SortOrder
+    mimeType?: SortOrder
+    fileName?: SortOrder
+    sizeBytes?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    durationMillis?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    createdByUserId?: SortOrder
+    messageId?: SortOrder
+  }
+
+  export type ChatAttachmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    url?: SortOrder
+    storagePath?: SortOrder
+    mimeType?: SortOrder
+    fileName?: SortOrder
+    sizeBytes?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    durationMillis?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    createdByUserId?: SortOrder
+    messageId?: SortOrder
+  }
+
+  export type ChatAttachmentSumOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    durationMillis?: SortOrder
+  }
+
+  export type EnumChatAttachmentTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentType | EnumChatAttachmentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentType[]
+    notIn?: $Enums.ChatAttachmentType[]
+    not?: NestedEnumChatAttachmentTypeWithAggregatesFilter<$PrismaModel> | $Enums.ChatAttachmentType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChatAttachmentTypeFilter<$PrismaModel>
+    _max?: NestedEnumChatAttachmentTypeFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type EnumChatAttachmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentStatus | EnumChatAttachmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentStatus[]
+    notIn?: $Enums.ChatAttachmentStatus[]
+    not?: NestedEnumChatAttachmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.ChatAttachmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChatAttachmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumChatAttachmentStatusFilter<$PrismaModel>
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type RefreshTokenCreateNestedManyWithoutUserInput = {
@@ -7246,6 +9157,88 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutRefreshTokensInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutRefreshTokensInput, UserUpdateWithoutRefreshTokensInput>, UserUncheckedUpdateWithoutRefreshTokensInput>
+  }
+
+  export type ChatAttachmentCreateNestedManyWithoutMessageInput = {
+    create?: XOR<ChatAttachmentCreateWithoutMessageInput, ChatAttachmentUncheckedCreateWithoutMessageInput> | ChatAttachmentCreateWithoutMessageInput[] | ChatAttachmentUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: ChatAttachmentCreateOrConnectWithoutMessageInput | ChatAttachmentCreateOrConnectWithoutMessageInput[]
+    createMany?: ChatAttachmentCreateManyMessageInputEnvelope
+    connect?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+  }
+
+  export type ChatAttachmentUncheckedCreateNestedManyWithoutMessageInput = {
+    create?: XOR<ChatAttachmentCreateWithoutMessageInput, ChatAttachmentUncheckedCreateWithoutMessageInput> | ChatAttachmentCreateWithoutMessageInput[] | ChatAttachmentUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: ChatAttachmentCreateOrConnectWithoutMessageInput | ChatAttachmentCreateOrConnectWithoutMessageInput[]
+    createMany?: ChatAttachmentCreateManyMessageInputEnvelope
+    connect?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+  }
+
+  export type EnumChatMessageTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ChatMessageType
+  }
+
+  export type ChatAttachmentUpdateManyWithoutMessageNestedInput = {
+    create?: XOR<ChatAttachmentCreateWithoutMessageInput, ChatAttachmentUncheckedCreateWithoutMessageInput> | ChatAttachmentCreateWithoutMessageInput[] | ChatAttachmentUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: ChatAttachmentCreateOrConnectWithoutMessageInput | ChatAttachmentCreateOrConnectWithoutMessageInput[]
+    upsert?: ChatAttachmentUpsertWithWhereUniqueWithoutMessageInput | ChatAttachmentUpsertWithWhereUniqueWithoutMessageInput[]
+    createMany?: ChatAttachmentCreateManyMessageInputEnvelope
+    set?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    disconnect?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    delete?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    connect?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    update?: ChatAttachmentUpdateWithWhereUniqueWithoutMessageInput | ChatAttachmentUpdateWithWhereUniqueWithoutMessageInput[]
+    updateMany?: ChatAttachmentUpdateManyWithWhereWithoutMessageInput | ChatAttachmentUpdateManyWithWhereWithoutMessageInput[]
+    deleteMany?: ChatAttachmentScalarWhereInput | ChatAttachmentScalarWhereInput[]
+  }
+
+  export type ChatAttachmentUncheckedUpdateManyWithoutMessageNestedInput = {
+    create?: XOR<ChatAttachmentCreateWithoutMessageInput, ChatAttachmentUncheckedCreateWithoutMessageInput> | ChatAttachmentCreateWithoutMessageInput[] | ChatAttachmentUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: ChatAttachmentCreateOrConnectWithoutMessageInput | ChatAttachmentCreateOrConnectWithoutMessageInput[]
+    upsert?: ChatAttachmentUpsertWithWhereUniqueWithoutMessageInput | ChatAttachmentUpsertWithWhereUniqueWithoutMessageInput[]
+    createMany?: ChatAttachmentCreateManyMessageInputEnvelope
+    set?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    disconnect?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    delete?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    connect?: ChatAttachmentWhereUniqueInput | ChatAttachmentWhereUniqueInput[]
+    update?: ChatAttachmentUpdateWithWhereUniqueWithoutMessageInput | ChatAttachmentUpdateWithWhereUniqueWithoutMessageInput[]
+    updateMany?: ChatAttachmentUpdateManyWithWhereWithoutMessageInput | ChatAttachmentUpdateManyWithWhereWithoutMessageInput[]
+    deleteMany?: ChatAttachmentScalarWhereInput | ChatAttachmentScalarWhereInput[]
+  }
+
+  export type ChatMessageCreateNestedOneWithoutAttachmentsInput = {
+    create?: XOR<ChatMessageCreateWithoutAttachmentsInput, ChatMessageUncheckedCreateWithoutAttachmentsInput>
+    connectOrCreate?: ChatMessageCreateOrConnectWithoutAttachmentsInput
+    connect?: ChatMessageWhereUniqueInput
+  }
+
+  export type EnumChatAttachmentTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ChatAttachmentType
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type EnumChatAttachmentStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ChatAttachmentStatus
+  }
+
+  export type ChatMessageUpdateOneWithoutAttachmentsNestedInput = {
+    create?: XOR<ChatMessageCreateWithoutAttachmentsInput, ChatMessageUncheckedCreateWithoutAttachmentsInput>
+    connectOrCreate?: ChatMessageCreateOrConnectWithoutAttachmentsInput
+    upsert?: ChatMessageUpsertWithoutAttachmentsInput
+    disconnect?: ChatMessageWhereInput | boolean
+    delete?: ChatMessageWhereInput | boolean
+    connect?: ChatMessageWhereUniqueInput
+    update?: XOR<XOR<ChatMessageUpdateToOneWithWhereWithoutAttachmentsInput, ChatMessageUpdateWithoutAttachmentsInput>, ChatMessageUncheckedUpdateWithoutAttachmentsInput>
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -7393,6 +9386,117 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedEnumChatMessageTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatMessageType | EnumChatMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatMessageType[]
+    notIn?: $Enums.ChatMessageType[]
+    not?: NestedEnumChatMessageTypeFilter<$PrismaModel> | $Enums.ChatMessageType
+  }
+
+  export type NestedEnumChatMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatMessageType | EnumChatMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatMessageType[]
+    notIn?: $Enums.ChatMessageType[]
+    not?: NestedEnumChatMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.ChatMessageType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChatMessageTypeFilter<$PrismaModel>
+    _max?: NestedEnumChatMessageTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumChatAttachmentTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentType | EnumChatAttachmentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentType[]
+    notIn?: $Enums.ChatAttachmentType[]
+    not?: NestedEnumChatAttachmentTypeFilter<$PrismaModel> | $Enums.ChatAttachmentType
+  }
+
+  export type NestedEnumChatAttachmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentStatus | EnumChatAttachmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentStatus[]
+    notIn?: $Enums.ChatAttachmentStatus[]
+    not?: NestedEnumChatAttachmentStatusFilter<$PrismaModel> | $Enums.ChatAttachmentStatus
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedEnumChatAttachmentTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentType | EnumChatAttachmentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentType[]
+    notIn?: $Enums.ChatAttachmentType[]
+    not?: NestedEnumChatAttachmentTypeWithAggregatesFilter<$PrismaModel> | $Enums.ChatAttachmentType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChatAttachmentTypeFilter<$PrismaModel>
+    _max?: NestedEnumChatAttachmentTypeFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedEnumChatAttachmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChatAttachmentStatus | EnumChatAttachmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ChatAttachmentStatus[]
+    notIn?: $Enums.ChatAttachmentStatus[]
+    not?: NestedEnumChatAttachmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.ChatAttachmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChatAttachmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumChatAttachmentStatusFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type RefreshTokenCreateWithoutUserInput = {
     id?: string
     tokenHash: string
@@ -7507,6 +9611,149 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ChatAttachmentCreateWithoutMessageInput = {
+    id?: string
+    type: $Enums.ChatAttachmentType
+    url: string
+    storagePath: string
+    mimeType: string
+    fileName: string
+    sizeBytes: number
+    width?: number | null
+    height?: number | null
+    durationMillis?: number | null
+    status?: $Enums.ChatAttachmentStatus
+    expiresAt?: Date | string | null
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+  }
+
+  export type ChatAttachmentUncheckedCreateWithoutMessageInput = {
+    id?: string
+    type: $Enums.ChatAttachmentType
+    url: string
+    storagePath: string
+    mimeType: string
+    fileName: string
+    sizeBytes: number
+    width?: number | null
+    height?: number | null
+    durationMillis?: number | null
+    status?: $Enums.ChatAttachmentStatus
+    expiresAt?: Date | string | null
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+  }
+
+  export type ChatAttachmentCreateOrConnectWithoutMessageInput = {
+    where: ChatAttachmentWhereUniqueInput
+    create: XOR<ChatAttachmentCreateWithoutMessageInput, ChatAttachmentUncheckedCreateWithoutMessageInput>
+  }
+
+  export type ChatAttachmentCreateManyMessageInputEnvelope = {
+    data: ChatAttachmentCreateManyMessageInput | ChatAttachmentCreateManyMessageInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ChatAttachmentUpsertWithWhereUniqueWithoutMessageInput = {
+    where: ChatAttachmentWhereUniqueInput
+    update: XOR<ChatAttachmentUpdateWithoutMessageInput, ChatAttachmentUncheckedUpdateWithoutMessageInput>
+    create: XOR<ChatAttachmentCreateWithoutMessageInput, ChatAttachmentUncheckedCreateWithoutMessageInput>
+  }
+
+  export type ChatAttachmentUpdateWithWhereUniqueWithoutMessageInput = {
+    where: ChatAttachmentWhereUniqueInput
+    data: XOR<ChatAttachmentUpdateWithoutMessageInput, ChatAttachmentUncheckedUpdateWithoutMessageInput>
+  }
+
+  export type ChatAttachmentUpdateManyWithWhereWithoutMessageInput = {
+    where: ChatAttachmentScalarWhereInput
+    data: XOR<ChatAttachmentUpdateManyMutationInput, ChatAttachmentUncheckedUpdateManyWithoutMessageInput>
+  }
+
+  export type ChatAttachmentScalarWhereInput = {
+    AND?: ChatAttachmentScalarWhereInput | ChatAttachmentScalarWhereInput[]
+    OR?: ChatAttachmentScalarWhereInput[]
+    NOT?: ChatAttachmentScalarWhereInput | ChatAttachmentScalarWhereInput[]
+    id?: StringFilter<"ChatAttachment"> | string
+    type?: EnumChatAttachmentTypeFilter<"ChatAttachment"> | $Enums.ChatAttachmentType
+    url?: StringFilter<"ChatAttachment"> | string
+    storagePath?: StringFilter<"ChatAttachment"> | string
+    mimeType?: StringFilter<"ChatAttachment"> | string
+    fileName?: StringFilter<"ChatAttachment"> | string
+    sizeBytes?: IntFilter<"ChatAttachment"> | number
+    width?: IntNullableFilter<"ChatAttachment"> | number | null
+    height?: IntNullableFilter<"ChatAttachment"> | number | null
+    durationMillis?: IntNullableFilter<"ChatAttachment"> | number | null
+    status?: EnumChatAttachmentStatusFilter<"ChatAttachment"> | $Enums.ChatAttachmentStatus
+    expiresAt?: DateTimeNullableFilter<"ChatAttachment"> | Date | string | null
+    consumedAt?: DateTimeNullableFilter<"ChatAttachment"> | Date | string | null
+    createdAt?: DateTimeFilter<"ChatAttachment"> | Date | string
+    updatedAt?: DateTimeFilter<"ChatAttachment"> | Date | string
+    createdByUserId?: StringFilter<"ChatAttachment"> | string
+    messageId?: StringNullableFilter<"ChatAttachment"> | string | null
+  }
+
+  export type ChatMessageCreateWithoutAttachmentsInput = {
+    id?: string
+    type?: $Enums.ChatMessageType
+    content: string
+    authorName: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+  }
+
+  export type ChatMessageUncheckedCreateWithoutAttachmentsInput = {
+    id?: string
+    type?: $Enums.ChatMessageType
+    content: string
+    authorName: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+  }
+
+  export type ChatMessageCreateOrConnectWithoutAttachmentsInput = {
+    where: ChatMessageWhereUniqueInput
+    create: XOR<ChatMessageCreateWithoutAttachmentsInput, ChatMessageUncheckedCreateWithoutAttachmentsInput>
+  }
+
+  export type ChatMessageUpsertWithoutAttachmentsInput = {
+    update: XOR<ChatMessageUpdateWithoutAttachmentsInput, ChatMessageUncheckedUpdateWithoutAttachmentsInput>
+    create: XOR<ChatMessageCreateWithoutAttachmentsInput, ChatMessageUncheckedCreateWithoutAttachmentsInput>
+    where?: ChatMessageWhereInput
+  }
+
+  export type ChatMessageUpdateToOneWithWhereWithoutAttachmentsInput = {
+    where?: ChatMessageWhereInput
+    data: XOR<ChatMessageUpdateWithoutAttachmentsInput, ChatMessageUncheckedUpdateWithoutAttachmentsInput>
+  }
+
+  export type ChatMessageUpdateWithoutAttachmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatMessageTypeFieldUpdateOperationsInput | $Enums.ChatMessageType
+    content?: StringFieldUpdateOperationsInput | string
+    authorName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ChatMessageUncheckedUpdateWithoutAttachmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatMessageTypeFieldUpdateOperationsInput | $Enums.ChatMessageType
+    content?: StringFieldUpdateOperationsInput | string
+    authorName?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+  }
+
   export type RefreshTokenCreateManyUserInput = {
     id?: string
     tokenHash: string
@@ -7537,6 +9784,82 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     revokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ChatAttachmentCreateManyMessageInput = {
+    id?: string
+    type: $Enums.ChatAttachmentType
+    url: string
+    storagePath: string
+    mimeType: string
+    fileName: string
+    sizeBytes: number
+    width?: number | null
+    height?: number | null
+    durationMillis?: number | null
+    status?: $Enums.ChatAttachmentStatus
+    expiresAt?: Date | string | null
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdByUserId: string
+  }
+
+  export type ChatAttachmentUpdateWithoutMessageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatAttachmentTypeFieldUpdateOperationsInput | $Enums.ChatAttachmentType
+    url?: StringFieldUpdateOperationsInput | string
+    storagePath?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    width?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: NullableIntFieldUpdateOperationsInput | number | null
+    durationMillis?: NullableIntFieldUpdateOperationsInput | number | null
+    status?: EnumChatAttachmentStatusFieldUpdateOperationsInput | $Enums.ChatAttachmentStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ChatAttachmentUncheckedUpdateWithoutMessageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatAttachmentTypeFieldUpdateOperationsInput | $Enums.ChatAttachmentType
+    url?: StringFieldUpdateOperationsInput | string
+    storagePath?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    width?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: NullableIntFieldUpdateOperationsInput | number | null
+    durationMillis?: NullableIntFieldUpdateOperationsInput | number | null
+    status?: EnumChatAttachmentStatusFieldUpdateOperationsInput | $Enums.ChatAttachmentStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ChatAttachmentUncheckedUpdateManyWithoutMessageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumChatAttachmentTypeFieldUpdateOperationsInput | $Enums.ChatAttachmentType
+    url?: StringFieldUpdateOperationsInput | string
+    storagePath?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    width?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: NullableIntFieldUpdateOperationsInput | number | null
+    durationMillis?: NullableIntFieldUpdateOperationsInput | number | null
+    status?: EnumChatAttachmentStatusFieldUpdateOperationsInput | $Enums.ChatAttachmentStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdByUserId?: StringFieldUpdateOperationsInput | string
   }
 
 

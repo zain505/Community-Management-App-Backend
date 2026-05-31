@@ -6,8 +6,10 @@ import {
   createChatMessage,
   deleteChatMessage,
   listChatMessages,
+  uploadChatAttachment,
   updateChatMessage,
 } from './chat.controller';
+import { parseChatAttachmentUpload } from './chat-attachment-upload.middleware';
 import {
   chatMessageIdParamSchema,
   createChatMessageBodySchema,
@@ -17,6 +19,12 @@ import {
 
 const chatRouter = Router();
 
+chatRouter.post(
+  '/attachments',
+  requireAuth,
+  asyncHandler(parseChatAttachmentUpload),
+  asyncHandler(uploadChatAttachment),
+);
 chatRouter.get(
   '/messages',
   requireAuth,

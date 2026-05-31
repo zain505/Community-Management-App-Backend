@@ -43,6 +43,21 @@ export async function createChatMessage(req: Request, res: Response): Promise<vo
   sendSuccess(res, StatusCodes.CREATED, message);
 }
 
+export async function uploadChatAttachment(req: Request, res: Response): Promise<void> {
+  if (!req.uploadedChatAttachment) {
+    throw new AppError('Attachment file is required', {
+      statusCode: StatusCodes.BAD_REQUEST,
+      code: 'VALIDATION_ERROR',
+    });
+  }
+
+  const attachment = await chatService.uploadAttachment(
+    getAuthenticatedUserId(req),
+    req.uploadedChatAttachment,
+  );
+  sendSuccess(res, StatusCodes.CREATED, attachment);
+}
+
 export async function updateChatMessage(req: Request, res: Response): Promise<void> {
   const message = await chatService.updateMessage(
     getAuthenticatedUserId(req),

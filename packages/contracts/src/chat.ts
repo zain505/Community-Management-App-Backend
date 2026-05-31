@@ -1,6 +1,24 @@
+export type ChatMessageType = 'text' | 'image' | 'audio';
+
+export type ChatAttachmentType = Extract<ChatMessageType, 'image' | 'audio'>;
+
+export interface ChatAttachment {
+  id: string;
+  type: ChatAttachmentType;
+  url: string;
+  mimeType: string;
+  fileName: string;
+  sizeBytes: number;
+  width: number | null;
+  height: number | null;
+  durationMillis: number | null;
+}
+
 export interface ChatMessage {
   id: string;
+  type: ChatMessageType;
   content: string;
+  attachments: ChatAttachment[];
   authorId: string;
   authorName: string;
   createdAt: string;
@@ -9,6 +27,8 @@ export interface ChatMessage {
 
 export interface CreateChatMessageRequest {
   content: string;
+  type: ChatMessageType;
+  attachments?: ChatAttachment[];
 }
 
 export interface UpdateChatMessageRequest {

@@ -8,6 +8,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ChatMessageType {
+  text
+  image
+  audio
+}
+
+enum ChatAttachmentType {
+  image
+  audio
+}
+
+enum ChatAttachmentStatus {
+  uploaded
+  attached
+  expired
+  deleted
+}
+
 model User {
   id            String         @id @default(cuid())
   mobileNumber  String         @unique
@@ -67,13 +85,41 @@ model EventManagement {
 }
 
 model ChatMessage {
-  id              String   @id @default(cuid())
-  content         String   @db.Text
+  id              String           @id @default(cuid())
+  type            ChatMessageType  @default(text)
+  content         String           @db.Text
   authorName      String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   createdByUserId String
+  attachments     ChatAttachment[]
 
   @@index([createdAt])
   @@index([createdByUserId])
+}
+
+model ChatAttachment {
+  id              String               @id @default(cuid())
+  type            ChatAttachmentType
+  url             String
+  storagePath     String
+  mimeType        String
+  fileName        String
+  sizeBytes       Int
+  width           Int?
+  height          Int?
+  durationMillis  Int?
+  status          ChatAttachmentStatus @default(uploaded)
+  expiresAt       DateTime?
+  consumedAt      DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  createdByUserId String
+  messageId       String?
+  message         ChatMessage?         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@index([messageId])
+  @@index([createdByUserId, status])
 }

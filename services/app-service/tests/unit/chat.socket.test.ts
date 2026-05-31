@@ -33,22 +33,26 @@ type TestNamespace = {
   emit: jest.Mock;
 };
 
+function buildChatMessage() {
+  return {
+    id: 'chat-message-1',
+    type: 'text' as const,
+    content: 'Hello neighbors',
+    attachments: [],
+    authorId: 'user-123',
+    authorName: 'Community Admin',
+    createdAt: '2026-03-20T10:00:00.000Z',
+    updatedAt: '2026-03-20T10:00:00.000Z',
+  };
+}
+
 describe('chat socket bootstrap', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
 
   it('loads the snapshot before announcing presence and chat:connected', async () => {
-    const messages = [
-      {
-        id: 'chat-message-1',
-        content: 'Hello neighbors',
-        authorId: 'user-123',
-        authorName: 'Community Admin',
-        createdAt: '2026-03-20T10:00:00.000Z',
-        updatedAt: '2026-03-20T10:00:00.000Z',
-      },
-    ];
+    const messages = [buildChatMessage()];
     const socket: TestSocket = {
       connected: true,
       data: {
@@ -93,16 +97,7 @@ describe('chat socket bootstrap', () => {
   });
 
   it('does not mark presence when the socket disconnects before bootstrap completes', async () => {
-    const messages = [
-      {
-        id: 'chat-message-1',
-        content: 'Hello neighbors',
-        authorId: 'user-123',
-        authorName: 'Community Admin',
-        createdAt: '2026-03-20T10:00:00.000Z',
-        updatedAt: '2026-03-20T10:00:00.000Z',
-      },
-    ];
+    const messages = [buildChatMessage()];
     const socket: TestSocket = {
       connected: true,
       data: {
