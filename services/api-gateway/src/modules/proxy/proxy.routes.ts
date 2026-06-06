@@ -90,6 +90,12 @@ const proxyRoutes: ProxyRouteConfig[] = [
     unavailableMessage: 'App service is unavailable',
   },
   {
+    prefix: '/v1/mobile',
+    targetBaseUrl: env.APP_SERVICE_URL,
+    unavailableCode: 'APP_SERVICE_UNAVAILABLE',
+    unavailableMessage: 'App service is unavailable',
+  },
+  {
     prefix: '/v1/auth',
     targetBaseUrl: env.AUTH_SERVICE_URL,
     unavailableCode: 'AUTH_SERVICE_UNAVAILABLE',

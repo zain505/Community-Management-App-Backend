@@ -1,7 +1,20 @@
 import request from 'supertest';
 import { app } from '../../src/app';
+import { env } from '../../src/config/env';
 
 describe('routes', () => {
+  const defaultMobilePolicy = {
+    android: {
+      latestBuild: null,
+      minimumSupportedBuild: null,
+      recommendedBuild: null,
+      forceUpdate: false,
+      storeUrl: 'https://play.google.com/store/apps/details?id=com.zain505.awt',
+      title: 'Update required',
+      message: 'A newer version of the app is required to continue.',
+    },
+  };
+
   it('accepts large event payloads within the app-service body limit', async () => {
     const response = await request(app)
       .post('/v1/event-management')
@@ -41,6 +54,49 @@ describe('routes', () => {
     expect(response.body.success).toBe(true);
     expect(response.body.data.status).toBe('ok');
     expect(response.headers['x-request-id']).toBeTruthy();
+  });
+
+  it('returns the default public mobile version policy without auth', async () => {
+    const response = await request(app).get('/v1/mobile/version-policy');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(defaultMobilePolicy);
+  });
+
+  it('returns a configured blocking mobile version policy', async () => {
+    const previousPolicy = {
+      latestBuild: env.AWT_ANDROID_LATEST_BUILD,
+      minimumSupportedBuild: env.AWT_ANDROID_MINIMUM_SUPPORTED_BUILD,
+      recommendedBuild: env.AWT_ANDROID_RECOMMENDED_BUILD,
+      forceUpdate: env.AWT_ANDROID_FORCE_UPDATE,
+    };
+
+    let response: request.Response;
+
+    try {
+      env.AWT_ANDROID_LATEST_BUILD = 8;
+      env.AWT_ANDROID_MINIMUM_SUPPORTED_BUILD = 8;
+      env.AWT_ANDROID_RECOMMENDED_BUILD = 8;
+      env.AWT_ANDROID_FORCE_UPDATE = true;
+
+      response = await request(app).get('/v1/mobile/version-policy');
+    } finally {
+      env.AWT_ANDROID_LATEST_BUILD = previousPolicy.latestBuild;
+      env.AWT_ANDROID_MINIMUM_SUPPORTED_BUILD = previousPolicy.minimumSupportedBuild;
+      env.AWT_ANDROID_RECOMMENDED_BUILD = previousPolicy.recommendedBuild;
+      env.AWT_ANDROID_FORCE_UPDATE = previousPolicy.forceUpdate;
+    }
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      android: {
+        ...defaultMobilePolicy.android,
+        latestBuild: 8,
+        minimumSupportedBuild: 8,
+        recommendedBuild: 8,
+        forceUpdate: true,
+      },
+    });
   });
 
   it('returns validation error on invalid register body', async () => {

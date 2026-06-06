@@ -21,6 +21,31 @@ const DEFAULT_CORS_ORIGINS = [
 ].join(',');
 const DEFAULT_AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:4100';
 const DEFAULT_NEWSFEED_SERVICE_BASE_URL = 'http://127.0.0.1:4300';
+const DEFAULT_AWT_ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.zain505.awt';
+const DEFAULT_AWT_ANDROID_UPDATE_TITLE = 'Update required';
+const DEFAULT_AWT_ANDROID_UPDATE_MESSAGE =
+  'A newer version of the app is required to continue.';
+
+const optionalPositiveInt = z.preprocess((value) => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+
+  return value;
+}, z.coerce.number().int().positive().nullable().default(null));
+const booleanString = z
+  .preprocess((value) => {
+    if (value === undefined || value === null || value === '') {
+      return 'false';
+    }
+
+    if (typeof value === 'boolean') {
+      return value ? 'true' : 'false';
+    }
+
+    return value;
+  }, z.enum(['true', 'false']).default('false'))
+  .transform((value) => value === 'true');
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -43,6 +68,13 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+  AWT_ANDROID_LATEST_BUILD: optionalPositiveInt,
+  AWT_ANDROID_MINIMUM_SUPPORTED_BUILD: optionalPositiveInt,
+  AWT_ANDROID_RECOMMENDED_BUILD: optionalPositiveInt,
+  AWT_ANDROID_FORCE_UPDATE: booleanString,
+  AWT_ANDROID_STORE_URL: z.string().url().default(DEFAULT_AWT_ANDROID_STORE_URL),
+  AWT_ANDROID_UPDATE_TITLE: z.string().min(1).default(DEFAULT_AWT_ANDROID_UPDATE_TITLE),
+  AWT_ANDROID_UPDATE_MESSAGE: z.string().min(1).default(DEFAULT_AWT_ANDROID_UPDATE_MESSAGE),
 });
 
 const parsed = envSchema.safeParse(process.env);

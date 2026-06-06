@@ -14,3 +14,22 @@ describe('app-service CORS origins', () => {
     expect(isAllowedCorsOrigin(undefined)).toBe(true);
   });
 });
+
+describe('app-service mobile version policy config', () => {
+  const invalidBuildValues = ['0', '-1', '1.5', 'abc'];
+
+  afterEach(() => {
+    delete process.env.AWT_ANDROID_LATEST_BUILD;
+    jest.resetModules();
+  });
+
+  it.each(invalidBuildValues)('rejects invalid build value %s', (buildValue) => {
+    process.env.AWT_ANDROID_LATEST_BUILD = buildValue;
+
+    jest.isolateModules(() => {
+      expect(() => {
+        require('../../src/config/env');
+      }).toThrow(/Invalid environment configuration: .*AWT_ANDROID_LATEST_BUILD/);
+    });
+  });
+});

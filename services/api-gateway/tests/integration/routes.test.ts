@@ -253,6 +253,55 @@ describe('routes', () => {
     expect(response.body.code).toBe('APP_SERVICE_UNAVAILABLE');
   });
 
+  it('proxies the public mobile version policy to app-service', async () => {
+    const mobilePolicy = {
+      android: {
+        latestBuild: 8,
+        minimumSupportedBuild: 8,
+        recommendedBuild: 8,
+        forceUpdate: true,
+        storeUrl: 'https://play.google.com/store/apps/details?id=com.zain505.awt',
+        title: 'Update required',
+        message: 'A newer version of the app is required to continue.',
+      },
+    };
+    const mockAppService: Server = http.createServer((req, res) => {
+      if (req.method === 'GET' && req.url === '/v1/mobile/version-policy') {
+        res.statusCode = 200;
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify(mobilePolicy));
+        return;
+      }
+
+      res.statusCode = 404;
+      res.end();
+    });
+
+    await new Promise<void>((resolve) => {
+      mockAppService.listen(59996, '127.0.0.1', () => {
+        resolve();
+      });
+    });
+
+    try {
+      const response = await request(app).get('/v1/mobile/version-policy');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mobilePolicy);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        mockAppService.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
+
   it('reports newsfeed-service unavailability on the dedicated route', async () => {
     const response = await request(app).get('/v1/newsfeed');
 

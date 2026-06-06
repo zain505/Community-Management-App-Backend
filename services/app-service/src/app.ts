@@ -15,6 +15,7 @@ import { authRouter } from './modules/auth/auth.routes';
 import { chatRouter } from './modules/chat/chat.routes';
 import { eventManagementRouter } from './modules/event-management/event-management.routes';
 import { healthRouter } from './modules/health/health.routes';
+import { mobileRouter } from './modules/mobile/mobile.routes';
 
 const requestBodyLimit = '8mb';
 
@@ -49,6 +50,7 @@ app.use('/v1/announcements', announcementRouter);
 app.use('/v1/auth', authRouter);
 app.use('/v1/chat', chatRouter);
 app.use('/v1/event-management', eventManagementRouter);
+app.use('/v1/mobile', mobileRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
