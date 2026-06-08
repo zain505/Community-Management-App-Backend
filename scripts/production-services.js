@@ -2,8 +2,16 @@ const { spawn } = require('node:child_process');
 const { existsSync, readFileSync } = require('node:fs');
 const path = require('node:path');
 const readline = require('node:readline');
+const dotenv = require('dotenv');
 
 const rootDir = path.resolve(__dirname, '..');
+const rootEnvironment = (process.env.APP_ENV || process.env.NODE_ENV || 'production')
+  .trim()
+  .toLowerCase();
+const rootEnvPath = path.join(
+  rootDir,
+  `.env.${rootEnvironment === 'development' ? 'development' : 'production'}`,
+);
 const workspaceRuntimeAliasRegisterPath = path.join(
   rootDir,
   'scripts',
@@ -12,6 +20,14 @@ const workspaceRuntimeAliasRegisterPath = path.join(
 const contractsEntryPath = path.join(rootDir, 'packages', 'contracts', 'dist', 'index.js');
 const contractsSourceEntryPath = path.join(rootDir, 'packages', 'contracts', 'src', 'index.ts');
 const installTimeOnlyDependencies = new Set(['prisma']);
+
+if (!existsSync(rootEnvPath)) {
+  console.error(`[production] Missing ${path.relative(rootDir, rootEnvPath)}.`);
+  process.exit(1);
+}
+
+dotenv.config({ path: rootEnvPath });
+
 const inheritedChildEnv = { ...process.env };
 
 delete inheritedChildEnv.DATABASE_URL;
@@ -28,7 +44,6 @@ const publicPort = process.env.PORT || process.env.API_GATEWAY_PORT || '4000';
 const services = [
   {
     name: 'auth-service',
-    envFile: path.join(rootDir, 'services', 'auth-service', '.env'),
     databaseUrlEnvKeys: ['AUTH_SERVICE_DATABASE_URL', 'AUTH_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'auth-service'),
     compiledEntry: 'dist/server.js',
@@ -38,7 +53,6 @@ const services = [
   },
   {
     name: 'store-service',
-    envFile: path.join(rootDir, 'services', 'store-service', '.env'),
     databaseUrlEnvKeys: ['STORE_SERVICE_DATABASE_URL', 'STORE_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'store-service'),
     compiledEntry: 'dist/server.js',
@@ -50,7 +64,6 @@ const services = [
   },
   {
     name: 'newsfeed-service',
-    envFile: path.join(rootDir, 'services', 'newsfeed-service', '.env'),
     databaseUrlEnvKeys: ['NEWSFEED_SERVICE_DATABASE_URL', 'NEWSFEED_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'newsfeed-service'),
     compiledEntry: 'dist/server.js',
@@ -62,7 +75,6 @@ const services = [
   },
   {
     name: 'app-service',
-    envFile: path.join(rootDir, 'services', 'app-service', '.env'),
     databaseUrlEnvKeys: ['APP_SERVICE_DATABASE_URL', 'APP_DATABASE_URL'],
     cwd: path.join(rootDir, 'services', 'app-service'),
     compiledEntry: 'dist/server.js',
@@ -74,7 +86,6 @@ const services = [
   },
   {
     name: 'api-gateway',
-    envFile: path.join(rootDir, 'services', 'api-gateway', '.env'),
     databaseUrlEnvKeys: [
       'API_GATEWAY_DATABASE_URL',
       'GATEWAY_DATABASE_URL',
@@ -116,41 +127,6 @@ function readJsonFile(filePath) {
   }
 }
 
-function parseEnvFile(filePath) {
-  try {
-    const entries = {};
-    const content = readFileSync(filePath, 'utf8');
-
-    for (const rawLine of content.split(/\r?\n/)) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith('#')) {
-        continue;
-      }
-
-      const separator = line.indexOf('=');
-      if (separator === -1) {
-        continue;
-      }
-
-      const key = line.slice(0, separator).trim();
-      let value = line.slice(separator + 1).trim();
-
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1);
-      }
-
-      entries[key] = value;
-    }
-
-    return entries;
-  } catch {
-    return {};
-  }
-}
-
 function getFirstNonEmptyValue(...values) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim() !== '') {
@@ -185,21 +161,11 @@ function resolveServiceDatabaseUrl(service) {
     };
   }
 
-  const fileEntries = parseEnvFile(service.envFile);
-  const fileValue = getFirstNonEmptyValue(fileEntries.DATABASE_URL);
-
-  if (fileValue) {
-    return {
-      source: path.relative(rootDir, service.envFile),
-      value: fileValue,
-    };
-  }
-
   return null;
 }
 
 function isLocalDevelopmentDatabaseUrl(databaseUrl) {
-  return /^mysql:\/\/root:root@(?:127\.0\.0\.1|localhost)(?::3306|:3307)?\//i.test(databaseUrl);
+  return /^mysql:\/\/root:root@(?:127\.0\.0\.1|localhost)(?::3306|:3306)?\//i.test(databaseUrl);
 }
 
 function shouldAllowLocalDevelopmentDatabaseUrls() {
@@ -220,9 +186,9 @@ function warnAboutSuspiciousProductionDatabaseUrl(service) {
     `[production] ${service.name} is using a local development DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
   );
   console.warn(
-    `[production] Set one of ${service.databaseUrlEnvKeys.join(', ')} or update ${path.relative(
+    `[production] Set one of ${service.databaseUrlEnvKeys.join(', ')} in ${path.relative(
       rootDir,
-      service.envFile,
+      rootEnvPath,
     )} before restarting.`,
   );
 }
@@ -238,7 +204,7 @@ function warnAboutIgnoredRootDatabaseUrl() {
     '[production] Ignoring root-level DATABASE_URL because each service resolves its own database connection.',
   );
   console.warn(
-    '[production] Set service-specific *_DATABASE_URL variables or update each services/*/.env file instead.',
+    '[production] Set service-specific *_DATABASE_URL variables in the root env file instead.',
   );
 }
 
@@ -269,7 +235,7 @@ function validateProductionDatabaseUrls() {
     '[production] Refusing to start because one or more services still resolve to local development DATABASE_URL values.',
   );
   console.error(
-    '[production] Update the affected services/*/.env files or provide service-specific *_DATABASE_URL environment variables.',
+    '[production] Update the affected service-specific *_DATABASE_URL variables in the root env file.',
   );
 
   for (const { service, resolvedDatabaseUrl } of invalidServices) {
@@ -277,9 +243,9 @@ function validateProductionDatabaseUrls() {
       `[production] ${service.name} resolved DATABASE_URL from ${resolvedDatabaseUrl.source}.`,
     );
     console.error(
-      `[production] Set one of ${service.databaseUrlEnvKeys.join(', ')} or update ${path.relative(
+      `[production] Set one of ${service.databaseUrlEnvKeys.join(', ')} in ${path.relative(
         rootDir,
-        service.envFile,
+        rootEnvPath,
       )} before restarting.`,
     );
   }

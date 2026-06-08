@@ -169,7 +169,7 @@ describe('auth service', () => {
     expect(mockedAuthRepository.createRefreshToken).not.toHaveBeenCalled();
   });
 
-  it('returns the managed user image as a base64 data URL on login', async () => {
+  it('returns the managed user image as a public URL on login', async () => {
     const imageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
     const imageFileName = 'user-123-avatar.png';
     const imagePath = path.join(userImageUploadDir, imageFileName);
@@ -204,7 +204,7 @@ describe('auth service', () => {
       refreshToken: 'refresh-token',
     });
     expect(result.user.usertype).toBe(1);
-    expect(result.user.profile.image).toBe(`data:image/png;base64,${imageBuffer.toString('base64')}`);
+    expect(result.user.profile.image).toBe(buildUserImagePublicPath(imageFileName));
   });
 
   it('rejects login when the supplied user type does not match the stored user type', async () => {

@@ -11,9 +11,7 @@ import { logger } from '../../config/logger';
 import { AppError } from '../../shared/app-error';
 import {
   deleteManagedImages,
-  isBase64ImageInput,
   isManagedImagePublicPath,
-  persistBase64Image,
 } from '../../shared/image-storage';
 import { toPublicAssetUrl } from '../../shared/public-asset-url';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
@@ -50,28 +48,6 @@ async function cleanupManagedProductImagesBestEffort(
   } catch (error) {
     logger.error({ error, action, imageUrls }, 'Failed to clean up managed product images');
   }
-}
-
-async function buildCreatePayload(payload: CreateProductRequest): Promise<CreateProductRequest> {
-  if (!isBase64ImageInput(payload.image)) {
-    return payload;
-  }
-
-  return {
-    ...payload,
-    image: await persistBase64Image(payload.image, 'product'),
-  };
-}
-
-async function buildUpdatePayload(payload: UpdateProductRequest): Promise<UpdateProductRequest> {
-  if (payload.image === undefined || !isBase64ImageInput(payload.image)) {
-    return payload;
-  }
-
-  return {
-    ...payload,
-    image: await persistBase64Image(payload.image, 'product'),
-  };
 }
 
 function throwStoreNotFound(message = 'Store not found'): never {
@@ -157,12 +133,9 @@ export const productService = {
 
   async createMyProduct(userId: string, payload: CreateProductRequest): Promise<Product> {
     const store = await getStoreForUser(userId);
-    const normalizedPayload = await buildCreatePayload(payload);
-    const createdImageUrls =
-      normalizedPayload.image === payload.image ? [] : [normalizedPayload.image];
 
     try {
-      const product = await productRepository.createForStore(store.id, normalizedPayload);
+      const product = await productRepository.createForStore(store.id, payload);
       await invalidateStoreListCache();
       await syncNewsFeed(
         [
@@ -175,10 +148,6 @@ export const productService = {
       );
       return toProduct(product);
     } catch (error) {
-      await cleanupManagedProductImagesBestEffort(
-        createdImageUrls,
-        'product creation rollback',
-      );
       handlePrismaError(error);
     }
   },
@@ -195,22 +164,7 @@ export const productService = {
       throwProductNotFound();
     }
 
-    const normalizedPayload = await buildUpdatePayload(payload);
-    const createdImageUrls =
-      normalizedPayload.image !== undefined && normalizedPayload.image !== payload.image
-        ? [normalizedPayload.image]
-        : [];
-    let updatedProduct: ProductRecord;
-
-    try {
-      updatedProduct = await productRepository.updateById(productId, normalizedPayload);
-    } catch (error) {
-      await cleanupManagedProductImagesBestEffort(
-        createdImageUrls,
-        'product update rollback',
-      );
-      throw error;
-    }
+    const updatedProduct = await productRepository.updateById(productId, payload);
 
     await cleanupManagedProductImagesBestEffort(
       existingProduct.image !== updatedProduct.image && isManagedImagePublicPath(existingProduct.image)

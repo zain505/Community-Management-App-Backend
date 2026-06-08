@@ -11,13 +11,17 @@ jest.mock('../../src/modules/store/store.service', () => ({
   },
 }));
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import request from 'supertest';
 import { app } from '../../src/app';
 import { signAccessToken } from '../../src/lib/token';
 import { storeService } from '../../src/modules/store/store.service';
 
 const mockedStoreService = jest.mocked(storeService);
-const largeStoreImageBase64 = `data:image/png;base64,${'a'.repeat(160_000)}`;
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const storeImageUrl = 'http://localhost:3000/uploads/store-images/store-image.png';
+const pngImageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
 
 function getAccessToken(): string {
   return signAccessToken({
@@ -30,6 +34,10 @@ describe('store routes', () => {
     jest.resetAllMocks();
   });
 
+  afterEach(async () => {
+    await fs.rm(uploadsRoot, { recursive: true, force: true });
+  });
+
   it('returns store reviews in the public store list response', async () => {
     mockedStoreService.listStores.mockResolvedValue([
       {
@@ -38,7 +46,7 @@ describe('store routes', () => {
         active: true,
         location: 'Main Road',
         rating: '4.5',
-        image: 'data:image/png;base64,aGVsbG8=',
+        image: storeImageUrl,
         badges: ['Best Seller'],
         delivery: '30 mins',
         minOrderRs: '500',
@@ -99,7 +107,7 @@ describe('store routes', () => {
         active: false,
         location: 'Main Road',
         rating: '4.5',
-        image: 'data:image/png;base64,aGVsbG8=',
+        image: storeImageUrl,
         badges: ['Best Seller'],
         delivery: '30 mins',
         minOrderRs: '500',
@@ -130,14 +138,14 @@ describe('store routes', () => {
     );
   });
 
-  it('accepts large base64 store images for store creation', async () => {
+  it('accepts multipart store images for store creation', async () => {
     mockedStoreService.createMyStore.mockResolvedValue({
       id: 18,
       name: 'Fresh Mart',
       active: true,
       location: 'Main Road',
       rating: '0',
-      image: largeStoreImageBase64,
+      image: storeImageUrl,
       badges: [],
       delivery: '30 mins',
       minOrderRs: '500',
@@ -154,25 +162,26 @@ describe('store routes', () => {
     const response = await request(app)
       .post('/v1/stores')
       .set('Authorization', `Bearer ${getAccessToken()}`)
-      .send({
-        name: 'Fresh Mart',
-        location: 'Main Road',
-        image: largeStoreImageBase64,
-        delivery: '30 mins',
-        minOrderRs: '500',
-        openingTime: '09:00',
-        closingTime: '22:00',
-        phoneNumber: '03001234567',
-        categoryId: 3,
+      .field('name', 'Fresh Mart')
+      .field('location', 'Main Road')
+      .field('delivery', '30 mins')
+      .field('minOrderRs', '500')
+      .field('openingTime', '09:00')
+      .field('closingTime', '22:00')
+      .field('phoneNumber', '03001234567')
+      .field('categoryId', '3')
+      .attach('image', pngImageBuffer, {
+        filename: 'store.png',
+        contentType: 'image/png',
       });
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
-    expect(response.body.data.image).toBe(largeStoreImageBase64);
+    expect(response.body.data.image).toBe(storeImageUrl);
     expect(mockedStoreService.createMyStore).toHaveBeenCalledWith('user_123', {
       name: 'Fresh Mart',
       location: 'Main Road',
-      image: largeStoreImageBase64,
+      image: expect.stringContaining('/uploads/store-images/'),
       delivery: '30 mins',
       minOrderRs: '500',
       openingTime: '09:00',
@@ -198,7 +207,7 @@ describe('store routes', () => {
         active: true,
         location: 'Main Road',
         rating: '4.5',
-        image: 'data:image/png;base64,aGVsbG8=',
+        image: storeImageUrl,
         badges: ['Best Seller'],
         delivery: '30 mins',
         minOrderRs: '500',
@@ -227,7 +236,7 @@ describe('store routes', () => {
       active: true,
       location: 'Main Road',
       rating: '4.5',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: storeImageUrl,
       badges: ['Best Seller'],
       delivery: '30 mins',
       minOrderRs: '500',
@@ -281,7 +290,7 @@ describe('store routes', () => {
       active: true,
       location: 'Main Road',
       rating: '4.5',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: storeImageUrl,
       badges: ['Best Seller'],
       delivery: '30 mins',
       minOrderRs: '500',
@@ -318,7 +327,7 @@ describe('store routes', () => {
       active: false,
       location: 'Main Road',
       rating: '4.5',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: storeImageUrl,
       badges: ['Best Seller'],
       delivery: '30 mins',
       minOrderRs: '500',

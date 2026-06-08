@@ -3,11 +3,13 @@ import request from 'supertest';
 import { app } from '../../src/app';
 
 describe('routes', () => {
-  it('accepts large auth payloads within the gateway body limit', async () => {
+  it('accepts auth payloads within the gateway body limit', async () => {
     const response = await request(app)
-      .patch('/v1/auth/users/user-123/image')
+      .post('/v1/auth/register')
       .send({
-        image: `data:image/png;base64,${'A'.repeat(200 * 1024)}`,
+        name: 'Community User',
+        mobileNumber: '+923001234567',
+        password: 'StrongPass123',
       });
 
     expect(response.status).toBe(503);
@@ -15,11 +17,14 @@ describe('routes', () => {
     expect(response.body.code).toBe('AUTH_SERVICE_UNAVAILABLE');
   });
 
-  it('rejects payloads larger than the gateway body limit', async () => {
+  it('rejects JSON payloads larger than the gateway body limit', async () => {
     const response = await request(app)
-      .patch('/v1/auth/users/user-123/image')
+      .post('/v1/auth/register')
       .send({
-        image: `data:image/png;base64,${'A'.repeat(8 * 1024 * 1024)}`,
+        name: 'Community User',
+        mobileNumber: '+923001234567',
+        password: 'StrongPass123',
+        notes: 'A'.repeat(8 * 1024 * 1024),
       });
 
     expect(response.status).toBe(413);

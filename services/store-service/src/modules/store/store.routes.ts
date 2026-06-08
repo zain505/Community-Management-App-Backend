@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middleware/require-auth';
 import { asyncHandler } from '../../shared/async-handler';
+import { parseImageUpload } from '../../shared/image-upload.middleware';
 import { validate } from '../../middleware/validate';
 import {
   createCategory,
@@ -82,12 +83,14 @@ storeRouter.get('/me/products', requireAuth, asyncHandler(getMyStoreProducts));
 storeRouter.post(
   '/',
   requireAuth,
+  asyncHandler(parseImageUpload('store')),
   validate({ body: createStoreBodySchema }),
   asyncHandler(createMyStore),
 );
 storeRouter.patch(
   '/me',
   requireAuth,
+  asyncHandler(parseImageUpload('store')),
   validate({ body: updateStoreBodySchema }),
   asyncHandler(updateMyStore),
 );

@@ -5,14 +5,14 @@ import {
   updateStoreBodySchema,
 } from '../../src/modules/store/store.schemas';
 
-const storeImageBase64 = 'data:image/png;base64,aGVsbG8=';
+const storeImageUrl = 'http://localhost:3000/uploads/store-images/store.png';
 
 describe('store schemas', () => {
   it('accepts a valid store payload', () => {
     const payload = createStoreBodySchema.parse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
-      image: storeImageBase64,
+      image: storeImageUrl,
       delivery: 'Free Delivery',
       minOrderRs: '500',
       openingTime: '09:00',
@@ -31,7 +31,7 @@ describe('store schemas', () => {
     });
 
     expect(payload.name).toBe('Desi Eatery');
-    expect(payload.image).toBe(storeImageBase64);
+    expect(payload.image).toBe(storeImageUrl);
     expect(payload.openingTime).toBe('09:00');
     expect(payload.closingTime).toBe('22:00');
     expect(payload.phoneNumber).toBe('0300402505');
@@ -43,7 +43,7 @@ describe('store schemas', () => {
     const payload = createStoreBodySchema.parse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
-      image: storeImageBase64,
+      image: storeImageUrl,
       delivery: 'Free Delivery',
       minOrderRs: '500',
       openingTime: '08:00',
@@ -64,19 +64,19 @@ describe('store schemas', () => {
     const payload = updateStoreBodySchema.parse({
       phoneNumber: '+92 300 402 5050',
       openingTime: '10:15',
-      image: storeImageBase64,
+      image: storeImageUrl,
     });
 
     expect(payload.phoneNumber).toBe('+923004025050');
     expect(payload.openingTime).toBe('10:15');
-    expect(payload.image).toBe(storeImageBase64);
+    expect(payload.image).toBe(storeImageUrl);
   });
 
   it('rejects invalid phone numbers', () => {
     const result = createStoreBodySchema.safeParse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
-      image: storeImageBase64,
+      image: storeImageUrl,
       delivery: 'Free Delivery',
       minOrderRs: '500',
       openingTime: '09:00',
@@ -92,7 +92,7 @@ describe('store schemas', () => {
     const result = createStoreBodySchema.safeParse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
-      image: storeImageBase64,
+      image: storeImageUrl,
       badges: ['Best Seller'],
       delivery: 'Free Delivery',
       minOrderRs: '500',
@@ -117,7 +117,7 @@ describe('store schemas', () => {
     const result = createStoreBodySchema.safeParse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
-      image: storeImageBase64,
+      image: storeImageUrl,
       delivery: 'Free Delivery',
       minOrderRs: '500',
       openingTime: '9:00 AM',
@@ -129,7 +129,7 @@ describe('store schemas', () => {
     expect(result.success).toBe(false);
   });
 
-  it('accepts store image URLs as well as base64 strings', () => {
+  it('accepts store image URLs', () => {
     const result = createStoreBodySchema.safeParse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
@@ -149,7 +149,7 @@ describe('store schemas', () => {
     const result = createStoreBodySchema.safeParse({
       name: 'Desi Eatery',
       location: 'AWT Main Market',
-      image: storeImageBase64,
+      image: storeImageUrl,
       delivery: 'Free Delivery',
       minOrderRs: '500',
       openingTime: '09:00',

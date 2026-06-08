@@ -1,10 +1,39 @@
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-dotenv.config({
-  path: process.env.ENV_FILE || path.resolve(__dirname, '../../.env'),
-});
+function resolveEnvFilePath(): string {
+  const rootDir = path.resolve(__dirname, '../../../..');
+  const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toLowerCase();
+  const environment = appEnv === 'production' ? 'production' : 'development';
+  const envPath = path.join(rootDir, `.env.${environment}`);
+
+  return existsSync(envPath) ? envPath : path.join(rootDir, '.env.development');
+}
+
+function applyEnvAlias(targetKey: string, sourceKeys: string[]): void {
+  if (process.env[targetKey]?.trim()) {
+    return;
+  }
+
+  const sourceKey = sourceKeys.find((key) => process.env[key]?.trim());
+  if (sourceKey) {
+    process.env[targetKey] = process.env[sourceKey];
+  }
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  dotenv.config({
+    path: resolveEnvFilePath(),
+  });
+}
+
+applyEnvAlias('SERVICE_NAME', ['AUTH_SERVICE_NAME']);
+applyEnvAlias('PORT', ['AUTH_SERVICE_PORT']);
+applyEnvAlias('DATABASE_URL', ['AUTH_SERVICE_DATABASE_URL', 'AUTH_DATABASE_URL']);
 
 const DEFAULT_PORT = 4100;
 const DEFAULT_CORS_ORIGINS = [
@@ -15,6 +44,7 @@ const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:5173',
 ].join(',');
+const DEFAULT_PUBLIC_BASE_URL = 'http://localhost:3000';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -23,6 +53,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   CORS_ORIGINS: z.string().default(DEFAULT_CORS_ORIGINS),
+  PUBLIC_BASE_URL: z.string().url().default(DEFAULT_PUBLIC_BASE_URL),
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),

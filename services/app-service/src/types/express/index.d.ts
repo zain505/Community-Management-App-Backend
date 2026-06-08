@@ -1,27 +1,35 @@
-declare namespace Express {
-  interface UploadedChatAttachmentFields {
-    type?: string;
-    mimeType?: string;
-    fileName?: string;
-    sizeBytes?: string;
-    width?: string;
-    height?: string;
-    durationMillis?: string;
-  }
+import type { File } from 'formidable';
 
-  interface UploadedChatAttachment {
-    file: import('formidable').File;
-    fields: UploadedChatAttachmentFields;
-  }
+declare global {
+  namespace Express {
+    interface UploadedChatAttachmentFields {
+      type?: string;
+      mimeType?: string;
+      fileName?: string;
+      sizeBytes?: string;
+      width?: string;
+      height?: string;
+      durationMillis?: string;
+    }
 
-  interface AuthenticatedUser {
-    id: string;
-    mobileNumber?: string;
-  }
+    interface UploadedChatAttachment {
+      file: File;
+      fields: UploadedChatAttachmentFields;
+    }
 
-  interface Request {
-    requestId: string;
-    user?: AuthenticatedUser;
-    uploadedChatAttachment?: UploadedChatAttachment;
+    interface AuthenticatedUser {
+      id: string;
+      mobileNumber?: string;
+    }
+
+    interface Request {
+      requestId: string;
+      user?: AuthenticatedUser;
+      uploadedChatAttachment?: UploadedChatAttachment;
+      managedEventImageUploadCleanupRegistered?: boolean;
+      managedEventImageUploadUrls?: string[];
+    }
   }
 }
+
+export {};

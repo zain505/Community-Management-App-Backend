@@ -9,12 +9,17 @@ jest.mock('../../src/modules/product/product.service', () => ({
   },
 }));
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import request from 'supertest';
 import { app } from '../../src/app';
 import { signAccessToken } from '../../src/lib/token';
 import { productService } from '../../src/modules/product/product.service';
 
 const mockedProductService = jest.mocked(productService);
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const productImageUrl = 'http://localhost:3000/uploads/product-images/product-image.png';
+const pngImageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
 
 function getAccessToken(): string {
   return signAccessToken({
@@ -25,6 +30,10 @@ function getAccessToken(): string {
 describe('product routes', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+  });
+
+  afterEach(async () => {
+    await fs.rm(uploadsRoot, { recursive: true, force: true });
   });
 
   it('creates a product', async () => {
@@ -60,12 +69,12 @@ describe('product routes', () => {
     });
   });
 
-  it('accepts product image data URIs', async () => {
+  it('accepts multipart product image uploads', async () => {
     mockedProductService.createMyProduct.mockResolvedValue({
       id: 'prod-1',
       name: 'Orange Juice',
       price: '500',
-      image: '/uploads/product-images/product-image.png',
+      image: productImageUrl,
       tag: 'Fresh',
       description: 'Freshly squeezed orange juice.',
     });
@@ -73,21 +82,22 @@ describe('product routes', () => {
     const response = await request(app)
       .post('/v1/products')
       .set('Authorization', `Bearer ${getAccessToken()}`)
-      .send({
-        name: 'Orange Juice',
-        price: '500',
-        image: 'data:image/png;base64,aGVsbG8=',
-        tag: 'Fresh',
-        description: 'Freshly squeezed orange juice.',
+      .field('name', 'Orange Juice')
+      .field('price', '500')
+      .field('tag', 'Fresh')
+      .field('description', 'Freshly squeezed orange juice.')
+      .attach('image', pngImageBuffer, {
+        filename: 'orange-juice.png',
+        contentType: 'image/png',
       });
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
-    expect(response.body.data.image).toBe('/uploads/product-images/product-image.png');
+    expect(response.body.data.image).toBe(productImageUrl);
     expect(mockedProductService.createMyProduct).toHaveBeenCalledWith('user_123', {
       name: 'Orange Juice',
       price: '500',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: expect.stringContaining('/uploads/product-images/'),
       tag: 'Fresh',
       description: 'Freshly squeezed orange juice.',
     });

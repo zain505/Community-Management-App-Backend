@@ -27,7 +27,6 @@ import {
   refreshBodySchema,
   registerBodySchema,
   updateUserActivationBodySchema,
-  updateUserImageBodySchema,
   updateUserNameBodySchema,
   userIdParamSchema,
   userIdsQuerySchema,
@@ -81,7 +80,7 @@ authRouter.patch(
 authRouter.patch(
   '/users/:id/image',
   requireAuth,
-  validate({ params: userIdParamSchema, body: updateUserImageBodySchema }),
+  validate({ params: userIdParamSchema }),
   asyncHandler(parseUserImageUpload),
   asyncHandler(updateUserImage),
 );

@@ -116,26 +116,36 @@ const serviceConfigs = [
     workspace: 'services/api-gateway',
     fallbackName: 'api-gateway',
     fallbackPort: 4000,
+    envPrefix: 'API_GATEWAY',
+    nameEnvKey: 'API_GATEWAY_SERVICE_NAME',
   },
   {
     workspace: 'services/auth-service',
     fallbackName: 'auth-service',
     fallbackPort: 4100,
+    envPrefix: 'AUTH_SERVICE',
+    nameEnvKey: 'AUTH_SERVICE_NAME',
   },
   {
     workspace: 'services/store-service',
     fallbackName: 'store-service',
     fallbackPort: 4200,
+    envPrefix: 'STORE_SERVICE',
+    nameEnvKey: 'STORE_SERVICE_NAME',
   },
   {
     workspace: 'services/newsfeed-service',
     fallbackName: 'newsfeed-service',
     fallbackPort: 4300,
+    envPrefix: 'NEWSFEED_SERVICE',
+    nameEnvKey: 'NEWSFEED_SERVICE_NAME',
   },
   {
     workspace: 'services/app-service',
     fallbackName: 'app-service',
     fallbackPort: 4400,
+    envPrefix: 'APP_SERVICE',
+    nameEnvKey: 'APP_SERVICE_NAME',
   },
 ];
 
@@ -174,15 +184,40 @@ function parseEnvFile(filePath) {
   }
 }
 
+function getRootEnvName() {
+  const requestedEnv = (process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toLowerCase();
+
+  return requestedEnv === 'production' ? 'production' : 'development';
+}
+
+function getFirstNonEmptyValue(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim() !== '') {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+const rootEnvPath = path.join(rootDir, `.env.${getRootEnvName()}`);
+const rootEnvData = parseEnvFile(rootEnvPath);
+
+function getRootEnvValue(key) {
+  return getFirstNonEmptyValue(process.env[key], rootEnvData[key]);
+}
+
 const services = serviceConfigs.map((config) => {
-  const envPath = path.join(rootDir, config.workspace, '.env');
-  const envData = parseEnvFile(envPath);
-  const parsedPort = Number.parseInt(envData.PORT ?? '', 10);
+  const configuredName = getRootEnvValue(config.nameEnvKey);
+  const configuredPort = getRootEnvValue(`${config.envPrefix}_PORT`);
+  const parsedPort = Number.parseInt(configuredPort ?? '', 10);
 
   return {
     ...config,
-    envPath,
-    name: envData.SERVICE_NAME || config.fallbackName,
+    envPath: rootEnvPath,
+    name: configuredName || config.fallbackName,
     port: Number.isFinite(parsedPort) ? parsedPort : config.fallbackPort,
     process: null,
     ready: false,
@@ -298,7 +333,9 @@ function reportContractsInstallProblem(summary, details = []) {
     console.error(`[dev] ${detail}`);
   }
 
-  console.error('[dev] Reinstall dependencies from the current project folder so workspace links point here:');
+  console.error(
+    '[dev] Reinstall dependencies from the current project folder so workspace links point here:',
+  );
   console.error(`[dev]   ${getReinstallCommand()}`);
   console.error('[dev]   npm install');
   console.error('[dev]   npm run dev');
@@ -306,13 +343,10 @@ function reportContractsInstallProblem(summary, details = []) {
 
 function validateContractsWorkspaceInstall() {
   if (!existsSync(contractsNodeModulesPath)) {
-    reportContractsInstallProblem(
-      'Missing node_modules/@community/contracts.',
-      [
-        'This workspace package is required at runtime by newsfeed-service.',
-        'A fresh checkout or copied repo still needs "npm install" from the current root folder.',
-      ],
-    );
+    reportContractsInstallProblem('Missing node_modules/@community/contracts.', [
+      'This workspace package is required at runtime by newsfeed-service.',
+      'A fresh checkout or copied repo still needs "npm install" from the current root folder.',
+    ]);
     return false;
   }
 
@@ -561,7 +595,9 @@ async function prepareServices() {
       const stopped = await stopServiceOnPort(service);
 
       if (!stopped) {
-        console.error(`[dev] ${service.name} could not be restarted because port ${service.port} stayed busy.`);
+        console.error(
+          `[dev] ${service.name} could not be restarted because port ${service.port} stayed busy.`,
+        );
         process.exit(1);
       }
 
@@ -587,9 +623,13 @@ async function prepareServices() {
   }
 
   if (blockedServices.length > 0) {
-    console.error('[dev] Port conflict detected. Stop the existing process or change the service port.');
+    console.error(
+      '[dev] Port conflict detected. Stop the existing process or change the service port.',
+    );
     for (const service of blockedServices) {
-      console.error(`[dev] ${service.name} cannot start because port ${service.port} is already in use.`);
+      console.error(
+        `[dev] ${service.name} cannot start because port ${service.port} is already in use.`,
+      );
     }
     process.exit(1);
   }
@@ -661,8 +701,12 @@ async function main() {
   if (servicesToStart.length === 0) {
     if (readyCount === services.length) {
       console.log('[dev] All services are already up.');
-      console.log('[dev] This launcher exits after health checks and does not attach to existing services.');
-      console.log('[dev] Use "npm run dev -- --restart=auth-service" to refresh auth, or "--restart" for all services.');
+      console.log(
+        '[dev] This launcher exits after health checks and does not attach to existing services.',
+      );
+      console.log(
+        '[dev] Use "npm run dev -- --restart=auth-service" to refresh auth, or "--restart" for all services.',
+      );
     }
     process.exit(0);
   }
@@ -678,9 +722,7 @@ async function main() {
       });
     } catch (error) {
       exitCode = 1;
-      process.stderr.write(
-        `[dev] Failed to spawn ${service.name}: ${getErrorMessage(error)}\n`,
-      );
+      process.stderr.write(`[dev] Failed to spawn ${service.name}: ${getErrorMessage(error)}\n`);
       stopAll(`${service.name} spawn error`);
       process.exit(exitCode);
     }

@@ -28,7 +28,9 @@ try {
 await fs.cp(sourceServiceDir, targetDir, {
   recursive: true,
   filter: (entry) => {
-    return !entry.includes('node_modules') && !entry.includes('dist') && !entry.includes('coverage');
+    return (
+      !entry.includes('node_modules') && !entry.includes('dist') && !entry.includes('coverage')
+    );
   },
 });
 
@@ -38,10 +40,9 @@ packageJson.name = `@community/${targetName}`;
 packageJson.description = `${targetName} microservice template using Express, TypeScript, and MySQL/Prisma.`;
 await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n', 'utf-8');
 
-const envExamplePath = path.join(targetDir, '.env.example');
-const envExample = await fs.readFile(envExamplePath, 'utf-8');
-const updatedEnvExample = envExample.replace('PORT=4000', 'PORT=4100');
-await fs.writeFile(envExamplePath, updatedEnvExample, 'utf-8');
-
 // eslint-disable-next-line no-console
 console.log(`Created service template at: ${targetDir}`);
+// eslint-disable-next-line no-console
+console.log(
+  'Add the new service port and database URL to the root .env.development/.env.production files.',
+);

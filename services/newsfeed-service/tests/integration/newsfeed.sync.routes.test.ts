@@ -16,8 +16,8 @@ describe('internal newsfeed sync routes', () => {
     mockedNewsFeedService.syncNewsFeed.mockResolvedValue(undefined);
   });
 
-  it('accepts product sync events with large inline image metadata', async () => {
-    const inlineImage = `data:image/png;base64,${'A'.repeat(150_000)}`;
+  it('accepts product sync events with image URL metadata', async () => {
+    const imageUrl = 'http://localhost:3000/uploads/product-images/orange-juice.png';
     const payload = {
       events: [
         {
@@ -31,7 +31,7 @@ describe('internal newsfeed sync routes', () => {
               id: 'prod-1',
               name: 'Orange Juice',
               price: '500',
-              image: inlineImage,
+              image: imageUrl,
               tag: 'Fresh',
               description: 'Freshly squeezed orange juice.',
             },

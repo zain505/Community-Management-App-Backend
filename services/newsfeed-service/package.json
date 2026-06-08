@@ -12,10 +12,10 @@
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\" \"*.json\"",
     "typecheck": "tsc --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:seed": "ts-node --transpile-only prisma/seed.ts"
+    "prisma:generate": "node ../../scripts/run-with-service-env.mjs newsfeed-service prisma generate",
+    "prisma:migrate": "node ../../scripts/run-with-service-env.mjs newsfeed-service prisma migrate dev",
+    "prisma:deploy": "node ../../scripts/run-with-service-env.mjs newsfeed-service prisma migrate deploy",
+    "prisma:seed": "node ../../scripts/run-with-service-env.mjs newsfeed-service ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
     "@community/contracts": "file:../../packages/contracts",
@@ -28,6 +28,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "formidable": "^3.5.4",
     "helmet": "^8.0.0",
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",

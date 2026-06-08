@@ -1,6 +1,7 @@
 ﻿# Community App Backend Template
 
 Microservices-ready Node.js starter using:
+
 - Express + TypeScript
 - MySQL + Prisma
 - CORS + Helmet + Rate limiting
@@ -30,20 +31,20 @@ Microservices-ready Node.js starter using:
 npm install
 ```
 
-2. Create per-service env files for local development:
+2. Review the root env files:
 
 ```bash
 npm run env:setup
 ```
 
-`npm run env:setup` now prefers `services/*/.env.development.example` when it exists, so the production-ready `services/*/.env.example` files can stay tuned for VPS deployment.
+`npm run env:setup` validates that `.env.development` and `.env.production` exist. Services no longer create or read `services/*/.env` files.
 
-3. Review the generated `services/*/.env` files and replace the placeholder JWT secrets.
+3. Update `.env.development` for local credentials and replace placeholder JWT secrets before sharing a running environment.
 
-4. Start MySQL and make sure your service env files point at the matching port:
+4. Start MySQL and make sure `.env.development` points at the matching port:
 
 - Local MySQL on your machine: use `127.0.0.1:3306`
-- Docker Compose MySQL: run `npm run docker:up` and use `127.0.0.1:3307`
+- Docker Compose MySQL: run `npm run docker:up` and use `127.0.0.1:3306`
 
 5. Generate Prisma client and run migrations:
 
@@ -60,44 +61,33 @@ npm run dev
 
 This starts `api-gateway`, `auth-service`, `store-service`, `newsfeed-service`, and `app-service`.
 If one of those services is already running on its configured port, `npm run dev` reuses the healthy instance instead of failing with `EADDRINUSE`.
-If a service `.env` file is missing, `npm run dev` now creates it from that service's `.env.development.example` when available, otherwise it falls back to `.env.example`.
 `npm run dev` also builds the shared `@community/contracts` package before launching services so a fresh checkout has the runtime contract files available.
 
 ## Production Deployment
 
-Use the production templates under `services/*/.env.example`, then keep only `api-gateway` behind Nginx and leave the other services on loopback ports.
+Use `.env.production` at the repository root, then keep only `api-gateway` behind Nginx and leave the other services on loopback ports.
 
-1. Create production env files on the VPS:
+1. Edit `.env.production` with real database credentials and long JWT secrets.
 
-```bash
-cp services/api-gateway/.env.example services/api-gateway/.env
-cp services/auth-service/.env.example services/auth-service/.env
-cp services/store-service/.env.example services/store-service/.env
-cp services/newsfeed-service/.env.example services/newsfeed-service/.env
-cp services/app-service/.env.example services/app-service/.env
-```
-
-2. Edit the copied `services/*/.env` files with real database credentials and long JWT secrets.
-
-3. Install dependencies:
+2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-4. Build the compiled production files:
+3. Build the compiled production files:
 
 ```bash
 npm run build
 ```
 
-5. Apply Prisma migrations before the compiled services start:
+4. Apply Prisma migrations before the compiled services start:
 
 ```bash
 npm run prisma:deploy
 ```
 
-6. Start every compiled service with PM2:
+5. Start every compiled service with PM2:
 
 ```bash
 npm run pm2:start
@@ -118,7 +108,7 @@ If you want to build and run only the compiled JavaScript services without PM2 f
 
 If you already built the repo, `npm start` runs the root production launcher, wires the loopback service URLs for you, and fails fast if the production build is missing or a service still points at the local `root:root` database template.
 
-A single root-level `DATABASE_URL` is not enough for this repo because each service owns its own database. Use the `services/*/.env` files or provide service-specific `*_DATABASE_URL` environment variables instead.
+A single root-level `DATABASE_URL` is not enough for this repo because each service owns its own database. Use service-specific root variables such as `AUTH_DATABASE_URL`, `STORE_DATABASE_URL`, `NEWSFEED_DATABASE_URL`, and `APP_DATABASE_URL`.
 
 ## Run The Full Backend In Docker
 
@@ -129,7 +119,8 @@ npm run docker:up:app
 ```
 
 This brings up:
-- `mysql` on `3307`
+
+- `mysql` on `3306`
 - `adminer` on `8080`
 - `api-gateway` on `4000`
 - `auth-service` on `4100`
@@ -137,7 +128,7 @@ This brings up:
 - `newsfeed-service` on `4300`
 - `app-service` on `4400`
 
-The full Docker stack uses the checked-in env files under `infra/docker/env/*.env`, so your existing `services/*/.env` files can stay tuned for local non-Docker development on `127.0.0.1:3306`. The Docker MySQL host port defaults to `3307` to avoid conflicts with a local MySQL service already using `3306`, and you can still override it with `MYSQL_PORT`. Update the placeholder JWT secrets there before using this outside local development.
+The full Docker stack reads the root `.env.production` file and overrides container-only MySQL/Redis hostnames in `infra/docker/docker-compose.yml`. The Docker MySQL host port defaults to `3306`, and you can still override it with `MYSQL_PORT`. Update placeholder JWT secrets before using this outside local development.
 
 Stop everything and remove the named volumes with:
 
@@ -161,11 +152,12 @@ Remove-Item -Recurse -Force node_modules, services\*\node_modules, packages\*\no
 npm install
 ```
 
-If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that each `services/*/.env` file has a `DATABASE_URL` with valid credentials for your machine. Local non-Docker development uses `root:root` on `127.0.0.1:3306`, while the included Docker MySQL setup uses `root:root` on `127.0.0.1:3307`. In production, if logs mention the `root` MySQL user, that means a service fell back to the local template value instead of your real `*_DATABASE_URL`.
+If Prisma reports `Authentication failed against database server`, make sure MySQL is running and that the service-specific database URL in the active root env file has valid credentials for your machine. Local non-Docker development uses `root:root` on `127.0.0.1:3306`, while Docker uses container hostnames internally. In production, if logs mention the `root` MySQL user, update the affected `*_DATABASE_URL` in `.env.production`.
 
 ## API Endpoints
 
 `auth-service`
+
 - `GET /health`
 - `GET /ready`
 - `POST /v1/auth/register`
@@ -177,6 +169,7 @@ If Prisma reports `Authentication failed against database server`, make sure MyS
   Super-admin-only account activation toggle with `{ "isActive": true | false | 1 | 0 }`
 
 `store-service`
+
 - `GET /health`
 - `GET /ready`
 - `GET /v1/stores` (public, supports `?search=`)
@@ -201,8 +194,9 @@ npm run create:service -- user-service
 ```
 
 After cloning, adjust:
+
 - service-specific routes/modules
-- `.env.example` defaults and port
+- root `.env.development` and `.env.production` service port/database variables
 - Prisma schema and migrations
 
 See [Service Checklist](services/auth-service/README.md) for standards to keep across services.

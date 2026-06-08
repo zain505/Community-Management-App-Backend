@@ -2,7 +2,7 @@ import path from 'node:path';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors, { type CorsOptions } from 'cors';
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import { env } from './config/env';
 import { errorHandler } from './middleware/error-handler';
@@ -30,18 +30,32 @@ const corsOptions: CorsOptions = {
 
 export const app = express();
 
+function normalizeUploadFileRequestPath(req: Request, _res: Response, next: NextFunction): void {
+  const [pathname, query = ''] = req.url.split('?');
+  const normalizedPathname = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+
+  if (normalizedPathname !== pathname && path.posix.extname(normalizedPathname)) {
+    req.url = `${normalizedPathname}${query ? `?${query}` : ''}`;
+  }
+
+  next();
+}
+
 app.disable('x-powered-by');
 app.use(requestIdMiddleware);
 app.use(requestLogger);
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(compression());
-// Store and product writes can still arrive as base64 payloads before they are persisted as files.
 app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(cookieParser());
 app.use(globalRateLimiter);
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+app.use(
+  '/uploads',
+  normalizeUploadFileRequestPath,
+  express.static(path.resolve(__dirname, '../uploads')),
+);
 
 app.use(healthRouter);
 app.use('/internal/stores', internalStoreRouter);

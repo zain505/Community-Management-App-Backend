@@ -1,11 +1,45 @@
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 import { parseTrustProxySetting } from './trust-proxy';
 
-dotenv.config({
-  path: process.env.ENV_FILE || path.resolve(__dirname, '../../.env'),
-});
+function resolveEnvFilePath(): string {
+  const rootDir = path.resolve(__dirname, '../../../..');
+  const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toLowerCase();
+  const environment = appEnv === 'production' ? 'production' : 'development';
+  const envPath = path.join(rootDir, `.env.${environment}`);
+
+  return existsSync(envPath) ? envPath : path.join(rootDir, '.env.development');
+}
+
+function applyEnvAlias(targetKey: string, sourceKeys: string[]): void {
+  if (process.env[targetKey]?.trim()) {
+    return;
+  }
+
+  const sourceKey = sourceKeys.find((key) => process.env[key]?.trim());
+  if (sourceKey) {
+    process.env[targetKey] = process.env[sourceKey];
+  }
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  dotenv.config({
+    path: resolveEnvFilePath(),
+  });
+}
+
+applyEnvAlias('SERVICE_NAME', ['API_GATEWAY_SERVICE_NAME']);
+applyEnvAlias('PORT', ['API_GATEWAY_PORT']);
+applyEnvAlias('DATABASE_URL', [
+  'API_GATEWAY_DATABASE_URL',
+  'GATEWAY_DATABASE_URL',
+  'AUTH_SERVICE_DATABASE_URL',
+  'AUTH_DATABASE_URL',
+]);
 
 // Keep older BASE_URL env names working while the gateway standardizes on *_SERVICE_URL.
 process.env.AUTH_SERVICE_URL ||= process.env.AUTH_SERVICE_BASE_URL;

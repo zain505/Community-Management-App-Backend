@@ -7,8 +7,13 @@ import type {
 } from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../shared/app-error';
+import { toPublicAssetUrl } from '../../shared/public-asset-url';
 import { authClient } from '../auth/auth-client';
 import { newsFeedClient } from '../newsfeed/newsfeed.client';
+import {
+  deleteManagedEventImages,
+  resolveEventImagePublicPath,
+} from './event-image-storage';
 import {
   buildEventManagementCreatedEvent,
   buildEventManagementDeletedEvent,
@@ -24,7 +29,7 @@ function toEventManagement(eventManagement: EventManagementRecord): EventManagem
     id: eventManagement.id,
     title: eventManagement.title,
     description: eventManagement.description,
-    image: eventManagement.image,
+    image: toPublicAssetUrl(eventManagement.image),
     location: eventManagement.location,
     startAt: eventManagement.startAt.toISOString(),
     endAt: eventManagement.endAt ? eventManagement.endAt.toISOString() : null,
@@ -33,6 +38,18 @@ function toEventManagement(eventManagement: EventManagementRecord): EventManagem
     createdAt: eventManagement.createdAt.toISOString(),
     updatedAt: eventManagement.updatedAt.toISOString(),
   };
+}
+
+async function cleanupManagedEventImagesBestEffort(imageUrls: string[]): Promise<void> {
+  if (imageUrls.length === 0) {
+    return;
+  }
+
+  try {
+    await deleteManagedEventImages(imageUrls);
+  } catch {
+    // Event writes should not fail only because an old local image could not be deleted.
+  }
 }
 
 function throwEventManagementNotFound(): never {
@@ -134,6 +151,12 @@ export const eventManagementService = {
     assertValidTimeRange(nextStartAt, nextEndAt);
 
     const updatedEventManagement = await eventManagementRepository.updateById(eventManagementId, payload);
+    await cleanupManagedEventImagesBestEffort(
+      existingEventManagement.image !== updatedEventManagement.image &&
+        resolveEventImagePublicPath(existingEventManagement.image)
+        ? [existingEventManagement.image]
+        : [],
+    );
     await syncNewsFeed(
       buildEventManagementUpdateActivitySync({
         existingEventManagement,
@@ -156,6 +179,11 @@ export const eventManagementService = {
     }
 
     const deletedEventManagement = await eventManagementRepository.deleteById(eventManagementId);
+    await cleanupManagedEventImagesBestEffort(
+      resolveEventImagePublicPath(deletedEventManagement.image)
+        ? [deletedEventManagement.image]
+        : [],
+    );
     await syncNewsFeed([buildEventManagementDeletedEvent(deletedEventManagement)]);
   },
 };

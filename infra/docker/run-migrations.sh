@@ -28,22 +28,15 @@ wait_for_mysql() {
 
 run_deploy() {
   service_path="$1"
-  env_file="$2"
 
   echo "[migrate] Applying Prisma migrations for ${service_path}"
-
-  (
-    set -a
-    . "$env_file"
-    set +a
-    npm run prisma:deploy -w "$service_path"
-  )
+  npm run prisma:deploy -w "$service_path"
 }
 
 wait_for_mysql
 
-run_deploy "services/auth-service" "./infra/docker/env/auth-service.env"
-run_deploy "services/store-service" "./infra/docker/env/store-service.env"
-run_deploy "services/newsfeed-service" "./infra/docker/env/newsfeed-service.env"
-run_deploy "services/app-service" "./infra/docker/env/app-service.env"
-run_deploy "services/api-gateway" "./infra/docker/env/api-gateway.env"
+run_deploy "services/auth-service"
+run_deploy "services/store-service"
+run_deploy "services/newsfeed-service"
+run_deploy "services/app-service"
+run_deploy "services/api-gateway"

@@ -11,12 +11,17 @@ jest.mock('../../src/modules/newsfeed/newsfeed.service', () => ({
   },
 }));
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import request from 'supertest';
 import { app } from '../../src/app';
 import { signAccessToken } from '../../src/lib/token';
 import { newsFeedService } from '../../src/modules/newsfeed/newsfeed.service';
 
 const mockedNewsFeedService = jest.mocked(newsFeedService);
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const newsFeedImageUrl = 'http://localhost:3000/uploads/newsfeed-images/post-image.png';
+const pngImageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
 
 function getAccessToken(userId = 'user-123'): string {
   return signAccessToken({
@@ -29,6 +34,10 @@ describe('user newsfeed routes', () => {
     jest.resetAllMocks();
   });
 
+  afterEach(async () => {
+    await fs.rm(uploadsRoot, { recursive: true, force: true });
+  });
+
   it('creates a user-submitted newsfeed post', async () => {
     mockedNewsFeedService.createNewsFeedPost.mockResolvedValue({
       id: 'feed-user-1',
@@ -37,7 +46,7 @@ describe('user newsfeed routes', () => {
       approvalStatus: 'PENDING',
       title: 'Water outage notice',
       description: 'There will be a short outage tomorrow morning.',
-      image: '/uploads/newsfeed-images/post-image.png',
+      image: newsFeedImageUrl,
       authorUserId: 'user-123',
       likesCount: 0,
       createdAt: '2026-03-19T12:00:00.000Z',
@@ -46,20 +55,21 @@ describe('user newsfeed routes', () => {
     const response = await request(app)
       .post('/v1/newsfeed')
       .set('Authorization', `Bearer ${getAccessToken()}`)
-      .send({
-        title: 'Water outage notice',
-        description: 'There will be a short outage tomorrow morning.',
-        image: 'data:image/png;base64,aGVsbG8=',
+      .field('title', 'Water outage notice')
+      .field('description', 'There will be a short outage tomorrow morning.')
+      .attach('image', pngImageBuffer, {
+        filename: 'post.png',
+        contentType: 'image/png',
       });
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.data.id).toBe('feed-user-1');
-    expect(response.body.data.image).toBe('/uploads/newsfeed-images/post-image.png');
+    expect(response.body.data.image).toBe(newsFeedImageUrl);
     expect(mockedNewsFeedService.createNewsFeedPost).toHaveBeenCalledWith('user-123', {
       title: 'Water outage notice',
       description: 'There will be a short outage tomorrow morning.',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: expect.stringContaining('/uploads/newsfeed-images/'),
     });
   });
 

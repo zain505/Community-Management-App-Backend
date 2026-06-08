@@ -4,7 +4,6 @@ import {
   loginBodySchema,
   registerBodySchema,
   updateUserActivationBodySchema,
-  updateUserImageBodySchema,
   updateUserNameBodySchema,
 } from '../../src/modules/auth/auth.schemas';
 
@@ -115,14 +114,6 @@ describe('auth schemas', () => {
     expect(result.success).toBe(true);
   });
 
-  it('accepts a base64 image payload for user image updates', () => {
-    const result = updateUserImageBodySchema.safeParse({
-      image: 'data:image/png;base64,iVBORw0KGgo=',
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it('accepts numeric activation payloads and normalizes them to booleans', () => {
     const result = updateUserActivationBodySchema.parse({
       isActive: 0,
@@ -183,11 +174,4 @@ describe('auth schemas', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects empty user image payloads', () => {
-    const result = updateUserImageBodySchema.safeParse({
-      image: '   ',
-    });
-
-    expect(result.success).toBe(false);
-  });
 });

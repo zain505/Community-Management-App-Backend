@@ -51,9 +51,9 @@
     "prisma:seed:newsfeed": "npm run prisma:seed -w services/newsfeed-service",
     "prisma:seed:app": "npm run prisma:seed -w services/app-service",
     "create:service": "node ./scripts/clone-service.mjs",
-    "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
-    "docker:up:app": "docker compose -f infra/docker/docker-compose.yml --profile app up -d --build",
-    "docker:down": "docker compose -f infra/docker/docker-compose.yml down -v",
+    "docker:up": "docker compose --env-file .env.development -f infra/docker/docker-compose.yml up -d",
+    "docker:up:app": "docker compose --env-file .env.production -f infra/docker/docker-compose.yml --profile app up -d --build",
+    "docker:down": "docker compose --env-file .env.development -f infra/docker/docker-compose.yml down -v",
     "pm2:start": "npm run prisma:deploy && pm2 start ecosystem.config.js",
     "pm2:restart": "npm run prisma:deploy && pm2 restart ecosystem.config.js --update-env",
     "pm2:logs": "pm2 logs"

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middleware/require-auth';
 import { asyncHandler } from '../../shared/async-handler';
+import { parseNewsFeedImageUpload } from '../../shared/image-upload.middleware';
 import { validate } from '../../middleware/validate';
 import {
   createNewsFeedPost,
@@ -28,6 +29,7 @@ newsFeedRouter.get('/', validate({ query: listNewsFeedQuerySchema }), asyncHandl
 newsFeedRouter.post(
   '/',
   requireAuth,
+  asyncHandler(parseNewsFeedImageUpload),
   validate({ body: createNewsFeedPostBodySchema }),
   asyncHandler(createNewsFeedPost),
 );

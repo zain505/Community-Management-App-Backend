@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { ChatAttachmentType } from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../shared/app-error';
+import { toPublicAssetUrl } from '../../shared/public-asset-url';
 
 const extensionByMimeType: Record<string, string> = {
   'audio/m4a': '.m4a',
@@ -27,7 +28,7 @@ export async function ensureChatAttachmentUploadDirs(): Promise<void> {
 }
 
 export function buildChatAttachmentPublicPath(filename: string): string {
-  return `${chatAttachmentPublicPathPrefix}/${filename}`;
+  return toPublicAssetUrl(`${chatAttachmentPublicPathPrefix}/${filename}`);
 }
 
 export function buildChatAttachmentDownloadPath(id: string): string {

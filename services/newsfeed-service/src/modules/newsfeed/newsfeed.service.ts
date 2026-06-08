@@ -22,8 +22,6 @@ import { logger } from '../../config/logger';
 import { AppError } from '../../shared/app-error';
 import {
   deleteManagedImages,
-  isBase64ImageInput,
-  persistBase64Image,
   resolveNewsFeedImagePublicPath,
 } from '../../shared/image-storage';
 import { toPublicAssetUrl } from '../../shared/public-asset-url';
@@ -42,16 +40,6 @@ import { storeClient } from '../store/store.client';
 
 const DEFAULT_NEWSFEED_LIMIT = 20;
 const MAX_NEWSFEED_LIMIT = 50;
-
-interface NormalizedMetadataResult {
-  createdImageUrls: string[];
-  value: unknown;
-}
-
-interface NormalizedNewsFeedImagePayload<TPayload> {
-  createdImageUrls: string[];
-  payload: TPayload;
-}
 
 function parseRatingValue(rating: string): number {
   const match = rating.match(/(\d+(?:\.\d+)?)/);
@@ -310,139 +298,6 @@ async function cleanupManagedNewsFeedImagesBestEffort(
   }
 }
 
-async function normalizeMetadataImages(value: unknown, key?: string): Promise<NormalizedMetadataResult> {
-  if (typeof value === 'string') {
-    if (!key?.toLowerCase().includes('image') || !isBase64ImageInput(value)) {
-      return {
-        createdImageUrls: [],
-        value,
-      };
-    }
-
-    const image = await persistBase64Image(value);
-
-    return {
-      createdImageUrls: [image],
-      value: image,
-    };
-  }
-
-  if (Array.isArray(value)) {
-    const createdImageUrls: string[] = [];
-    const normalizedEntries = [];
-
-    try {
-      for (const entry of value) {
-        const normalizedEntry = await normalizeMetadataImages(entry, key);
-        createdImageUrls.push(...normalizedEntry.createdImageUrls);
-        normalizedEntries.push(normalizedEntry.value);
-      }
-    } catch (error) {
-      await cleanupManagedNewsFeedImagesBestEffort(
-        createdImageUrls,
-        'metadata image normalization rollback',
-      );
-      throw error;
-    }
-
-    return {
-      createdImageUrls,
-      value: normalizedEntries,
-    };
-  }
-
-  if (!isObject(value)) {
-    return {
-      createdImageUrls: [],
-      value,
-    };
-  }
-
-  const createdImageUrls: string[] = [];
-  const normalizedEntries: [string, unknown][] = [];
-
-  try {
-    for (const [nestedKey, nestedValue] of Object.entries(value)) {
-      const normalizedEntry = await normalizeMetadataImages(nestedValue, nestedKey);
-      createdImageUrls.push(...normalizedEntry.createdImageUrls);
-      normalizedEntries.push([nestedKey, normalizedEntry.value]);
-    }
-  } catch (error) {
-    await cleanupManagedNewsFeedImagesBestEffort(
-      createdImageUrls,
-      'metadata image normalization rollback',
-    );
-    throw error;
-  }
-
-  return {
-    createdImageUrls,
-    value: Object.fromEntries(normalizedEntries),
-  };
-}
-
-async function normalizeSyncEventImages(
-  event: NewsFeedSyncEvent,
-): Promise<NormalizedNewsFeedImagePayload<NewsFeedSyncEvent>> {
-  const createdImageUrls: string[] = [];
-
-  try {
-    const image =
-      event.image && isBase64ImageInput(event.image)
-        ? await persistBase64Image(event.image)
-        : event.image;
-
-    if (image && image !== event.image) {
-      createdImageUrls.push(image);
-    }
-
-    const metadata = event.metadata
-      ? await normalizeMetadataImages(event.metadata)
-      : {
-          createdImageUrls: [],
-          value: undefined,
-        };
-
-    createdImageUrls.push(...metadata.createdImageUrls);
-
-    return {
-      createdImageUrls,
-      payload: {
-        ...event,
-        image,
-        metadata: metadata.value as Record<string, unknown> | undefined,
-      },
-    };
-  } catch (error) {
-    await cleanupManagedNewsFeedImagesBestEffort(
-      createdImageUrls,
-      'sync event image normalization rollback',
-    );
-    throw error;
-  }
-}
-
-async function normalizeUserPostPayload(
-  payload: CreateNewsFeedPostRequest,
-): Promise<NormalizedNewsFeedImagePayload<CreateNewsFeedPostRequest>> {
-  if (!payload.image || !isBase64ImageInput(payload.image)) {
-    return {
-      createdImageUrls: [],
-      payload,
-    };
-  }
-
-  const image = await persistBase64Image(payload.image);
-
-  return {
-    createdImageUrls: [image],
-    payload: {
-      ...payload,
-      image,
-    },
-  };
-}
-
 function collectManagedImageUrlsFromValue(value: unknown, key?: string): string[] {
   if (typeof value === 'string') {
     return key?.toLowerCase().includes('image') && resolveNewsFeedImagePublicPath(value) ? [value] : [];
@@ -553,20 +408,10 @@ async function enrichNewsFeedItems(items: NewsFeedItemRecord[]): Promise<NewsFee
 }
 
 async function createEntry(payload: NewsFeedSyncEvent): Promise<void> {
-  const normalizedPayload = await normalizeSyncEventImages(payload);
-
-  try {
-    await newsFeedRepository.createEntry({
-      ...normalizedPayload.payload,
-      metadata: normalizedPayload.payload.metadata as Prisma.InputJsonValue | undefined,
-    });
-  } catch (error) {
-    await cleanupManagedNewsFeedImagesBestEffort(
-      normalizedPayload.createdImageUrls,
-      'system newsfeed create rollback',
-    );
-    throw error;
-  }
+  await newsFeedRepository.createEntry({
+    ...payload,
+    metadata: payload.metadata as Prisma.InputJsonValue | undefined,
+  });
 }
 
 interface MetricRefreshContext {
@@ -692,25 +537,15 @@ export const newsFeedService = {
   ): Promise<NewsFeedItem> {
     await cleanupExpiredNewsFeedEntries();
 
-    const normalizedPayload = await normalizeUserPostPayload(payload);
+    const createdPost = await newsFeedRepository.createUserPost({
+      authorUserId: userId,
+      title: payload.title,
+      description: payload.description,
+      image: payload.image,
+    });
+    const enrichmentData = await buildNewsFeedEnrichmentData([createdPost]);
 
-    try {
-      const createdPost = await newsFeedRepository.createUserPost({
-        authorUserId: userId,
-        title: normalizedPayload.payload.title,
-        description: normalizedPayload.payload.description,
-        image: normalizedPayload.payload.image,
-      });
-      const enrichmentData = await buildNewsFeedEnrichmentData([createdPost]);
-
-      return enrichNewsFeedItem(createdPost, enrichmentData);
-    } catch (error) {
-      await cleanupManagedNewsFeedImagesBestEffort(
-        normalizedPayload.createdImageUrls,
-        'user newsfeed create rollback',
-      );
-      throw error;
-    }
+    return enrichNewsFeedItem(createdPost, enrichmentData);
   },
 
   async listMyNewsFeedPosts(

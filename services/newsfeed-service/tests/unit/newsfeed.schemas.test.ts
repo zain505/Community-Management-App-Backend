@@ -38,7 +38,7 @@ describe('newsfeed schemas', () => {
           type: 'EVENT_MANAGEMENT_CREATED',
           title: 'New community event: Water supply meeting',
           description: 'Community Admin scheduled a community event at Main Hall.',
-          image: 'data:image/png;base64,aGVsbG8=',
+          image: 'http://localhost:3000/uploads/newsfeed-images/event.png',
         },
       ],
       refreshMetrics: ['POPULAR_STORE'],
@@ -52,11 +52,11 @@ describe('newsfeed schemas', () => {
     const payload = createNewsFeedPostBodySchema.parse({
       title: 'Water outage notice',
       description: 'There will be a short outage tomorrow morning.',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: 'http://localhost:3000/uploads/newsfeed-images/post.png',
     });
 
     expect(payload.title).toBe('Water outage notice');
-    expect(payload.image).toBe('data:image/png;base64,aGVsbG8=');
+    expect(payload.image).toBe('http://localhost:3000/uploads/newsfeed-images/post.png');
   });
 
   it('defaults admin submission listing to pending posts', () => {

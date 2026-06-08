@@ -34,11 +34,8 @@ import {
   resolveUserImagePublicPath,
   userImageUploadDir,
 } from './user-image-storage';
-import {
-  detectUserImageMimeType,
-  getUserImageExtension,
-  toBase64DataUrl,
-} from './user-image.utils';
+import { getUserImageExtension } from './user-image.utils';
+import { toPublicAssetUrl } from '../../shared/public-asset-url';
 
 const defaultUserProfile: UserProfile = {
   image: null,
@@ -51,7 +48,10 @@ function toUserProfile(profile: Prisma.JsonValue | null | undefined): UserProfil
     return defaultUserProfile;
   }
 
-  const image = 'image' in profile && typeof profile.image === 'string' ? profile.image : null;
+  const image =
+    'image' in profile && typeof profile.image === 'string'
+      ? toPublicAssetUrl(profile.image)
+      : null;
 
   return {
     image,
@@ -68,51 +68,16 @@ function normalizeNameForPolicyCheck(name: string): string {
   return name.trim().replace(/\s+/g, ' ');
 }
 
-async function resolveUserImageForResponse(image: string | null): Promise<string | null> {
-  if (!image) {
-    return null;
-  }
-
-  if (image.startsWith('data:')) {
-    return image;
-  }
-
-  const resolvedImagePath = resolveUserImagePublicPath(image);
-
-  if (!resolvedImagePath) {
-    return image;
-  }
-
-  try {
-    const buffer = await fs.readFile(resolvedImagePath);
-    const mimetype = detectUserImageMimeType(buffer);
-
-    if (!mimetype) {
-      return image;
-    }
-
-    return toBase64DataUrl(buffer, mimetype);
-  } catch (error) {
-    const nodeError = error as NodeJS.ErrnoException;
-
-    if (nodeError.code === 'ENOENT') {
-      return image;
-    }
-
-    throw error;
-  }
-}
-
 type AuthUserPublic = UserPublic & { usertype: UserType };
 
-async function toUserPublic(user: {
+function toUserPublic(user: {
   id: string;
   mobileNumber: string;
   name: string;
   usertype: number;
   profile: Prisma.JsonValue | null;
   createdAt: Date;
-}): Promise<AuthUserPublic> {
+}): AuthUserPublic {
   const profile = toUserProfile(user.profile);
 
   return {
@@ -120,9 +85,7 @@ async function toUserPublic(user: {
     mobileNumber: user.mobileNumber,
     name: user.name,
     usertype: user.usertype as UserType,
-    profile: {
-      image: await resolveUserImageForResponse(profile.image),
-    },
+    profile,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -384,7 +347,7 @@ export const authService = {
     const tokens = await issueTokens(user);
 
     return {
-      user: await toUserPublic(user),
+      user: toUserPublic(user),
       tokens,
     };
   },
@@ -440,7 +403,7 @@ export const authService = {
     });
 
     return {
-      user: await toUserPublic(user),
+      user: toUserPublic(user),
       tokens: {
         accessToken,
         refreshToken: rotatedRefresh.token,
@@ -624,7 +587,7 @@ export const authService = {
 
     const updatedUser = await authRepository.updateUserName(user.id, params.name.trim());
 
-    return await toUserPublic(updatedUser);
+    return toUserPublic(updatedUser);
   },
 
   async updateUserImage(params: {
@@ -664,7 +627,7 @@ export const authService = {
 
       await deletePreviousUserImageIfManaged(currentProfile.image);
 
-      return await toUserPublic(updatedUser);
+      return toUserPublic(updatedUser);
     } catch (error) {
       if (storedImagePath) {
         await deleteFileIfPresent(resolveUserImagePublicPath(storedImagePath));

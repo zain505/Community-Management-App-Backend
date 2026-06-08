@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middleware/require-auth';
 import { asyncHandler } from '../../shared/async-handler';
+import { parseImageUpload } from '../../shared/image-upload.middleware';
 import { validate } from '../../middleware/validate';
 import {
   createMyProduct,
@@ -27,10 +28,17 @@ productRouter.get(
   asyncHandler(listStoreProducts),
 );
 productRouter.get('/:id', requireAuth, validate({ params: productIdParamSchema }), asyncHandler(getMyProduct));
-productRouter.post('/', requireAuth, validate({ body: createProductBodySchema }), asyncHandler(createMyProduct));
+productRouter.post(
+  '/',
+  requireAuth,
+  asyncHandler(parseImageUpload('product')),
+  validate({ body: createProductBodySchema }),
+  asyncHandler(createMyProduct),
+);
 productRouter.patch(
   '/:id',
   requireAuth,
+  asyncHandler(parseImageUpload('product')),
   validate({ params: productIdParamSchema, body: updateProductBodySchema }),
   asyncHandler(updateMyProduct),
 );

@@ -34,7 +34,7 @@
 ### Update user image
 
 - Requires bearer access token
-- JSON body with an `image` field containing a base64-encoded image string
+- `multipart/form-data` body with an `image`, `file`, or `avatar` file field
 - Allowed file types: `image/jpeg`, `image/png`
 - Maximum file size: `5 MB`
 
@@ -57,6 +57,6 @@
 - Logout revokes the provided refresh token when valid.
 - Super admins can delete any other user account.
 - User responses include a `profile` object.
-- Public auth responses return managed user images as base64 data URLs.
-- User image uploads are stored locally after the base64 payload is decoded.
+- Public auth responses return managed user images as public upload URLs.
+- User image uploads are stored locally from multipart file uploads.
 - Login uses a rate limiter.

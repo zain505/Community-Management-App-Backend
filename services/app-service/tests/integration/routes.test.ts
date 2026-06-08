@@ -20,8 +20,8 @@ describe('routes', () => {
       .post('/v1/event-management')
       .send({
         title: 'Community meetup',
-        description: 'Residents are meeting in the main hall.',
-        image: `data:image/png;base64,${'A'.repeat(200 * 1024)}`,
+        description: 'A'.repeat(200 * 1024),
+        image: 'http://localhost:3000/uploads/event-images/event.png',
         location: 'Main Hall',
         startAt: '2026-03-20T18:00:00.000Z',
       });
@@ -36,8 +36,8 @@ describe('routes', () => {
       .post('/v1/event-management')
       .send({
         title: 'Community meetup',
-        description: 'Residents are meeting in the main hall.',
-        image: `data:image/png;base64,${'A'.repeat(8 * 1024 * 1024)}`,
+        description: 'A'.repeat(8 * 1024 * 1024),
+        image: 'http://localhost:3000/uploads/event-images/event.png',
         location: 'Main Hall',
         startAt: '2026-03-20T18:00:00.000Z',
       });

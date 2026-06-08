@@ -59,16 +59,11 @@ const mockedNewsFeedClient = jest.mocked(newsFeedClient);
 const mockedStoreCache = jest.mocked(storeCache);
 const uploadsRoot = path.resolve(__dirname, '../../uploads');
 
-const storeImageBase64 = `data:image/png;base64,${Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
-]).toString('base64')}`;
-const updatedStoreImageBase64 = `data:image/png;base64,${Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01,
-]).toString('base64')}`;
 const publicBaseUrl = process.env.PUBLIC_BASE_URL ?? 'https://public.example.test';
 const storeImageUrl = '/uploads/store-images/store-image.png';
 const updatedStoreImageUrl = '/uploads/store-images/store-image-updated.png';
 const absoluteStoreImageUrl = `${publicBaseUrl}${storeImageUrl}`;
+const absoluteUpdatedStoreImageUrl = `${publicBaseUrl}${updatedStoreImageUrl}`;
 
 async function removeUploadsDirectory(): Promise<void> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -199,7 +194,7 @@ const storeFieldChangeCases = [
   {
     name: 'publishes an image update event when image changes',
     payload: {
-      image: updatedStoreImageBase64,
+      image: absoluteUpdatedStoreImageUrl,
     },
     updatedStoreOverrides: {
       image: updatedStoreImageUrl,
@@ -499,7 +494,7 @@ describe('store service', () => {
     const store = await storeService.createMyStore('user-123', {
       name: 'Fresh Mart2',
       location: 'Main Road',
-      image: storeImageBase64,
+      image: absoluteStoreImageUrl,
       delivery: '30 mins',
       minOrderRs: '500',
       openingTime: '09:00',
@@ -526,7 +521,7 @@ describe('store service', () => {
     expect(mockedStoreRepository.createForUser).toHaveBeenCalledWith('user-123', {
       name: 'Fresh Mart2',
       location: 'Main Road',
-      image: expect.stringMatching(/^\/uploads\/store-images\//),
+      image: absoluteStoreImageUrl,
       badges: [],
       delivery: '30 mins',
       minOrderRs: '500',
@@ -546,7 +541,7 @@ describe('store service', () => {
       storeService.createMyStore('user-123', {
         name: 'Fresh Mart2',
         location: 'Main Road',
-        image: storeImageBase64,
+        image: absoluteStoreImageUrl,
         delivery: '30 mins',
         minOrderRs: '500',
         openingTime: '09:00',
@@ -743,7 +738,7 @@ describe('store service', () => {
 
     await storeService.updateMyStore('user-123', {
       location: 'Mall Road',
-      image: updatedStoreImageBase64,
+      image: absoluteUpdatedStoreImageUrl,
       delivery: '45 mins',
       minOrderRs: '700',
       phoneNumber: '03112223344',
@@ -752,7 +747,7 @@ describe('store service', () => {
     expect(mockedStoreRepository.updateById).toHaveBeenCalledWith(
       18,
       expect.objectContaining({
-        image: expect.stringMatching(/^\/uploads\/store-images\//),
+        image: absoluteUpdatedStoreImageUrl,
       }),
       [],
     );

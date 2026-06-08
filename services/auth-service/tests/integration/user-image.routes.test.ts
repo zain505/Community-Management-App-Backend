@@ -20,7 +20,6 @@ import { authService } from '../../src/modules/auth/auth.service';
 const mockedAuthService = jest.mocked(authService);
 const uploadsRoot = path.resolve(__dirname, '../../uploads');
 const pngImageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
-const pngImageBase64 = `data:image/png;base64,${pngImageBuffer.toString('base64')}`;
 
 async function removeUploadsDirectory(): Promise<void> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -71,8 +70,9 @@ describe('user image routes', () => {
         'Authorization',
         `Bearer ${signAccessToken({ sub: 'user-123', mobileNumber: '+923001234567' })}`,
       )
-      .send({
-        image: pngImageBase64,
+      .attach('image', pngImageBuffer, {
+        filename: 'avatar.png',
+        contentType: 'image/png',
       });
 
     expect(response.status).toBe(200);
@@ -84,7 +84,7 @@ describe('user image routes', () => {
         userId: 'user-123',
         file: expect.objectContaining({
           mimetype: 'image/png',
-          originalFilename: null,
+          originalFilename: 'avatar.png',
         }),
       }),
     );
@@ -97,8 +97,9 @@ describe('user image routes', () => {
         'Authorization',
         `Bearer ${signAccessToken({ sub: 'user-123', mobileNumber: '+923001234567' })}`,
       )
-      .send({
-        image: `data:text/plain;base64,${Buffer.from('plain-text').toString('base64')}`,
+      .attach('image', Buffer.from('plain-text'), {
+        filename: 'avatar.txt',
+        contentType: 'text/plain',
       });
 
     expect(response.status).toBe(400);
@@ -116,8 +117,9 @@ describe('user image routes', () => {
         'Authorization',
         `Bearer ${signAccessToken({ sub: 'user-123', mobileNumber: '+923001234567' })}`,
       )
-      .send({
-        image: `data:image/png;base64,${oversizedPng.toString('base64')}`,
+      .attach('image', oversizedPng, {
+        filename: 'avatar.png',
+        contentType: 'image/png',
       });
 
     expect(response.status).toBe(413);

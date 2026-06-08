@@ -170,7 +170,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\backend\\community_backend_app_new\\Community-Management-App-Backend\\services\\api-gateway\\src\\generated\\prisma",
+      "value": "D:\\Copies\\community\\Community-Management-App-Backend\\services\\api-gateway\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -184,12 +184,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\backend\\community_backend_app_new\\Community-Management-App-Backend\\services\\api-gateway\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\Copies\\community\\Community-Management-App-Backend\\services\\api-gateway\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.19.2",
@@ -198,7 +197,6 @@ const config = {
     "db"
   ],
   "activeProvider": "mysql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {

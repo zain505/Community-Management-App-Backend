@@ -7,5 +7,7 @@ declare namespace Express {
   interface Request {
     requestId: string;
     user?: AuthenticatedUser;
+    managedImageUploadCleanupRegistered?: boolean;
+    managedImageUploadUrls?: string[];
   }
 }

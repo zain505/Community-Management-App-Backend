@@ -52,18 +52,14 @@ const mockedNewsFeedCache = jest.mocked(newsFeedCache);
 const mockedNewsFeedRepository = jest.mocked(newsFeedRepository);
 const mockedStoreClient = jest.mocked(storeClient);
 const uploadsRoot = path.resolve(__dirname, '../../uploads');
-const pngImageBase64 = `data:image/png;base64,${Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
-]).toString('base64')}`;
-const pngImageBase64Alt = `data:image/png;base64,${Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01,
-]).toString('base64')}`;
 const publicBaseUrl = process.env.PUBLIC_BASE_URL ?? 'https://public.example.test';
 const newsFeedImageUrl = '/uploads/newsfeed-images/post-image.png';
+const newsFeedImageAltUrl = '/uploads/newsfeed-images/post-image-alt.png';
 const storeImageUrl = '/uploads/store-images/store-image.png';
 const productImageUrl = '/uploads/product-images/product-image.png';
 const userImageUrl = '/uploads/user-images/user-avatar.png';
 const absoluteNewsFeedImageUrl = `${publicBaseUrl}${newsFeedImageUrl}`;
+const absoluteNewsFeedImageAltUrl = `${publicBaseUrl}${newsFeedImageAltUrl}`;
 const absoluteStoreImageUrl = `${publicBaseUrl}${storeImageUrl}`;
 const absoluteProductImageUrl = `${publicBaseUrl}${productImageUrl}`;
 const absoluteUserImageUrl = `${publicBaseUrl}${userImageUrl}`;
@@ -471,9 +467,7 @@ describe('newsfeed service', () => {
     expect(mockedAuthClient.findUsersPublicByIds).toHaveBeenCalledWith(['user-123']);
   });
 
-  it('preserves inline image payloads in the newsfeed response', async () => {
-    const inlineImage = `data:image/png;base64,${'A'.repeat(2048)}`;
-
+  it('normalizes image URLs in the newsfeed response', async () => {
     mockedNewsFeedRepository.listEntries.mockResolvedValue({
       items: [
         {
@@ -488,10 +482,10 @@ describe('newsfeed service', () => {
               id: 'prod-1',
               name: 'Orange Juice',
               price: '550',
-              image: inlineImage,
+              image: newsFeedImageUrl,
               tag: 'Fresh',
             },
-            previousImage: inlineImage,
+            previousImage: newsFeedImageUrl,
           },
           _count: {
             likes: 1,
@@ -509,7 +503,7 @@ describe('newsfeed service', () => {
         active: true,
         location: 'Main Road',
         rating: '4.5',
-        image: inlineImage,
+        image: storeImageUrl,
         badges: ['Popular'],
         delivery: '30 mins',
         minOrderRs: '500',
@@ -524,7 +518,7 @@ describe('newsfeed service', () => {
         name: 'Store Owner',
         mobileNumber: '03009998888',
         profile: {
-          image: inlineImage,
+          image: userImageUrl,
         },
         createdAt: '2026-03-01T08:00:00.000Z',
       },
@@ -548,7 +542,7 @@ describe('newsfeed service', () => {
           active: true,
           location: 'Main Road',
           rating: '4.5',
-          image: inlineImage,
+          image: absoluteStoreImageUrl,
           badges: ['Popular'],
           delivery: '30 mins',
           minOrderRs: '500',
@@ -561,7 +555,7 @@ describe('newsfeed service', () => {
           name: 'Store Owner',
           mobileNumber: '03009998888',
           profile: {
-            image: inlineImage,
+            image: absoluteUserImageUrl,
           },
           createdAt: '2026-03-01T08:00:00.000Z',
         },
@@ -569,7 +563,7 @@ describe('newsfeed service', () => {
           id: 'prod-1',
           name: 'Orange Juice',
           price: '550',
-          image: inlineImage,
+          image: absoluteNewsFeedImageUrl,
           tag: 'Fresh',
         },
         metadata: {
@@ -577,10 +571,10 @@ describe('newsfeed service', () => {
             id: 'prod-1',
             name: 'Orange Juice',
             price: '550',
-            image: inlineImage,
+            image: absoluteNewsFeedImageUrl,
             tag: 'Fresh',
           },
-          previousImage: inlineImage,
+          previousImage: absoluteNewsFeedImageUrl,
         },
         likesCount: 1,
         createdAt: '2026-03-14T08:00:00.000Z',
@@ -588,7 +582,7 @@ describe('newsfeed service', () => {
     ]);
   });
 
-  it('stores base64 user post images as managed URLs and returns the pending post with author data', async () => {
+  it('stores user post image URLs and returns the pending post with author data', async () => {
     mockedNewsFeedRepository.createUserPost.mockResolvedValue({
       id: 'feed-user-1',
       type: 'USER_POST',
@@ -621,14 +615,14 @@ describe('newsfeed service', () => {
     const post = await newsFeedService.createNewsFeedPost('user-123', {
       title: 'Water outage notice',
       description: 'There will be a short outage tomorrow morning.',
-      image: pngImageBase64,
+      image: absoluteNewsFeedImageUrl,
     });
 
     expect(mockedNewsFeedRepository.createUserPost).toHaveBeenCalledWith({
       authorUserId: 'user-123',
       title: 'Water outage notice',
       description: 'There will be a short outage tomorrow morning.',
-      image: expect.stringMatching(/^\/uploads\/newsfeed-images\//),
+      image: absoluteNewsFeedImageUrl,
     });
     expect(post).toEqual({
       id: 'feed-user-1',
@@ -724,7 +718,7 @@ describe('newsfeed service', () => {
     });
   });
 
-  it('stores inline sync images as managed URLs before saving the event', async () => {
+  it('passes sync image URLs through before saving the event', async () => {
     await newsFeedService.syncNewsFeed({
       events: [
         {
@@ -736,9 +730,9 @@ describe('newsfeed service', () => {
               id: 'prod-1',
               name: 'Orange Juice',
               price: '550',
-              image: pngImageBase64,
+              image: absoluteNewsFeedImageUrl,
             },
-            previousImage: pngImageBase64Alt,
+            previousImage: absoluteNewsFeedImageAltUrl,
           },
         },
       ],
@@ -748,17 +742,14 @@ describe('newsfeed service', () => {
       type: 'PRODUCT_UPDATED',
       title: 'Fresh Mart updated a product.',
       description: 'Orange Juice image was refreshed.',
-      image: undefined,
-      storeId: undefined,
-      storeName: undefined,
       metadata: {
         current: {
           id: 'prod-1',
           name: 'Orange Juice',
           price: '550',
-          image: expect.stringMatching(/^\/uploads\/newsfeed-images\//),
+          image: absoluteNewsFeedImageUrl,
         },
-        previousImage: expect.stringMatching(/^\/uploads\/newsfeed-images\//),
+        previousImage: absoluteNewsFeedImageAltUrl,
       },
     });
   });

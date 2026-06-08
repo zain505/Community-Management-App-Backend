@@ -20,16 +20,16 @@ describe('product schemas', () => {
     expect(payload.description).toBe('Freshly baked naan served hot.');
   });
 
-  it('accepts a product image as a base64 data URI', () => {
+  it('accepts a product image URL', () => {
     const payload = createProductBodySchema.parse({
       name: 'Fresh Sada Naan',
       price: 'Rs.30',
-      image: 'data:image/png;base64,aGVsbG8=',
+      image: 'http://localhost:3000/uploads/product-images/product.png',
       tag: 'Popular',
       description: 'Freshly baked naan served hot.',
     });
 
-    expect(payload.image).toBe('data:image/png;base64,aGVsbG8=');
+    expect(payload.image).toBe('http://localhost:3000/uploads/product-images/product.png');
   });
 
   it('rejects empty update payload', () => {

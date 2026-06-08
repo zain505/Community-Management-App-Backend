@@ -1,8 +1,17 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import request from 'supertest';
 import { app } from '../../src/app';
 import { signAccessToken } from '../../src/lib/token';
 
+const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const routeTestImagePath = path.join(uploadsRoot, 'store-images', 'route-test-image.jpg');
+
 describe('routes', () => {
+  afterEach(async () => {
+    await fs.rm(routeTestImagePath, { force: true });
+  });
+
   it('returns liveness data', async () => {
     const response = await request(app).get('/health');
 
@@ -10,6 +19,19 @@ describe('routes', () => {
     expect(response.body.success).toBe(true);
     expect(response.body.data.status).toBe('ok');
     expect(response.headers['x-request-id']).toBeTruthy();
+  });
+
+  it('serves uploaded files with a trailing slash after the filename', async () => {
+    const imageBytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]);
+
+    await fs.mkdir(path.dirname(routeTestImagePath), { recursive: true });
+    await fs.writeFile(routeTestImagePath, imageBytes);
+
+    const response = await request(app).get('/uploads/store-images/route-test-image.jpg/');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('image/jpeg');
+    expect(response.body).toEqual(imageBytes);
   });
 
   it('does not expose auth routes in store-service', async () => {

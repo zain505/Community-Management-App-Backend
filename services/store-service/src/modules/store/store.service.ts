@@ -22,9 +22,7 @@ import { logger } from '../../config/logger';
 import { AppError } from '../../shared/app-error';
 import {
   deleteManagedImages,
-  isBase64ImageInput,
   isManagedImagePublicPath,
-  persistBase64Image,
 } from '../../shared/image-storage';
 import { toPublicAssetUrl } from '../../shared/public-asset-url';
 import {
@@ -207,41 +205,9 @@ async function cleanupManagedStoreImagesBestEffort(
 async function normalizeProductImages<TProduct extends { image: string }>(
   products?: TProduct[],
 ): Promise<NormalizedProductImagesResult<TProduct>> {
-  if (!products) {
-    return {
-      createdImageUrls: [],
-      products: undefined,
-    };
-  }
-
-  const createdImageUrls: string[] = [];
-  const normalizedProducts = [];
-
-  try {
-    for (const product of products) {
-      if (!isBase64ImageInput(product.image)) {
-        normalizedProducts.push(product);
-        continue;
-      }
-
-      const image = await persistBase64Image(product.image, 'product');
-      createdImageUrls.push(image);
-      normalizedProducts.push({
-        ...product,
-        image,
-      });
-    }
-  } catch (error) {
-    await cleanupManagedStoreImagesBestEffort(
-      createdImageUrls,
-      'product image normalization rollback',
-    );
-    throw error;
-  }
-
   return {
-    createdImageUrls,
-    products: normalizedProducts,
+    createdImageUrls: [],
+    products,
   };
 }
 
@@ -261,33 +227,15 @@ async function buildCreatePayload(
   products: StoreProductInput[];
 }>> {
   const normalizedProducts = await normalizeProductImages(payload.products ?? []);
-  const createdImageUrls = [...normalizedProducts.createdImageUrls];
 
-  try {
-    const image = isBase64ImageInput(payload.image)
-      ? await persistBase64Image(payload.image, 'store')
-      : payload.image;
-
-    if (image !== payload.image) {
-      createdImageUrls.push(image);
-    }
-
-    return {
-      createdImageUrls,
-      payload: {
-        ...payload,
-        badges: [],
-        image,
-        products: normalizedProducts.products ?? [],
-      },
-    };
-  } catch (error) {
-    await cleanupManagedStoreImagesBestEffort(
-      createdImageUrls,
-      'store image normalization rollback',
-    );
-    throw error;
-  }
+  return {
+    createdImageUrls: [],
+    payload: {
+      ...payload,
+      badges: [],
+      products: normalizedProducts.products ?? [],
+    },
+  };
 }
 
 async function buildUpdatePayload(
@@ -305,33 +253,14 @@ async function buildUpdatePayload(
   products?: StoreProductInput[];
 }>> {
   const normalizedProducts = await normalizeProductImages(payload.products);
-  const createdImageUrls = [...normalizedProducts.createdImageUrls];
 
-  try {
-    const image =
-      payload.image === undefined || !isBase64ImageInput(payload.image)
-        ? payload.image
-        : await persistBase64Image(payload.image, 'store');
-
-    if (image !== undefined && image !== payload.image) {
-      createdImageUrls.push(image);
-    }
-
-    return {
-      createdImageUrls,
-      payload: {
-        ...payload,
-        image,
-        products: normalizedProducts.products ?? undefined,
-      },
-    };
-  } catch (error) {
-    await cleanupManagedStoreImagesBestEffort(
-      createdImageUrls,
-      'store update image normalization rollback',
-    );
-    throw error;
-  }
+  return {
+    createdImageUrls: [],
+    payload: {
+      ...payload,
+      products: normalizedProducts.products ?? undefined,
+    },
+  };
 }
 
 function collectManagedImageUrls(store: Pick<StoreWithProductsRecord, 'image' | 'products'>): string[] {

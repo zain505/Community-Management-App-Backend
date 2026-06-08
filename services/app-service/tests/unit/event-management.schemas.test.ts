@@ -8,21 +8,21 @@ describe('event management schemas', () => {
     const value = createEventManagementBodySchema.parse({
       title: 'Community meetup',
       description: 'Residents are meeting in the main hall.',
-      image: 'data:image/png;base64,aGVsbG8xMjM=',
+      image: 'http://localhost:3000/uploads/event-images/event.png',
       location: 'Main Hall',
       startAt: '2026-03-20T18:00:00.000Z',
       endAt: '2026-03-20T20:00:00.000Z',
     });
 
     expect(value.title).toBe('Community meetup');
-    expect(value.image).toBe('data:image/png;base64,aGVsbG8xMjM=');
+    expect(value.image).toBe('http://localhost:3000/uploads/event-images/event.png');
   });
 
   it('rejects invalid time ranges', () => {
     const result = createEventManagementBodySchema.safeParse({
       title: 'Community meetup',
       description: 'Residents are meeting in the main hall.',
-      image: 'data:image/png;base64,aGVsbG8xMjM=',
+      image: 'http://localhost:3000/uploads/event-images/event.png',
       location: 'Main Hall',
       startAt: '2026-03-20T20:00:00.000Z',
       endAt: '2026-03-20T18:00:00.000Z',

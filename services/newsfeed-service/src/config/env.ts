@@ -1,10 +1,41 @@
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-dotenv.config({
-  path: process.env.ENV_FILE || path.resolve(__dirname, '../../.env'),
-});
+function resolveEnvFilePath(): string {
+  const rootDir = path.resolve(__dirname, '../../../..');
+  const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toLowerCase();
+  const environment = appEnv === 'production' ? 'production' : 'development';
+  const envPath = path.join(rootDir, `.env.${environment}`);
+
+  return existsSync(envPath) ? envPath : path.join(rootDir, '.env.development');
+}
+
+function applyEnvAlias(targetKey: string, sourceKeys: string[]): void {
+  if (process.env[targetKey]?.trim()) {
+    return;
+  }
+
+  const sourceKey = sourceKeys.find((key) => process.env[key]?.trim());
+  if (sourceKey) {
+    process.env[targetKey] = process.env[sourceKey];
+  }
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  dotenv.config({
+    path: resolveEnvFilePath(),
+  });
+}
+
+applyEnvAlias('SERVICE_NAME', ['NEWSFEED_SERVICE_NAME']);
+applyEnvAlias('PORT', ['NEWSFEED_SERVICE_PORT']);
+applyEnvAlias('DATABASE_URL', ['NEWSFEED_SERVICE_DATABASE_URL', 'NEWSFEED_DATABASE_URL']);
+applyEnvAlias('AUTH_SERVICE_BASE_URL', ['AUTH_SERVICE_URL']);
+applyEnvAlias('STORE_SERVICE_BASE_URL', ['STORE_SERVICE_URL']);
 
 const DEFAULT_PORT = 4300;
 const DEFAULT_CORS_ORIGINS = [
@@ -15,7 +46,7 @@ const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:5173',
 ].join(',');
-const DEFAULT_PUBLIC_BASE_URL = 'https://hzhtechco.site';
+const DEFAULT_PUBLIC_BASE_URL = 'http://localhost:3000';
 const DEFAULT_AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:4100';
 const DEFAULT_STORE_SERVICE_BASE_URL = 'http://127.0.0.1:4200';
 const DEFAULT_REDIS_URL = 'redis://127.0.0.1:6379';

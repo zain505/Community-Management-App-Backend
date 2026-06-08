@@ -1,10 +1,41 @@
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-dotenv.config({
-  path: process.env.ENV_FILE || path.resolve(__dirname, '../../.env'),
-});
+function resolveEnvFilePath(): string {
+  const rootDir = path.resolve(__dirname, '../../../..');
+  const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toLowerCase();
+  const environment = appEnv === 'production' ? 'production' : 'development';
+  const envPath = path.join(rootDir, `.env.${environment}`);
+
+  return existsSync(envPath) ? envPath : path.join(rootDir, '.env.development');
+}
+
+function applyEnvAlias(targetKey: string, sourceKeys: string[]): void {
+  if (process.env[targetKey]?.trim()) {
+    return;
+  }
+
+  const sourceKey = sourceKeys.find((key) => process.env[key]?.trim());
+  if (sourceKey) {
+    process.env[targetKey] = process.env[sourceKey];
+  }
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  dotenv.config({
+    path: resolveEnvFilePath(),
+  });
+}
+
+applyEnvAlias('SERVICE_NAME', ['APP_SERVICE_NAME']);
+applyEnvAlias('PORT', ['APP_SERVICE_PORT']);
+applyEnvAlias('DATABASE_URL', ['APP_SERVICE_DATABASE_URL', 'APP_DATABASE_URL']);
+applyEnvAlias('AUTH_SERVICE_BASE_URL', ['AUTH_SERVICE_URL']);
+applyEnvAlias('NEWSFEED_SERVICE_BASE_URL', ['NEWSFEED_SERVICE_URL']);
 
 const DEFAULT_PORT = 4400;
 const DEFAULT_CORS_ORIGINS = [
@@ -21,10 +52,11 @@ const DEFAULT_CORS_ORIGINS = [
 ].join(',');
 const DEFAULT_AUTH_SERVICE_BASE_URL = 'http://127.0.0.1:4100';
 const DEFAULT_NEWSFEED_SERVICE_BASE_URL = 'http://127.0.0.1:4300';
-const DEFAULT_AWT_ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.zain505.awt';
+const DEFAULT_PUBLIC_BASE_URL = 'http://localhost:3000';
+const DEFAULT_AWT_ANDROID_STORE_URL =
+  'https://play.google.com/store/apps/details?id=com.zain505.awt';
 const DEFAULT_AWT_ANDROID_UPDATE_TITLE = 'Update required';
-const DEFAULT_AWT_ANDROID_UPDATE_MESSAGE =
-  'A newer version of the app is required to continue.';
+const DEFAULT_AWT_ANDROID_UPDATE_MESSAGE = 'A newer version of the app is required to continue.';
 
 const optionalPositiveInt = z.preprocess((value) => {
   if (value === undefined || value === null || value === '') {
@@ -34,17 +66,20 @@ const optionalPositiveInt = z.preprocess((value) => {
   return value;
 }, z.coerce.number().int().positive().nullable().default(null));
 const booleanString = z
-  .preprocess((value) => {
-    if (value === undefined || value === null || value === '') {
-      return 'false';
-    }
+  .preprocess(
+    (value) => {
+      if (value === undefined || value === null || value === '') {
+        return 'false';
+      }
 
-    if (typeof value === 'boolean') {
-      return value ? 'true' : 'false';
-    }
+      if (typeof value === 'boolean') {
+        return value ? 'true' : 'false';
+      }
 
-    return value;
-  }, z.enum(['true', 'false']).default('false'))
+      return value;
+    },
+    z.enum(['true', 'false']).default('false'),
+  )
   .transform((value) => value === 'true');
 
 const envSchema = z.object({
@@ -54,6 +89,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   CORS_ORIGINS: z.string().default(DEFAULT_CORS_ORIGINS),
+  PUBLIC_BASE_URL: z.string().url().default(DEFAULT_PUBLIC_BASE_URL),
   DATABASE_URL: z.string().min(1),
   // Internal service URLs stay on loopback when PM2 runs the services behind Nginx.
   AUTH_SERVICE_BASE_URL: z.string().url().default(DEFAULT_AUTH_SERVICE_BASE_URL),

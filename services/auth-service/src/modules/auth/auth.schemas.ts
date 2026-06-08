@@ -45,10 +45,6 @@ export const logoutBodySchema = z.object({
   refreshToken: z.string().min(10),
 });
 
-export const updateUserImageBodySchema = z.object({
-  image: z.string().trim().min(1),
-});
-
 export const updateUserActivationBodySchema = z.object({
   isActive: isActiveSchema,
 });

@@ -34,7 +34,6 @@ app.use(requestLogger);
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(compression());
-// Sync events and user posts can still arrive with base64 images before they are persisted as files.
 app.use(express.json({ limit: requestBodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
 app.use(cookieParser());

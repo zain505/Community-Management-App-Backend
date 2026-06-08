@@ -1,21 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import type { File } from 'formidable';
 import { StatusCodes } from 'http-status-codes';
 import { AppError } from './app-error';
+import { toPublicAssetPath, toPublicAssetUrl } from './public-asset-url';
 
 export const maxStoredImageBytes = 5 * 1024 * 1024;
 
 export type StoredImageMimeType = 'image/gif' | 'image/jpeg' | 'image/png' | 'image/webp';
 
-const supportedImageMimeTypes = new Set<StoredImageMimeType>([
-  'image/gif',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
-const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-const base64DataUrlPattern = /^data:(?<mimetype>[^;,]+);base64,(?<payload>[\s\S]+)$/i;
 const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const jpegSignature = [0xff, 0xd8, 0xff];
 const gif87aSignature = [0x47, 0x49, 0x46, 0x38, 0x37, 0x61];
@@ -25,14 +19,8 @@ const webpSignature = [0x57, 0x45, 0x42, 0x50];
 
 export const newsFeedUploadsRootDir = path.resolve(__dirname, '../../uploads');
 const newsFeedImageUploadDir = path.join(newsFeedUploadsRootDir, 'newsfeed-images');
+export const newsFeedImageTempUploadDir = path.join(newsFeedUploadsRootDir, 'tmp', 'newsfeed-images');
 const newsFeedImagePublicPathPrefix = '/uploads/newsfeed-images';
-
-function createInvalidImageUploadError(): AppError {
-  return new AppError('Image must be a valid base64-encoded JPEG, PNG, WEBP, or GIF', {
-    statusCode: StatusCodes.BAD_REQUEST,
-    code: 'INVALID_IMAGE_UPLOAD',
-  });
-}
 
 function createInvalidImageTypeError(): AppError {
   return new AppError('Only JPEG, PNG, WEBP, and GIF images are allowed', {
@@ -41,18 +29,23 @@ function createInvalidImageTypeError(): AppError {
   });
 }
 
-function normalizeDeclaredMimeType(mimetype: string): StoredImageMimeType | null {
-  const normalizedMimeType = mimetype.trim().toLowerCase();
+function normalizeDeclaredMimeType(mimetype: string | null | undefined): StoredImageMimeType | null {
+  const normalizedMimeType = mimetype?.trim().toLowerCase() ?? '';
 
   if (normalizedMimeType === 'image/jpg') {
     return 'image/jpeg';
   }
 
-  if (!supportedImageMimeTypes.has(normalizedMimeType as StoredImageMimeType)) {
+  if (
+    normalizedMimeType !== 'image/gif' &&
+    normalizedMimeType !== 'image/jpeg' &&
+    normalizedMimeType !== 'image/png' &&
+    normalizedMimeType !== 'image/webp'
+  ) {
     return null;
   }
 
-  return normalizedMimeType as StoredImageMimeType;
+  return normalizedMimeType;
 }
 
 function hasSignature(buffer: Buffer, signature: number[], offset = 0): boolean {
@@ -61,42 +54,6 @@ function hasSignature(buffer: Buffer, signature: number[], offset = 0): boolean 
   }
 
   return signature.every((byte, index) => buffer[index + offset] === byte);
-}
-
-function decodeBase64Payload(payload: string): Buffer {
-  const normalizedPayload = payload.replace(/\s+/g, '');
-
-  if (!normalizedPayload) {
-    throw createInvalidImageUploadError();
-  }
-
-  if (!base64Pattern.test(normalizedPayload) || normalizedPayload.length % 4 === 1) {
-    throw createInvalidImageUploadError();
-  }
-
-  const paddingLength = (4 - (normalizedPayload.length % 4)) % 4;
-  const paddedPayload = normalizedPayload.padEnd(normalizedPayload.length + paddingLength, '=');
-  const buffer = Buffer.from(paddedPayload, 'base64');
-
-  if (!buffer.length) {
-    throw createInvalidImageUploadError();
-  }
-
-  const normalizedWithoutPadding = normalizedPayload.replace(/=+$/, '');
-  const decodedWithoutPadding = buffer.toString('base64').replace(/=+$/, '');
-
-  if (decodedWithoutPadding !== normalizedWithoutPadding) {
-    throw createInvalidImageUploadError();
-  }
-
-  if (buffer.length > maxStoredImageBytes) {
-    throw new AppError('Image must be 5 MB or smaller', {
-      statusCode: StatusCodes.REQUEST_TOO_LONG,
-      code: 'IMAGE_TOO_LARGE',
-    });
-  }
-
-  return buffer;
 }
 
 function detectStoredImageMimeType(buffer: Buffer): StoredImageMimeType | null {
@@ -132,74 +89,60 @@ function getStoredImageExtension(mimetype: StoredImageMimeType): string {
   }
 }
 
-export function isBase64ImageInput(image: string): boolean {
-  const trimmedImage = image.trim();
-
-  if (!trimmedImage) {
-    return false;
+function assertValidUploadedImage(buffer: Buffer, declaredMimeType: string | null | undefined): StoredImageMimeType {
+  if (!buffer.length) {
+    throw new AppError('Image file is required', {
+      statusCode: StatusCodes.BAD_REQUEST,
+      code: 'INVALID_IMAGE_UPLOAD',
+    });
   }
 
-  if (/^(?:https?:)?\/\//i.test(trimmedImage) || trimmedImage.startsWith('/')) {
-    return false;
+  if (buffer.length > maxStoredImageBytes) {
+    throw new AppError('Image must be 5 MB or smaller', {
+      statusCode: StatusCodes.REQUEST_TOO_LONG,
+      code: 'IMAGE_TOO_LARGE',
+    });
   }
 
-  if (base64DataUrlPattern.test(trimmedImage)) {
-    return true;
-  }
-
-  return trimmedImage.length >= 8 && base64Pattern.test(trimmedImage);
-}
-
-export function parseBase64Image(image: string): {
-  buffer: Buffer;
-  mimetype: StoredImageMimeType;
-} {
-  const trimmedImage = image.trim();
-  const dataUrlMatch = base64DataUrlPattern.exec(trimmedImage);
-  const declaredMimeType = dataUrlMatch?.groups?.mimetype
-    ? normalizeDeclaredMimeType(dataUrlMatch.groups.mimetype)
-    : null;
-  const payload = dataUrlMatch?.groups?.payload ?? trimmedImage;
-
-  if (dataUrlMatch?.groups?.mimetype && !declaredMimeType) {
-    throw createInvalidImageTypeError();
-  }
-
-  const buffer = decodeBase64Payload(payload);
+  const normalizedDeclaredMimeType = normalizeDeclaredMimeType(declaredMimeType);
   const detectedMimeType = detectStoredImageMimeType(buffer);
 
-  if (!detectedMimeType || (declaredMimeType && declaredMimeType !== detectedMimeType)) {
+  if (!detectedMimeType || (normalizedDeclaredMimeType && normalizedDeclaredMimeType !== detectedMimeType)) {
     throw createInvalidImageTypeError();
   }
 
-  return {
-    buffer,
-    mimetype: detectedMimeType,
-  };
+  return detectedMimeType;
 }
 
 export function buildNewsFeedImagePublicPath(filename: string): string {
   return `${newsFeedImagePublicPathPrefix}/${filename}`;
 }
 
+export function buildNewsFeedImagePublicUrl(filename: string): string {
+  return toPublicAssetUrl(buildNewsFeedImagePublicPath(filename));
+}
+
 export function resolveNewsFeedImagePublicPath(publicPath: string): string | null {
-  if (!publicPath.startsWith(`${newsFeedImagePublicPathPrefix}/`)) {
+  const assetPath = toPublicAssetPath(publicPath);
+
+  if (!assetPath.startsWith(`${newsFeedImagePublicPathPrefix}/`)) {
     return null;
   }
 
-  const relativePath = publicPath.slice('/uploads/'.length);
+  const relativePath = assetPath.slice('/uploads/'.length);
   return path.join(newsFeedUploadsRootDir, relativePath);
 }
 
-export async function persistBase64Image(image: string): Promise<string> {
-  const { buffer, mimetype } = parseBase64Image(image);
+export async function persistUploadedImage(file: File): Promise<string> {
+  const buffer = await fs.readFile(file.filepath);
+  const mimetype = assertValidUploadedImage(buffer, file.mimetype);
+  const filename = `${randomUUID()}${getStoredImageExtension(mimetype)}`;
+  const destinationPath = path.join(newsFeedImageUploadDir, filename);
 
   await fs.mkdir(newsFeedImageUploadDir, { recursive: true });
+  await fs.rename(file.filepath, destinationPath);
 
-  const filename = `${randomUUID()}${getStoredImageExtension(mimetype)}`;
-  await fs.writeFile(path.join(newsFeedImageUploadDir, filename), buffer);
-
-  return buildNewsFeedImagePublicPath(filename);
+  return buildNewsFeedImagePublicUrl(filename);
 }
 
 export async function deleteManagedImages(imagePaths: Iterable<string>): Promise<void> {

@@ -12,10 +12,10 @@
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"prisma/**/*.ts\" \"*.json\"",
     "typecheck": "tsc --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:seed": "ts-node --transpile-only prisma/seed.ts"
+    "prisma:generate": "node ../../scripts/run-with-service-env.mjs api-gateway prisma generate",
+    "prisma:migrate": "node ../../scripts/run-with-service-env.mjs api-gateway prisma migrate dev",
+    "prisma:deploy": "node ../../scripts/run-with-service-env.mjs api-gateway prisma migrate deploy",
+    "prisma:seed": "node ../../scripts/run-with-service-env.mjs api-gateway ts-node --transpile-only prisma/seed.ts"
   },
   "prisma": {
     "seed": "ts-node --transpile-only prisma/seed.ts"

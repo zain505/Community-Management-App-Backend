@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../../middleware/require-auth';
 import { validate } from '../../middleware/validate';
 import { asyncHandler } from '../../shared/async-handler';
+import { parseEventImageUpload } from './event-image-upload.middleware';
 import {
   createEventManagement,
   deleteEventManagement,
@@ -23,12 +24,14 @@ eventManagementRouter.get('/:id', validate({ params: eventManagementIdParamSchem
 eventManagementRouter.post(
   '/',
   requireAuth,
+  asyncHandler(parseEventImageUpload),
   validate({ body: createEventManagementBodySchema }),
   asyncHandler(createEventManagement),
 );
 eventManagementRouter.patch(
   '/:id',
   requireAuth,
+  asyncHandler(parseEventImageUpload),
   validate({ params: eventManagementIdParamSchema, body: updateEventManagementBodySchema }),
   asyncHandler(updateEventManagement),
 );
