@@ -17,9 +17,6 @@
     "prisma:deploy": "node ../../scripts/run-with-service-env.mjs api-gateway prisma migrate deploy",
     "prisma:seed": "node ../../scripts/run-with-service-env.mjs api-gateway ts-node --transpile-only prisma/seed.ts"
   },
-  "prisma": {
-    "seed": "ts-node --transpile-only prisma/seed.ts"
-  },
   "dependencies": {
     "@community/contracts": "file:../../packages/contracts",
     "@prisma/client": "^6.0.1",

@@ -169,7 +169,10 @@ function isLocalDevelopmentDatabaseUrl(databaseUrl) {
 }
 
 function shouldAllowLocalDevelopmentDatabaseUrls() {
-  return (process.env.NODE_ENV || 'production') === 'development';
+  return (
+    (process.env.NODE_ENV || 'production') === 'development' ||
+    process.env.ALLOW_LOCAL_PRODUCTION_DATABASE_URLS === 'true'
+  );
 }
 
 function warnAboutSuspiciousProductionDatabaseUrl(service) {

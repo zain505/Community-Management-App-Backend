@@ -235,7 +235,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\Copies\\community\\Community-Management-App-Backend\\services\\newsfeed-service\\src\\generated\\prisma",
+      "value": "C:\\backend\\community_backend_app_new\\Community-Management-App-Backend\\services\\newsfeed-service\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -249,7 +249,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\Copies\\community\\Community-Management-App-Backend\\services\\newsfeed-service\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\backend\\community_backend_app_new\\Community-Management-App-Backend\\services\\newsfeed-service\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

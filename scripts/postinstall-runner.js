@@ -1,56 +1,46 @@
+const { existsSync } = require('node:fs');
+const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-function resolveNpmInvocation() {
-  const npmExecPath = process.env.npm_execpath;
+const rootDir = path.resolve(__dirname, '..');
 
-  if (typeof npmExecPath === 'string' && npmExecPath.trim() !== '') {
+function resolveNpmInvocation(args) {
+  if (process.env.npm_execpath) {
     return {
       command: process.execPath,
-      argsPrefix: [npmExecPath],
-      shell: false,
-    };
-  }
-
-  if (process.platform === 'win32') {
-    return {
-      command: 'npm.cmd',
-      argsPrefix: [],
-      shell: true,
+      args: [process.env.npm_execpath, ...args],
     };
   }
 
   return {
-    command: 'npm',
-    argsPrefix: [],
-    shell: false,
+    command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    args,
   };
 }
 
-const npmInvocation = resolveNpmInvocation();
-
-function runScript(scriptName) {
-  const result = spawnSync(
-    npmInvocation.command,
-    [...npmInvocation.argsPrefix, 'run', scriptName],
-    {
-      cwd: process.cwd(),
-      env: process.env,
-      shell: npmInvocation.shell,
-      stdio: 'inherit',
-    },
-  );
+function run(command, args) {
+  const result = spawnSync(command, args, {
+    cwd: rootDir,
+    stdio: 'inherit',
+    shell: false,
+  });
 
   if (result.error) {
-    throw result.error;
+    console.error(`[postinstall] Failed to run ${command} ${args.join(' ')}:`, result.error.message);
+    process.exit(1);
   }
 
-  if (typeof result.status === 'number' && result.status !== 0) {
-    process.exit(result.status);
-  }
-
-  if (result.signal) {
-    process.kill(process.pid, result.signal);
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
   }
 }
 
-runScript('build');
+run(process.execPath, [path.join(rootDir, 'scripts', 'setup-service-envs.mjs')]);
+
+const contractsPackage = path.join(rootDir, 'packages', 'contracts', 'package.json');
+if (existsSync(contractsPackage)) {
+  const npm = resolveNpmInvocation(['run', 'build', '-w', 'packages/contracts']);
+  run(npm.command, npm.args);
+} else {
+  console.warn('[postinstall] Skipping contracts build because packages/contracts is missing.');
+}

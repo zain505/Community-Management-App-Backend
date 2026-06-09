@@ -11,7 +11,7 @@
     "contracts:build": "npm run build -w packages/contracts",
     "env:setup": "node ./scripts/setup-service-envs.mjs",
     "postinstall": "node ./scripts/postinstall-runner.js",
-    "start": "npm run prisma:deploy && node ./scripts/production-services.js",
+    "start": "node ./scripts/start-production.js",
     "start:dist": "npm run build && npm start",
     "dev": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs",
     "dev:restart": "npm run env:setup && npm run contracts:build && node ./scripts/dev-services.mjs --restart",
