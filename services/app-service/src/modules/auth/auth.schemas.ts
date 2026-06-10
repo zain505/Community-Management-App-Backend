@@ -5,17 +5,15 @@ const mobileNumberSchema = z
   .trim()
   .regex(/^\+?[1-9]\d{7,14}$/, 'Mobile phone number must be in international format');
 const reservedAdminNamePattern = /\b(?:super\s+admin|admin)\b/i;
-const userTypeSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
 
 export const registerBodySchema = z.object({
   name: z.string().trim().min(2).max(80),
   mobileNumber: mobileNumberSchema,
   password: z.string().min(8).max(128),
-  usertype: userTypeSchema.default(2),
 }).superRefine((value, ctx) => {
   const normalizedName = value.name.trim().replace(/\s+/g, ' ');
 
-  if (value.usertype === 2 && reservedAdminNamePattern.test(normalizedName)) {
+  if (reservedAdminNamePattern.test(normalizedName)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['name'],
@@ -27,7 +25,6 @@ export const registerBodySchema = z.object({
 export const loginBodySchema = z.object({
   mobileNumber: mobileNumberSchema,
   password: z.string().min(8).max(128),
-  usertype: userTypeSchema.default(2),
 });
 
 export const refreshBodySchema = z.object({

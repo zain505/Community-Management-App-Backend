@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { Prisma } from '../../generated/prisma';
 import type {
   AdminResetUserPasswordResponse,
+  AssignableUserType,
   AuthResponse,
   AuthTokens,
   DeleteUserResponse,
@@ -40,7 +41,7 @@ import { toPublicAssetUrl } from '../../shared/public-asset-url';
 const defaultUserProfile: UserProfile = {
   image: null,
 };
-const invalidCredentialsMessage = 'Invalid mobile number, password, or user type';
+const invalidCredentialsMessage = 'Invalid mobile number or password';
 const reservedAdminNamePattern = /\b(?:super\s+admin|admin)\b/i;
 
 function toUserProfile(profile: Prisma.JsonValue | null | undefined): UserProfile {
@@ -303,7 +304,7 @@ export const authService = {
     const user = await authRepository.createUser({
       mobileNumber: payload.mobileNumber,
       name: payload.name,
-      usertype: payload.usertype,
+      usertype: 2,
       profile: toStoredUserProfile(defaultUserProfile),
       passwordHash: await hashPassword(payload.password),
       isActive: false,
@@ -337,7 +338,7 @@ export const authService = {
 
     const passwordMatches = await verifyPassword(payload.password, user.passwordHash);
 
-    if (!passwordMatches || user.usertype !== payload.usertype) {
+    if (!passwordMatches) {
       throw new AppError(invalidCredentialsMessage, {
         statusCode: StatusCodes.UNAUTHORIZED,
         code: 'INVALID_CREDENTIALS',
@@ -528,6 +529,47 @@ export const authService = {
     }
 
     return toUserStatus(updatedUser);
+  },
+
+  async updateUserType(params: {
+    requesterId: string;
+    userId: string;
+    usertype: AssignableUserType;
+  }): Promise<ManagedUserStatus> {
+    await ensureActiveSuperAdmin(params.requesterId, 'update user types');
+
+    if (params.requesterId === params.userId) {
+      throw new AppError('Super admins cannot change their own user type', {
+        statusCode: StatusCodes.FORBIDDEN,
+        code: 'SELF_USER_TYPE_CHANGE_FORBIDDEN',
+      });
+    }
+
+    const user = await authRepository.findUserById(params.userId);
+
+    if (!user) {
+      throw new AppError('User not found', {
+        statusCode: StatusCodes.NOT_FOUND,
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    if (user.usertype === 0) {
+      throw new AppError('The super admin user type is protected', {
+        statusCode: StatusCodes.FORBIDDEN,
+        code: 'SUPER_ADMIN_USER_TYPE_PROTECTED',
+      });
+    }
+
+    assertNameAllowedForUser(user.name, params.usertype);
+
+    if (user.usertype === params.usertype) {
+      return toManagedUserStatus(user);
+    }
+
+    const updatedUser = await authRepository.updateUserType(user.id, params.usertype);
+
+    return toManagedUserStatus(updatedUser);
   },
 
   async deleteUserAccount(params: {

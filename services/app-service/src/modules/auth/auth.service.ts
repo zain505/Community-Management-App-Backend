@@ -3,6 +3,8 @@ import type {
   AuthTokens,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
+  ManagedUserStatus,
   UserProfile,
   UserPublic,
   UserType,
@@ -14,6 +16,7 @@ import { AppError } from '../../shared/app-error';
 import { authRepository } from './auth.repository';
 
 type AuthUserPublic = UserPublic & { usertype: UserType };
+const invalidCredentialsMessage = 'Invalid mobile number or password';
 
 function toUserPublic(user: {
   id: string;
@@ -32,6 +35,27 @@ function toUserPublic(user: {
     name: user.name,
     usertype: user.usertype as UserType,
     profile,
+    createdAt: user.createdAt.toISOString(),
+  };
+}
+
+function toManagedUserStatus(user: {
+  id: string;
+  mobileNumber: string;
+  name: string;
+  usertype: number;
+  isActive: boolean;
+  createdAt: Date;
+}): ManagedUserStatus {
+  return {
+    id: user.id,
+    mobileNumber: user.mobileNumber,
+    name: user.name,
+    usertype: user.usertype as UserType,
+    profile: {
+      image: null,
+    },
+    isActive: user.isActive,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -60,7 +84,7 @@ async function issueTokens(user: { id: string; mobileNumber: string }): Promise<
 }
 
 export const authService = {
-  async register(payload: RegisterRequest): Promise<AuthResponse> {
+  async register(payload: RegisterRequest): Promise<RegisterResponse> {
     const existing = await authRepository.findUserByMobileNumber(payload.mobileNumber);
 
     if (existing) {
@@ -73,15 +97,14 @@ export const authService = {
     const user = await authRepository.createUser({
       mobileNumber: payload.mobileNumber,
       name: payload.name,
-      usertype: payload.usertype,
+      usertype: 2,
       passwordHash: await hashPassword(payload.password),
+      isActive: false,
     });
 
-    const tokens = await issueTokens(user);
-
     return {
-      user: toUserPublic(user),
-      tokens,
+      user: toManagedUserStatus(user),
+      requiresActivation: true,
     };
   },
 
@@ -89,7 +112,7 @@ export const authService = {
     const user = await authRepository.findUserByMobileNumber(payload.mobileNumber);
 
     if (!user || !user.isActive) {
-      throw new AppError('Invalid mobile number, password, or user type', {
+      throw new AppError(invalidCredentialsMessage, {
         statusCode: StatusCodes.UNAUTHORIZED,
         code: 'INVALID_CREDENTIALS',
       });
@@ -97,8 +120,8 @@ export const authService = {
 
     const passwordMatches = await verifyPassword(payload.password, user.passwordHash);
 
-    if (!passwordMatches || user.usertype !== payload.usertype) {
-      throw new AppError('Invalid mobile number, password, or user type', {
+    if (!passwordMatches) {
+      throw new AppError(invalidCredentialsMessage, {
         statusCode: StatusCodes.UNAUTHORIZED,
         code: 'INVALID_CREDENTIALS',
       });

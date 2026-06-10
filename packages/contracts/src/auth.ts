@@ -1,14 +1,18 @@
 export type UserType = 0 | 1 | 2;
+export type AssignableUserType = 1 | 2;
 
 export interface RegisterRequest {
   name: string;
   mobileNumber: string;
   password: string;
-  usertype: UserType;
 }
 
 export interface UpdateUserActivationRequest {
   isActive: boolean;
+}
+
+export interface UpdateUserTypeRequest {
+  usertype: AssignableUserType;
 }
 
 export interface UpdateUserNameRequest {
@@ -28,7 +32,6 @@ export interface AdminResetUserPasswordRequest {
 export interface LoginRequest {
   mobileNumber: string;
   password: string;
-  usertype: UserType;
 }
 
 export interface TokenRefreshRequest {
@@ -71,7 +74,7 @@ export interface ManagedUserStatus extends UserStatus {
 }
 
 export interface AuthResponse {
-  user: UserPublic;
+  user: UserPublic & { usertype: UserType };
   tokens: AuthTokens;
 }
 

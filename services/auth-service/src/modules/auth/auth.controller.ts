@@ -9,6 +9,7 @@ import type {
   TokenRefreshRequest,
   UpdateUserActivationRequest,
   UpdateUserNameRequest,
+  UpdateUserTypeRequest,
 } from '@community/contracts';
 import { sendSuccess } from '../../lib/http';
 import { AppError } from '../../shared/app-error';
@@ -115,6 +116,24 @@ export async function updateUserActivation(req: Request, res: Response): Promise
     requesterId: req.user.id,
     userId: (req.params as { id: string }).id,
     isActive: payload.isActive,
+  });
+
+  sendSuccess(res, StatusCodes.OK, updatedUser);
+}
+
+export async function updateUserType(req: Request, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new AppError('Access token is required', {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      code: 'UNAUTHORIZED',
+    });
+  }
+
+  const payload = req.body as UpdateUserTypeRequest;
+  const updatedUser = await authService.updateUserType({
+    requesterId: req.user.id,
+    userId: (req.params as { id: string }).id,
+    usertype: payload.usertype,
   });
 
   sendSuccess(res, StatusCodes.OK, updatedUser);

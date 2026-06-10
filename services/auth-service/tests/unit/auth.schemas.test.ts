@@ -5,6 +5,7 @@ import {
   registerBodySchema,
   updateUserActivationBodySchema,
   updateUserNameBodySchema,
+  updateUserTypeBodySchema,
 } from '../../src/modules/auth/auth.schemas';
 
 describe('auth schemas', () => {
@@ -16,34 +17,31 @@ describe('auth schemas', () => {
     });
 
     expect(value.mobileNumber).toBe('+923001234567');
-    expect(value.usertype).toBe(2);
+    expect(value).not.toHaveProperty('usertype');
   });
 
-  it('defaults missing login usertype to normal user', () => {
+  it('accepts a login payload without a usertype', () => {
     const value = loginBodySchema.parse({
       mobileNumber: '+923001234567',
       password: 'StrongPass123',
     });
 
-    expect(value.usertype).toBe(2);
+    expect(value).not.toHaveProperty('usertype');
   });
 
   it('accepts the seeded super admin login password', () => {
     const value = loginBodySchema.parse({
       mobileNumber: '+923074029959',
       password: 'root123',
-      usertype: 0,
     });
 
     expect(value.password).toBe('root123');
-    expect(value.usertype).toBe(0);
   });
 
   it('accepts a valid local mobile phone number', () => {
     const value = loginBodySchema.parse({
       mobileNumber: '03074029959',
       password: 'root123',
-      usertype: 0,
     });
 
     expect(value.mobileNumber).toBe('03074029959');
@@ -54,7 +52,6 @@ describe('auth schemas', () => {
       name: 'Test User',
       mobileNumber: '+923001234567',
       password: 'short',
-      usertype: 2,
     });
 
     expect(result.success).toBe(false);
@@ -65,7 +62,6 @@ describe('auth schemas', () => {
       name: 'Test User',
       mobileNumber: 'abc123',
       password: 'StrongPass123',
-      usertype: 2,
     });
 
     expect(result.success).toBe(false);
@@ -75,13 +71,12 @@ describe('auth schemas', () => {
     const result = loginBodySchema.safeParse({
       mobileNumber: 'not-a-mobile-number',
       password: 'StrongPass123',
-      usertype: 2,
     });
 
     expect(result.success).toBe(false);
   });
 
-  it('rejects register payloads with unsupported user types', () => {
+  it('strips unsupported usertype payloads from register requests', () => {
     const result = registerBodySchema.safeParse({
       name: 'Test User',
       mobileNumber: '+923001234567',
@@ -89,7 +84,13 @@ describe('auth schemas', () => {
       usertype: 99,
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+
+    if (!result.success) {
+      throw new Error('Expected register payload to parse successfully');
+    }
+
+    expect(result.data).not.toHaveProperty('usertype');
   });
 
   it('rejects reserved admin words in normal user names', () => {
@@ -97,21 +98,9 @@ describe('auth schemas', () => {
       name: 'John Admin',
       mobileNumber: '+923001234567',
       password: 'StrongPass123',
-      usertype: 2,
     });
 
     expect(result.success).toBe(false);
-  });
-
-  it('allows reserved admin words for admin signups', () => {
-    const result = registerBodySchema.safeParse({
-      name: 'John Admin',
-      mobileNumber: '+923001234567',
-      password: 'StrongPass123',
-      usertype: 1,
-    });
-
-    expect(result.success).toBe(true);
   });
 
   it('accepts numeric activation payloads and normalizes them to booleans', () => {
@@ -125,6 +114,22 @@ describe('auth schemas', () => {
   it('rejects invalid activation payloads', () => {
     const result = updateUserActivationBodySchema.safeParse({
       isActive: 'inactive',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts valid assignable user types', () => {
+    const result = updateUserTypeBodySchema.parse({
+      usertype: 1,
+    });
+
+    expect(result.usertype).toBe(1);
+  });
+
+  it('rejects super admin assignment through the user type route', () => {
+    const result = updateUserTypeBodySchema.safeParse({
+      usertype: 0,
     });
 
     expect(result.success).toBe(false);

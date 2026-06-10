@@ -64,6 +64,13 @@ export const authRepository = {
     });
   },
 
+  updateUserType(id: string, usertype: number): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { usertype },
+    });
+  },
+
   deleteUserById(id: string): Promise<User> {
     return prisma.user.delete({
       where: { id },

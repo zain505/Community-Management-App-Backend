@@ -18,6 +18,7 @@ import {
   updateUserActivation,
   updateUserImage,
   updateUserName,
+  updateUserType,
 } from './auth.controller';
 import {
   adminResetUserPasswordBodySchema,
@@ -28,6 +29,7 @@ import {
   registerBodySchema,
   updateUserActivationBodySchema,
   updateUserNameBodySchema,
+  updateUserTypeBodySchema,
   userIdParamSchema,
   userIdsQuerySchema,
 } from './auth.schemas';
@@ -64,6 +66,12 @@ authRouter.patch(
   requireAuth,
   validate({ params: userIdParamSchema, body: updateUserActivationBodySchema }),
   asyncHandler(updateUserActivation),
+);
+authRouter.patch(
+  '/users/:id/type',
+  requireAuth,
+  validate({ params: userIdParamSchema, body: updateUserTypeBodySchema }),
+  asyncHandler(updateUserType),
 );
 authRouter.delete(
   '/users/:id',

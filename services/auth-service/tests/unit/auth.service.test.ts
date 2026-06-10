@@ -6,6 +6,7 @@ jest.mock('../../src/modules/auth/auth.repository', () => ({
     createUser: jest.fn(),
     deleteUserById: jest.fn(),
     updateUserActiveStatus: jest.fn(),
+    updateUserType: jest.fn(),
     updateUserPasswordHashAndRevokeTokens: jest.fn(),
     updateUserName: jest.fn(),
     updateUserProfile: jest.fn(),
@@ -87,54 +88,13 @@ describe('auth service', () => {
     await removeUploadsDirectory();
   });
 
-  it('creates admin signups as inactive until a super admin activates them', async () => {
+  it('creates signups as inactive residents until a super admin activates them', async () => {
     mockedAuthRepository.findUserByMobileNumber.mockResolvedValue(null);
     mockedHashPassword.mockResolvedValue('hashed-password');
     mockedAuthRepository.createUser.mockResolvedValue({
-      id: 'admin-123',
+      id: 'user-123',
       mobileNumber: '+923001234567',
-      name: 'Community Admin',
-      usertype: 1,
-      profile: {
-        image: null,
-      },
-      passwordHash: 'hashed-password',
-      isActive: false,
-      createdAt: new Date('2026-03-15T09:00:00.000Z'),
-    } as never);
-
-    const result = await authService.register({
-      name: 'Community Admin',
-      mobileNumber: '+923001234567',
-      password: 'StrongPass123',
-      usertype: 1,
-    });
-
-    expect(mockedAuthRepository.createUser).toHaveBeenCalledWith(
-      expect.objectContaining({
-        usertype: 1,
-        isActive: false,
-      }),
-    );
-    expect(result).toMatchObject({
-      requiresActivation: true,
-      user: {
-        id: 'admin-123',
-        usertype: 1,
-        isActive: false,
-      },
-    });
-    expect(result.tokens).toBeUndefined();
-    expect(mockedAuthRepository.createRefreshToken).not.toHaveBeenCalled();
-  });
-
-  it('creates normal user signups as inactive until a super admin activates them', async () => {
-    mockedAuthRepository.findUserByMobileNumber.mockResolvedValue(null);
-    mockedHashPassword.mockResolvedValue('hashed-password');
-    mockedAuthRepository.createUser.mockResolvedValue({
-      id: 'user-456',
-      mobileNumber: '+923009876543',
-      name: 'Community User',
+      name: 'Community Resident',
       usertype: 2,
       profile: {
         image: null,
@@ -145,10 +105,9 @@ describe('auth service', () => {
     } as never);
 
     const result = await authService.register({
-      name: 'Community User',
-      mobileNumber: '+923009876543',
+      name: 'Community Resident',
+      mobileNumber: '+923001234567',
       password: 'StrongPass123',
-      usertype: 2,
     });
 
     expect(mockedAuthRepository.createUser).toHaveBeenCalledWith(
@@ -160,7 +119,7 @@ describe('auth service', () => {
     expect(result).toMatchObject({
       requiresActivation: true,
       user: {
-        id: 'user-456',
+        id: 'user-123',
         usertype: 2,
         isActive: false,
       },
@@ -196,7 +155,6 @@ describe('auth service', () => {
     const result = await authService.login({
       mobileNumber: '+923001234567',
       password: 'StrongPass123',
-      usertype: 1,
     });
 
     expect(result.tokens).toEqual({
@@ -207,7 +165,7 @@ describe('auth service', () => {
     expect(result.user.profile.image).toBe(buildUserImagePublicPath(imageFileName));
   });
 
-  it('rejects login when the supplied user type does not match the stored user type', async () => {
+  it('allows login without a supplied user type when the password is correct', async () => {
     mockedAuthRepository.findUserByMobileNumber.mockResolvedValue({
       id: 'user-123',
       mobileNumber: '+923001234567',
@@ -222,16 +180,18 @@ describe('auth service', () => {
     } as never);
 
     mockedVerifyPassword.mockResolvedValue(true);
+    mockIssuedTokens();
 
-    await expect(
-      authService.login({
-        mobileNumber: '+923001234567',
-        password: 'StrongPass123',
-        usertype: 2,
-      }),
-    ).rejects.toMatchObject({
-      code: 'INVALID_CREDENTIALS',
-      statusCode: 401,
+    const result = await authService.login({
+      mobileNumber: '+923001234567',
+      password: 'StrongPass123',
+    });
+
+    expect(result).toMatchObject({
+      user: {
+        id: 'user-123',
+        usertype: 1,
+      },
     });
   });
 
@@ -361,6 +321,59 @@ describe('auth service', () => {
     expect(result).toMatchObject({
       id: 'user-456',
       isActive: false,
+    });
+  });
+
+  it('allows active super admins to update another user type', async () => {
+    mockedAuthRepository.findUserById
+      .mockResolvedValueOnce({
+        id: 'super-123',
+        mobileNumber: '+923000000001',
+        name: 'Super Admin',
+        usertype: 0,
+        profile: {
+          image: null,
+        },
+        passwordHash: 'hashed-password',
+        isActive: true,
+        createdAt: new Date('2026-03-15T09:00:00.000Z'),
+      } as never)
+      .mockResolvedValueOnce({
+        id: 'user-456',
+        mobileNumber: '+923009876543',
+        name: 'Community User',
+        usertype: 2,
+        profile: {
+          image: null,
+        },
+        passwordHash: 'hashed-password',
+        isActive: true,
+        createdAt: new Date('2026-03-15T09:00:00.000Z'),
+      } as never);
+    mockedAuthRepository.updateUserType.mockResolvedValue({
+      id: 'user-456',
+      mobileNumber: '+923009876543',
+      name: 'Community User',
+      usertype: 1,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    const result = await authService.updateUserType({
+      requesterId: 'super-123',
+      userId: 'user-456',
+      usertype: 1,
+    });
+
+    expect(mockedAuthRepository.updateUserType).toHaveBeenCalledWith('user-456', 1);
+    expect(result).toMatchObject({
+      id: 'user-456',
+      usertype: 1,
+      isActive: true,
     });
   });
 
@@ -528,6 +541,75 @@ describe('auth service', () => {
 
     expect(mockedAuthRepository.findUserById).toHaveBeenCalledTimes(1);
     expect(mockedAuthRepository.deleteUserById).not.toHaveBeenCalled();
+  });
+
+  it('rejects attempts by a super admin to change their own user type', async () => {
+    mockedAuthRepository.findUserById.mockResolvedValueOnce({
+      id: 'super-123',
+      mobileNumber: '+923000000001',
+      name: 'Super Admin',
+      usertype: 0,
+      profile: {
+        image: null,
+      },
+      passwordHash: 'hashed-password',
+      isActive: true,
+      createdAt: new Date('2026-03-15T09:00:00.000Z'),
+    } as never);
+
+    await expect(
+      authService.updateUserType({
+        requesterId: 'super-123',
+        userId: 'super-123',
+        usertype: 1,
+      }),
+    ).rejects.toMatchObject({
+      code: 'SELF_USER_TYPE_CHANGE_FORBIDDEN',
+      statusCode: 403,
+    });
+
+    expect(mockedAuthRepository.updateUserType).not.toHaveBeenCalled();
+  });
+
+  it('rejects attempts to change the seeded super admin user type', async () => {
+    mockedAuthRepository.findUserById
+      .mockResolvedValueOnce({
+        id: 'super-123',
+        mobileNumber: '+923000000001',
+        name: 'Super Admin',
+        usertype: 0,
+        profile: {
+          image: null,
+        },
+        passwordHash: 'hashed-password',
+        isActive: true,
+        createdAt: new Date('2026-03-15T09:00:00.000Z'),
+      } as never)
+      .mockResolvedValueOnce({
+        id: 'super-456',
+        mobileNumber: '+923000000002',
+        name: 'Other Super Admin',
+        usertype: 0,
+        profile: {
+          image: null,
+        },
+        passwordHash: 'hashed-password',
+        isActive: true,
+        createdAt: new Date('2026-03-15T09:00:00.000Z'),
+      } as never);
+
+    await expect(
+      authService.updateUserType({
+        requesterId: 'super-123',
+        userId: 'super-456',
+        usertype: 1,
+      }),
+    ).rejects.toMatchObject({
+      code: 'SUPER_ADMIN_USER_TYPE_PROTECTED',
+      statusCode: 403,
+    });
+
+    expect(mockedAuthRepository.updateUserType).not.toHaveBeenCalled();
   });
 
   it('allows a logged-in user to update their own name', async () => {

@@ -5,6 +5,7 @@ import type {
   RegisterRequest,
   UserProfile,
   UserPublic,
+  UserType,
 } from '@community/contracts';
 import { StatusCodes } from 'http-status-codes';
 import { decodeTokenExpiration, hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../../lib/token';
@@ -12,7 +13,13 @@ import { verifyPassword, hashPassword } from '../../lib/password';
 import { AppError } from '../../shared/app-error';
 import { authRepository } from './auth.repository';
 
-function toUserPublic(user: { id: string; mobileNumber: string; name: string; createdAt: Date }): UserPublic {
+function toUserPublic(user: {
+  id: string;
+  mobileNumber: string;
+  name: string;
+  usertype: number;
+  createdAt: Date;
+}): UserPublic & { usertype: UserType } {
   const profile: UserProfile = {
     image: null,
   };
@@ -21,6 +28,7 @@ function toUserPublic(user: { id: string; mobileNumber: string; name: string; cr
     id: user.id,
     mobileNumber: user.mobileNumber,
     name: user.name,
+    usertype: user.usertype as UserType,
     profile,
     createdAt: user.createdAt.toISOString(),
   };
@@ -63,6 +71,7 @@ export const authService = {
     const user = await authRepository.createUser({
       mobileNumber: payload.mobileNumber,
       name: payload.name,
+      usertype: 2,
       passwordHash: await hashPassword(payload.password),
     });
 

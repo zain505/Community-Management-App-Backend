@@ -11,18 +11,17 @@ const nameSchema = z.string().trim().min(2).max(80);
 const passwordSchema = z.string().min(8).max(128);
 const currentPasswordSchema = z.string().min(4).max(128);
 const reservedAdminNamePattern = /\b(?:super\s+admin|admin)\b/i;
-const userTypeSchema = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+const assignableUserTypeSchema = z.union([z.literal(1), z.literal(2)]);
 const isActiveSchema = z.union([z.boolean(), z.literal(0), z.literal(1)]).transform((value) => value === true || value === 1);
 
 export const registerBodySchema = z.object({
   name: nameSchema,
   mobileNumber: mobileNumberSchema,
   password: passwordSchema,
-  usertype: userTypeSchema.default(2),
 }).superRefine((value, ctx) => {
   const normalizedName = value.name.trim().replace(/\s+/g, ' ');
 
-  if (value.usertype === 2 && reservedAdminNamePattern.test(normalizedName)) {
+  if (reservedAdminNamePattern.test(normalizedName)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['name'],
@@ -34,7 +33,6 @@ export const registerBodySchema = z.object({
 export const loginBodySchema = z.object({
   mobileNumber: mobileNumberSchema,
   password: currentPasswordSchema,
-  usertype: userTypeSchema.default(2),
 });
 
 export const refreshBodySchema = z.object({
@@ -47,6 +45,10 @@ export const logoutBodySchema = z.object({
 
 export const updateUserActivationBodySchema = z.object({
   isActive: isActiveSchema,
+});
+
+export const updateUserTypeBodySchema = z.object({
+  usertype: assignableUserTypeSchema,
 });
 
 export const updateUserNameBodySchema = z.object({
